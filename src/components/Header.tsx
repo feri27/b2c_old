@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function Header() {
   return (
-    <header className="flex items-center justify-between min-h-[100px] p-1.5 ">
+    <header className="flex items-center justify-between min-h-[100px] mx-auto max-w-[1140px] p-1.5 ">
       <div className=" w-1/3  pl-[4%] p-[.25rem]">
         <div className="relative w-[80%] md:w-[60%] mt-2.5  h-10 md:h-20">
           <Image
