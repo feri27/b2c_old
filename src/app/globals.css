@@ -14,3 +14,8 @@
   padding-left: calc(var(--bs-gutter-x) * 0.5);
   padding-right: calc(var(--bs-gutter-x) * 0.5);
 }
+
+.padx75 {
+  padding-left: var(--bs-gutter-x, 0.75rem);
+  padding-right: var(--bs-gutter-x, 0.75rem);
+}

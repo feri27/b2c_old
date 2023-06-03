@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function Footer() {
   return (
-    <footer className="before:box-border mx-auto max-w-[1140px] after:box-border block text-sm">
+    <footer className="before:box-border mx-auto  max-w-[1140px] after:box-border block text-sm">
       <div className="min-h-[38px] pt-6 px-3.5 pb-3.5" role="contentinfo">
         <div className="flex justify-between flex-wrap">
           <div className="">
@@ -53,7 +53,7 @@ export default function Footer() {
               <div className="bg-[#f26f21] w-[50px] h-[1px] my-1.5 footer-line"></div>
             </div>
 
-            <div className=" my-2">
+            <div className="text-center md:text-start my-2">
               Copyright 2023 © Bank Rakyat. All rights reserved.
               <br />
               Best viewed with the latest versions of Google Chrome, Mozilla

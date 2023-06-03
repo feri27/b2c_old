@@ -22,7 +22,6 @@ export default function RootLayout({
       <body className={`${inter.className} x`}>
         <Header />
         <SeparatorLine />
-        <Steps title="Payment Details" step={1} />
         {children}
         <Footer />
       </body>
