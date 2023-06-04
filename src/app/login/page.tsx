@@ -1,10 +1,14 @@
 'use client';
+import { usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
+import { useAtom } from 'jotai';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
+  const router = useRouter();
+  const [username, setUsername] = useAtom(usernameAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
 
   const handleSumbit = () => {
@@ -13,17 +17,15 @@ export default function Login() {
       return;
     } else {
       setVisible('hidden');
-      return;
+      router.push('/secure-phrase');
     }
   };
 
   return (
     <>
       <Steps title="" step={1} />
-
       <div className="flex flex-col max-w-[960px]  md:flex-row  items-stretch padx bg-slate-100 mx-auto">
-        <div className="clear-both"></div>
-        <div className="p-10 bg-white shadow-sm leading-[1.5] ">
+        <div className="p-10 md:w-5/6  bg-white shadow-sm leading-[1.5] ">
           <h3 className="text-[#e9730d] mt-0 text-center text-[calc(1.2rem_+_0.6vw)]  mb-2 font-medium">
             Welcome to <b>iRakyat</b> Internet Banking
           </h3>

@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="before:box-border mx-auto  max-w-[1140px] after:box-border block text-sm">
       <div className="min-h-[38px] pt-6 px-3.5 pb-3.5" role="contentinfo">
-        <div className="flex justify-between flex-wrap">
+        <div className="flex justify-between flex-wrap items-center">
           <div className="">
             <ul className="flex flex-wrap md:justify-between justify-center mb-1.5 space-x-4">
               <li className="flex items-center my-1.5 list-none">

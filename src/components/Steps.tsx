@@ -1,13 +1,17 @@
 import React from 'react';
 
 type stepsProps = {
-  title: string;
+  title?: string;
   step: number;
 };
 
 function Steps({ title, step }: stepsProps) {
   return (
-    <div className="flex justify-between padx items-center mt-5 my-2.5">
+    <div
+      className={`flex ${
+        !!title ? 'justify-between' : 'justify-center'
+      } padx items-center  my-2.5`}
+    >
       <h2 className="text-[#f26f21] font-medium leading-[1.1] title-size ">
         {title}
       </h2>
