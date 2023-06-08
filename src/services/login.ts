@@ -18,6 +18,11 @@ type LoginRes = {
   };
 };
 
+type LoginAndNotifyLoginCombined = {
+  loginRes: LoginRes;
+  notifyRes?: { data: { header: ResponseHeader } };
+};
+
 export async function login({
   username,
   password,
@@ -26,7 +31,7 @@ export async function login({
   username: string;
   password: string;
   accessToken: string;
-}): Promise<LoginRes> {
+}): Promise<LoginAndNotifyLoginCombined> {
   const body = { username, password, accessToken };
 
   const res = await fetch(`${API_URL}/login`, {
@@ -36,18 +41,21 @@ export async function login({
       'Content-Type': 'application/json',
     },
   });
-  return res.json();
-}
-
-export async function notifyLogin(
-  accessToken: string
-): Promise<ResponseHeader> {
-  const res = await fetch(`${API_URL}/notifylogin`, {
-    method: 'POST',
-    body: JSON.stringify({ accessToken }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  return res.json();
+  const loginRes = (await res.json()) as LoginRes;
+  if (!(loginRes.data.header.status === 1)) {
+    return { loginRes };
+  } else {
+    const notifyRes = await fetch(`${API_URL}/notifylogin`, {
+      method: 'POST',
+      body: JSON.stringify({ accessToken }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const result = await notifyRes.json();
+    return {
+      loginRes,
+      notifyRes: result,
+    };
+  }
 }

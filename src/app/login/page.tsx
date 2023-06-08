@@ -2,10 +2,11 @@
 import { accessTokenAtom, securePhraseAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
 import { checkUsername } from '@/services/checkUsername';
-import { useMutation } from '@tanstack/react-query';
+import { getTransactionDetail } from '@/services/getTransactionDetail';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
 
 export default function Login() {
@@ -14,6 +15,26 @@ export default function Login() {
   const [_, setSecurePhrase] = useAtom(securePhraseAtom);
   const [__, setAccessToken] = useAtom(accessTokenAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
+  const searchParams = useSearchParams();
+  const endToEndId = searchParams.get('endToEndId');
+  const dbtrAgt = searchParams.get('dbtrAgt');
+
+  const getTransactionDetailQry = useQuery({
+    queryKey: ['transactionDetail', endToEndId, dbtrAgt],
+    queryFn: async () =>
+      getTransactionDetail({
+        endToEndId: endToEndId ?? '',
+        dbtrAgt: dbtrAgt ?? '',
+      }),
+  });
+
+  if (getTransactionDetailQry.data) {
+    console.log(getTransactionDetailQry.data);
+    localStorage.setItem(
+      'transactionDetail',
+      JSON.stringify(getTransactionDetailQry.data.data)
+    );
+  }
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,

@@ -15,9 +15,9 @@ export default function SecurePhrase() {
   const loginMut = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      console.log(data);
-
-      router.push('/otp');
+      if (data.notifyRes?.data.header.status === 1) {
+        console.log(data);
+      }
     },
     onError: (error) => {
       console.log(error);
