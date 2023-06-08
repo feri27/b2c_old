@@ -1,6 +1,8 @@
 'use client';
-import { usernameAtom } from '@/atoms';
+import { accessTokenAtom, securePhraseAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
+import { checkUsername } from '@/services/checkUsername';
+import { useMutation } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -9,7 +11,21 @@ import React, { useState } from 'react';
 export default function Login() {
   const router = useRouter();
   const [username, setUsername] = useAtom(usernameAtom);
+  const [_, setSecurePhrase] = useAtom(securePhraseAtom);
+  const [__, setAccessToken] = useAtom(accessTokenAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
+
+  const checkUsernameMut = useMutation({
+    mutationFn: checkUsername,
+    onSuccess: (data) => {
+      setSecurePhrase(data.data.body.securePhrase);
+      setAccessToken(data.data.header.accessToken);
+      router.push('/secure-phrase');
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
 
   const handleSumbit = () => {
     if (!username.trim()) {
@@ -17,7 +33,7 @@ export default function Login() {
       return;
     } else {
       setVisible('hidden');
-      router.push('/secure-phrase');
+      checkUsernameMut.mutate(username);
     }
   };
 
@@ -81,15 +97,17 @@ export default function Login() {
                 data-toggle="modal"
                 data-target="#myModal"
                 value="Cancel"
+                disabled={checkUsernameMut.isLoading}
               />
               <input
                 type="submit"
                 name="doSubmit"
                 id="doSubmit"
                 className="bg-[#e9730d] text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
-                value="Next"
+                value={checkUsernameMut.isLoading ? 'Loading...' : 'Next'}
                 onClick={handleSumbit}
                 tabIndex={2}
+                disabled={checkUsernameMut.isLoading}
               />
             </div>
           </div>
