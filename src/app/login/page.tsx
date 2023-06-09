@@ -2,7 +2,7 @@
 import { accessTokenAtom, securePhraseAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
 import { checkUsername } from '@/services/checkUsername';
-import { getTransactionDetail } from '@/services/getTransactionDetail';
+import { getTransactionDetail } from '@/services/transaction';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import Image from 'next/image';

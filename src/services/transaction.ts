@@ -10,7 +10,19 @@ type GetTransactionDetail = {
     currency: string;
     recipientReference: string;
     paymentDescription: string;
+    productId: string;
+    merchantID: string;
   };
+};
+
+export type TransactionDetail = GetTransactionDetail['data'];
+
+type UpdTrxReq = {
+  dbtrAgt: string;
+  endToEndId: string;
+  gpsCoord: string;
+  merchantId: string;
+  productId: string;
 };
 
 export async function getTransactionDetail({
@@ -23,5 +35,13 @@ export async function getTransactionDetail({
   const res = await fetch(
     `${API_URL}/gettransactiondetail?endToEndId=${endToEndId}&dbtrAgt=${dbtrAgt}`
   );
+  return res.json();
+}
+
+export async function updateTransaction(body: UpdTrxReq) {
+  const res = await fetch(`${API_URL}/updatetransaction`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
   return res.json();
 }

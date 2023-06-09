@@ -16,7 +16,11 @@ export default function SecurePhrase() {
     mutationFn: login,
     onSuccess: (data) => {
       if (data.notifyRes?.data.header.status === 1) {
-        console.log(data);
+        localStorage.setItem(
+          'loginData',
+          JSON.stringify(data.loginRes.data.body)
+        );
+        router.push('/payment-detail');
       }
     },
     onError: (error) => {

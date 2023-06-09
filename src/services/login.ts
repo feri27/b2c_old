@@ -1,3 +1,4 @@
+import { RecursiveKeyValuePair } from 'tailwindcss/types/config';
 import { ResponseHeader } from './commonTypes';
 import { API_URL } from './config';
 
@@ -17,6 +18,8 @@ type LoginRes = {
     };
   };
 };
+
+export type LoginResBody = LoginRes['data']['body'];
 
 type LoginAndNotifyLoginCombined = {
   loginRes: LoginRes;
