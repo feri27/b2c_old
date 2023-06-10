@@ -9,6 +9,8 @@ export function useLogout() {
     mutationFn: logout,
     onSuccess: (data) => {
       Cookies.remove('accessToken');
+      localStorage.removeItem('transactionDetail');
+      localStorage.removeItem('loginData');
       router.push('/');
     },
   });

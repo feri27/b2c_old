@@ -1,4 +1,4 @@
-import { API_URL } from '../utils/config';
+import { API_URL } from '@/utils/config';
 
 export type Account = {
   data: {

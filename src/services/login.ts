@@ -1,6 +1,5 @@
-import { RecursiveKeyValuePair } from 'tailwindcss/types/config';
+import { API_URL } from '@/utils/config';
 import { ResponseHeader } from './commonTypes';
-import { API_URL } from '../utils/config';
 
 type LoginRes = {
   data: {
