@@ -280,7 +280,7 @@ export default function PaymentDetail() {
               type="submit"
               name="doSubmit"
               className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] w-full min-[480px]:w-auto border-none !rounded-md  flex justify-center items-center"
-              defaultValue={
+              value={
                 authProceed
                   ? "I've approved/reject my transaction via iSecure"
                   : 'Proceed'
