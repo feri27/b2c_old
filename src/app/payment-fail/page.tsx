@@ -128,8 +128,8 @@ export default function PaymentFail() {
         <p className="text-sm text-[#212529] mb-4 ">
           <strong>Note: </strong>
           <br />
-          By clicking on the "Continue with Transaction" button, you will be
-          redirected to the merchant site.
+          By clicking on the &quot;Continue with Transaction&quot; button, you
+          will be redirected to the merchant site.
         </p>
       </div>
     </div>

@@ -11,7 +11,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { FormEvent, useEffect, useLayoutEffect, useState } from 'react';
+import React, {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import { verifyOTP } from '@/services/veritfyOtp';
 import { encrypt } from '@/utils/helpers';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
@@ -102,7 +108,11 @@ export default function PaymentDetail() {
         trxTimestamp: transactionDetail?.currentDT ?? '',
       });
     }
-  }, [accountQry.data?.data.accNo, accountQry.data?.data.accHolderName]);
+  }, [
+    accountQry.data?.data.accNo,
+    accessToken,
+    accountQry.data?.data.accHolderName,
+  ]);
 
   const proceedHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -133,24 +143,27 @@ export default function PaymentDetail() {
     }
   };
 
-  const cancel = (txnDetail: TransactionDetail) => {
-    let lat: number | undefined;
-    let long: number | undefined;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        lat = pos.coords.latitude;
-        long = pos.coords.longitude;
+  const cancel = useCallback(
+    (txnDetail: TransactionDetail) => {
+      let lat: number | undefined;
+      let long: number | undefined;
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          lat = pos.coords.latitude;
+          long = pos.coords.longitude;
+        });
+      }
+      const latLng = `${lat} ${long}`;
+      updTrxMut.mutate({
+        endToEndId: txnDetail.endToEndId,
+        dbtrAgt: txnDetail.dbtrAgt,
+        gpsCoord: latLng,
+        merchantId: txnDetail.merchantID,
+        productId: txnDetail.productId,
       });
-    }
-    const latLng = `${lat} ${long}`;
-    updTrxMut.mutate({
-      endToEndId: txnDetail.endToEndId,
-      dbtrAgt: txnDetail.dbtrAgt,
-      gpsCoord: latLng,
-      merchantId: txnDetail.merchantID,
-      productId: txnDetail.productId,
-    });
-  };
+    },
+    [updTrxMut]
+  );
 
   useEffect(() => {
     if (transactionDetail && loginData) {
@@ -162,7 +175,7 @@ export default function PaymentDetail() {
         setShowOtp(false);
       }
     }
-  }, [loginData, transactionDetail]);
+  }, [loginData, transactionDetail, cancel]);
   return (
     <div className="xl:max-w-[1140px] w-full sm:max-w-[540px] md:max-w-[720px] lg:[960px] mx-auto padx md:px-0">
       <Steps title="Payment Details" step={2} />
