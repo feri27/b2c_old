@@ -1,7 +1,14 @@
-export default function AccountSelection() {
+import { Account } from '@/services/account';
+import { TransactionDetail } from '@/services/transaction';
+
+export default function AccountSelection({
+  data,
+}: {
+  data?: TransactionDetail | null;
+}) {
   return (
     <>
-      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
+      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
         <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
           From Account :
         </label>
@@ -15,7 +22,9 @@ export default function AccountSelection() {
                   className="select-bg cursor-not-allowed bg-[#e9ecef] disabled:opacity-[1] !h-[34px] !py-1.5 !px-3 !text-sm"
                   disabled
                 >
-                  <option defaultValue=""></option>
+                  <option value={data?.merchantAccountType}>
+                    {data?.merchantAccountType === 'SVGS' && 'Saving Account'}
+                  </option>
                 </select>
                 <input type="hidden" name="fromAcc" id="fromAcc" value="" />
               </div>
@@ -23,53 +32,53 @@ export default function AccountSelection() {
           </div>
         </div>
       </div>
-      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
-        <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
+      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
+        <label className="mb-[5px] text-[#212529] font-bold  md:w-1/3">
           Date &amp; Time :
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <div className="md:w-2/3"></div>
+            <p className="">{data?.currentDT}</p>
           </div>
         </div>
       </div>
-      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
-        <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
+      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
+        <label className="mb-[5px] text-[#212529] font-bold  md:w-1/3">
           Pay To :
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <div className="md:w-2/3"></div>
+            <p className="">{data?.merchantName}</p>
           </div>
         </div>
       </div>
-      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
-        <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
+      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
+        <label className="mb-[5px] text-[#212529] font-bold  md:w-1/3">
           OBW Message ID :
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <div className="md:w-2/3"></div>
+            <p className="">{data?.messageId}</p>
           </div>
         </div>
       </div>
-      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
-        <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
+      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
+        <label className="mb-[5px] text-[#212529] font-bold  md:w-1/3">
           Invoice No :
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <div className="md:w-2/3"></div>
+            <p className=""></p>
           </div>
         </div>
       </div>
-      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
-        <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
+      <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
+        <label className="mb-[5px] text-[#212529] font-bold  md:w-1/3">
           Transaction Amount :
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <div className="md:w-2/3"></div>
+            <p className="">{data?.amount}</p>
           </div>
         </div>
       </div>

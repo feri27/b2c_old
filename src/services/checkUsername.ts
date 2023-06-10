@@ -1,5 +1,5 @@
 import { ResponseHeader } from './commonTypes';
-import { API_URL } from './config';
+import { API_URL } from '../utils/config';
 
 export type CheckUsernameRes = {
   data: {

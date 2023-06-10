@@ -4,6 +4,14 @@
 
 :root {
   --bs-gutter-x: 1.5rem;
+  --bs-table-bg: transparent;
+  --bs-table-accent-bg: transparent;
+  --bs-table-striped-color: #212529;
+  --bs-table-striped-bg: rgba(0, 0, 0, 0.05);
+  --bs-table-active-color: #212529;
+  --bs-table-active-bg: rgba(0, 0, 0, 0.1);
+  --bs-table-hover-color: #212529;
+  --bs-table-hover-bg: rgba(0, 0, 0, 0.075);
 }
 
 .title-size {
@@ -38,4 +46,39 @@
   font-weight: 400;
   line-height: 1.5;
   color: #212529;
+}
+
+.table {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #212529;
+  vertical-align: top;
+  border: 1px solid;
+  border-color: #dee2e6;
+  border-spacing: 2px;
+}
+
+.table-input {
+  display: block;
+  height: 26px;
+  width: 100%;
+  padding: 2px 10px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+@media print {
+  .hide-when-print {
+    display: none !important;
+  }
 }

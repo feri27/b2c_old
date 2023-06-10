@@ -1,17 +1,26 @@
 'use client';
-import { accessTokenAtom, securePhraseAtom, usernameAtom } from '@/atoms';
+import { securePhraseAtom, usernameAtom } from '@/atoms';
 import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
+import crypto from 'crypto';
 import { login } from '@/services/login';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
+import { encrypt } from '@/utils/helpers';
+import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
+import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { useAccessToken } from '@/hooks/useAccessToken';
+import { usePrivateKey } from '@/hooks/usePrivateKey';
+import { TransactionDetail } from '@/services/transaction';
 
 export default function SecurePhrase() {
   const router = useRouter();
+  const transactionDetail = useTransactionDetail();
+  const privateKeyQry = usePrivateKey();
   const loginMut = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
@@ -27,7 +36,11 @@ export default function SecurePhrase() {
       console.log(error);
     },
   });
+
+  const updTrxMut = useUpdateTxnMutation();
+
   const [username] = useAtom(usernameAtom);
+  const accessToken = useAccessToken();
   const [password, setPassword] = useState('');
   const [errorVisible, setErrorVisible] = useState<'hidden' | 'inline'>(
     'hidden'
@@ -37,18 +50,48 @@ export default function SecurePhrase() {
   );
 
   const [securePhrase] = useAtom(securePhraseAtom);
-  const [accessToken] = useAtom(accessTokenAtom);
 
   const handleCheck = () => {
     setNextStepVisible('inline');
   };
+
+  const cancel = () => {
+    let lat: number | undefined;
+    let long: number | undefined;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        lat = pos.coords.latitude;
+        long = pos.coords.longitude;
+      });
+    }
+    const latLng = `${lat} ${long}`;
+    updTrxMut.mutate({
+      endToEndId: transactionDetail?.endToEndId ?? '',
+      dbtrAgt: transactionDetail?.dbtrAgt ?? '',
+      gpsCoord: latLng,
+      merchantId: transactionDetail?.merchantID ?? '',
+      productId: transactionDetail?.productId ?? '',
+    });
+  };
+
   const handleSubmit = () => {
     if (!password.trim()) {
       setErrorVisible('inline');
       return;
     } else {
       setErrorVisible('hidden');
-      loginMut.mutate({ username, password, accessToken });
+      if (privateKeyQry.data) {
+        const secret = privateKeyQry.data.private_key;
+        console.log({ secret });
+
+        const { encryptedTxt, iv } = encrypt(password, secret);
+        loginMut.mutate({
+          username,
+          password: encryptedTxt.toString('base64'),
+          iv: iv.toString('base64'),
+          accessToken,
+        });
+      }
     }
   };
 
@@ -155,18 +198,19 @@ export default function SecurePhrase() {
                 className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
                 data-toggle="modal"
                 data-target="#myModal"
-                value="Cancel"
-                disabled={loginMut.isLoading}
+                defaultValue="Cancel"
+                onClick={cancel}
+                disabled={loginMut.isLoading || updTrxMut.isLoading}
               />
               <input
                 type="submit"
                 name="doSubmit"
                 id="doSubmit"
                 className="bg-[#e9730d] disabled:opacity-50  text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
-                value={loginMut.isLoading ? 'Loading...' : 'Login'}
+                defaultValue="Login"
                 onClick={handleSubmit}
                 tabIndex={2}
-                disabled={loginMut.isLoading}
+                disabled={loginMut.isLoading || updTrxMut.isLoading}
               />
             </div>
           </div>

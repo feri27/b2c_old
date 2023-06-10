@@ -1,6 +1,6 @@
 import { RecursiveKeyValuePair } from 'tailwindcss/types/config';
 import { ResponseHeader } from './commonTypes';
-import { API_URL } from './config';
+import { API_URL } from '../utils/config';
 
 type LoginRes = {
   data: {
@@ -30,10 +30,12 @@ export async function login({
   username,
   password,
   accessToken,
+  iv,
 }: {
   username: string;
   password: string;
   accessToken: string;
+  iv: string;
 }): Promise<LoginAndNotifyLoginCombined> {
   const body = { username, password, accessToken };
 

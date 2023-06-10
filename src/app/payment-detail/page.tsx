@@ -1,76 +1,161 @@
 'use client';
-import { loginDataAtom, transactionDetailAtom } from '@/atoms';
 import AccountSelection from '@/components/AccountSelection';
 import Steps from '@/components/Steps';
-import { account } from '@/services/account';
-import { TransactionDetail } from '@/services/transaction';
-import { LoginResBody, login } from '@/services/login';
-import { updateTransaction } from '@/services/transaction';
+import { account, accountPayment } from '@/services/account';
+import {
+  TransactionDetail,
+  authorizeTransaction,
+  notifyTransaction,
+} from '@/services/transaction';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useLayoutEffect, useState } from 'react';
+import { verifyOTP } from '@/services/veritfyOtp';
+import { encrypt } from '@/utils/helpers';
+import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
+import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { useLoginData } from '@/hooks/useLoginData';
+import { useAccessToken } from '@/hooks/useAccessToken';
+import { usePrivateKey } from '@/hooks/usePrivateKey';
 
 export default function PaymentDetail() {
   const router = useRouter();
-  const [loginData, setLoginData] = useState<LoginResBody | null>(null);
-  const [transactionDetail, setTransactionDetail] =
-    useState<TransactionDetail | null>(null);
+  const loginData = useLoginData();
+  const transactionDetail = useTransactionDetail();
   const [showOtp, setShowOtp] = useState<boolean | null>(null);
+  const [otp, setOtp] = useState<string>('');
   const [authProceed, setAuthProceed] = useState(false);
+  const accessToken = useAccessToken();
+  const privateKeyQry = usePrivateKey();
 
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
     queryFn: async () => account(loginData?.cif ?? ''),
-    enabled: loginData !== null,
   });
 
-  const updTrxMut = useMutation({
-    mutationFn: updateTransaction,
+  const updTrxMut = useUpdateTxnMutation();
+
+  const authorizeTxnMut = useMutation({
+    mutationFn: authorizeTransaction,
     onSuccess: (data) => {
       console.log(data);
-      router.push('/payment-fail');
     },
   });
+  const notifyTxnMut = useMutation({
+    mutationFn: notifyTransaction,
+    onSuccess: (data) => {
+      console.log('here in no');
+      router.push('/payment-success');
+    },
+  });
+
+  const accPaymentMut = useMutation({
+    mutationFn: accountPayment,
+    onSuccess: (data) => {
+      if (accountQry.data)
+        notifyTxnMut.mutate({
+          accessToken: accessToken ?? '',
+          fromAccountHolder: accountQry.data.data.accHolderName,
+          fromAccountNo: accountQry.data.data.accNo,
+          referenceNo: transactionDetail?.recipientReference ?? '',
+          totalAmount: transactionDetail?.amount ?? 0,
+          transactionNo: transactionDetail?.tnxId ?? '',
+          trxAmount: transactionDetail?.amount ?? 0,
+          trxTimestamp: transactionDetail?.currentDT ?? '',
+          sellerName: transactionDetail?.merchantName ?? '',
+          trxStatus: 'S',
+        });
+    },
+  });
+
+  const verifyOTPMut = useMutation({
+    mutationFn: verifyOTP,
+    onSuccess: (data) => {
+      if (accountQry.data)
+        accPaymentMut.mutate({
+          body: {
+            actNo: accountQry.data.data.accNo,
+            addenda: transactionDetail?.paymentDescription ?? '',
+            sellerId: transactionDetail?.merchantID ?? '',
+            sellerOdNo: transactionDetail?.recipientReference ?? '',
+            senderName: transactionDetail?.merchantName ?? '',
+            trxAmt: transactionDetail?.amount ?? 0,
+          },
+          saving: transactionDetail?.merchantAccountType === 'SVGS',
+        });
+    },
+  });
+
+  useEffect(() => {
+    if (accountQry.data?.data.accNo && accountQry.data.data.accHolderName) {
+      authorizeTxnMut.mutate({
+        accessToken,
+        creditorName: transactionDetail?.merchantName ?? '',
+        fromAccountHolder: accountQry.data.data.accHolderName,
+        fromAccountNo: accountQry.data.data.accNo,
+        referenceNo: transactionDetail?.recipientReference ?? '',
+        totalAmount: transactionDetail?.amount ?? 0,
+        transactionNo: transactionDetail?.tnxId ?? '',
+        trxAmount: transactionDetail?.amount ?? 0,
+        trxTimestamp: transactionDetail?.currentDT ?? '',
+      });
+    }
+  }, [accountQry.data?.data.accNo, accountQry.data?.data.accHolderName]);
 
   const proceedHandler = (e: FormEvent) => {
     e.preventDefault();
     if (showOtp) {
-      // Call Saving/Current Acc Payment
+      const secret = privateKeyQry.data?.private_key ?? '';
+      const { encryptedTxt, iv } = encrypt(otp, secret);
+      verifyOTPMut.mutate({
+        accessToken,
+        iv: iv.toString('base64'),
+        otp: encryptedTxt.toString('base64'),
+      });
     } else if (authProceed) {
-      // Call Saving/Current Acc Payment
+      if (accountQry.data) {
+        accPaymentMut.mutate({
+          body: {
+            actNo: accountQry.data.data.accNo,
+            addenda: transactionDetail?.paymentDescription ?? '',
+            sellerId: transactionDetail?.merchantID ?? '',
+            sellerOdNo: transactionDetail?.recipientReference ?? '',
+            senderName: transactionDetail?.merchantName ?? '',
+            trxAmt: transactionDetail?.amount ?? 0,
+          },
+          saving: transactionDetail?.merchantAccountType === 'SVGS',
+        });
+      }
     } else if (!authProceed) {
       setAuthProceed(true);
     }
   };
 
-  useEffect(() => {
-    const storedLgData = localStorage.getItem('loginData');
-    const storedTnxData = localStorage.getItem('transactionDetail');
-    setLoginData(storedLgData ? JSON.parse(storedLgData) : null);
-    setTransactionDetail(storedTnxData ? JSON.parse(storedTnxData) : null);
-  }, []);
+  const cancel = (txnDetail: TransactionDetail) => {
+    let lat: number | undefined;
+    let long: number | undefined;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        lat = pos.coords.latitude;
+        long = pos.coords.longitude;
+      });
+    }
+    const latLng = `${lat} ${long}`;
+    updTrxMut.mutate({
+      endToEndId: txnDetail.endToEndId,
+      dbtrAgt: txnDetail.dbtrAgt,
+      gpsCoord: latLng,
+      merchantId: txnDetail.merchantID,
+      productId: txnDetail.productId,
+    });
+  };
 
   useEffect(() => {
     if (transactionDetail && loginData) {
       if (transactionDetail.amount > loginData.mbl.trxLimit) {
-        let lat: number | undefined;
-        let long: number | undefined;
-        if (navigator.geolocation) {
-          const curPos = navigator.geolocation.getCurrentPosition((pos) => {
-            lat = pos.coords.latitude;
-            long = pos.coords.longitude;
-          });
-        }
-        const latLng = `${lat} ${long}`;
-        updTrxMut.mutate({
-          endToEndId: 'endToEndId',
-          dbtrAgt: 'dbtrAgt',
-          gpsCoord: latLng,
-          merchantId: transactionDetail.merchantID,
-          productId: transactionDetail.productId,
-        });
+        cancel(transactionDetail);
       } else if (transactionDetail.amount > loginData.mbl.trxLimit * 0.5) {
         setShowOtp(true);
       } else if (transactionDetail.amount < loginData.mbl.trxLimit * 0.5) {
@@ -78,9 +163,8 @@ export default function PaymentDetail() {
       }
     }
   }, [loginData, transactionDetail]);
-  const requestTac = () => {};
   return (
-    <div className="xl:max-w-[1140px] w-full sm:max-w-[540px] md:max-w-[720px] lg:[960px] mx-auto padx75 md:px-0">
+    <div className="xl:max-w-[1140px] w-full sm:max-w-[540px] md:max-w-[720px] lg:[960px] mx-auto padx md:px-0">
       <Steps title="Payment Details" step={2} />
       <form
         // action="paymentDetails3-Success.html"
@@ -96,7 +180,7 @@ export default function PaymentDetail() {
         {/* <input type="hidden" name="SYNCHRONIZER_URI" value="/fpxonline/fpxui/logout/show" id="SYNCHRONIZER_URI"> --> */}
         <div className="mb-[15px] bg-white border border-solid border-[#ddd] rounded shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
           <div className="py-[15px] px-[30px]">
-            <AccountSelection />
+            <AccountSelection data={transactionDetail} />
             {showOtp !== null && showOtp ? (
               <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
                 <label className="mb-[5px] w-full text-[#212529] font-bold text-sm md:w-1/3">
@@ -107,13 +191,13 @@ export default function PaymentDetail() {
                     <div className="w-[59%] md:w-1/2">
                       <input
                         onPaste={() => true}
-                        type="password"
+                        type="number"
                         id="tac"
                         name="tac"
-                        value=""
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
                         maxLength={6}
                         className="disabled:cursor-not-allowed disabled:bg-[#e9ecef] !h-[34px] !py-1.5 !px-3 !text-sm disabled:opacity-[1] select-bg !bg-none"
-                        disabled
                       />
                     </div>
                     {/* <div className="w-2/5 md:w-1/2 flex justify-end">
@@ -163,36 +247,40 @@ export default function PaymentDetail() {
             )}
           </div>
         </div>
-        <div className="flex flex-wrap text-sm my-2 ">
-          <div className="!mb-[15px] mt-2.5 justify-center gap-5 w-full flex cursor-pointer">
-            <Link
-              href="/payment-fail"
-              onClick={() => {}}
-              className="bg-[#f26f21] text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
-            >
-              Cancel
-            </Link>
+        <div className=" text-sm my-2 ">
+          <div className="!mb-[15px] flex-wrap mt-2.5 justify-center gap-5 w-full padx flex">
+            <input
+              type="button"
+              onClick={(e) => cancel(transactionDetail!)}
+              disabled={
+                verifyOTPMut.isLoading ||
+                accPaymentMut.isLoading ||
+                notifyTxnMut.isLoading ||
+                updTrxMut.isLoading
+              }
+              defaultValue="Cancel"
+              className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none w-full min-[480px]:w-auto !rounded-md   flex justify-center items-center"
+            />
+
             {/* <!-- <input type="submit" name="doSubmit" className="acc-selc-orange-button" value="Proceed" id="doSubmit" disabled=""> --> */}
             <input
               type="submit"
               name="doSubmit"
-              className="bg-[#f26f21] cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
-              value={
+              className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] w-full min-[480px]:w-auto border-none !rounded-md  flex justify-center items-center"
+              defaultValue={
                 authProceed
                   ? "I've approved/reject my transaction via iSecure"
                   : 'Proceed'
               }
+              disabled={
+                verifyOTPMut.isLoading ||
+                accPaymentMut.isLoading ||
+                notifyTxnMut.isLoading ||
+                updTrxMut.isLoading
+              }
               id="doSubmit"
             />
           </div>
-        </div>
-        <div>
-          <p className="text-sm text-[#212529] mb-4 ">
-            <strong>Note: </strong>
-            <br />
-            By clicking on the "Continue with Transaction" button, you will be
-            redirected to the merchant site.
-          </p>
         </div>
       </form>
     </div>

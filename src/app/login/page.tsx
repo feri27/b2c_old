@@ -1,23 +1,30 @@
 'use client';
-import { accessTokenAtom, securePhraseAtom, usernameAtom } from '@/atoms';
+import { securePhraseAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
 import { checkUsername } from '@/services/checkUsername';
-import { getTransactionDetail } from '@/services/transaction';
+import {
+  TransactionDetail,
+  getTransactionDetail,
+} from '@/services/transaction';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
+import Cookies from 'js-cookie';
+import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 
 export default function Login() {
   const router = useRouter();
   const [username, setUsername] = useAtom(usernameAtom);
   const [_, setSecurePhrase] = useAtom(securePhraseAtom);
-  const [__, setAccessToken] = useAtom(accessTokenAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
   const searchParams = useSearchParams();
-  const endToEndId = searchParams.get('endToEndId');
-  const dbtrAgt = searchParams.get('dbtrAgt');
+
+  const endToEndId = searchParams.get('EndtoEndId');
+  const dbtrAgt = searchParams.get('DbtrAgt');
+
+  const updTxnMut = useUpdateTxnMutation();
 
   const getTransactionDetailQry = useQuery({
     queryKey: ['transactionDetail', endToEndId, dbtrAgt],
@@ -36,11 +43,30 @@ export default function Login() {
     );
   }
 
+  const cancel = (txnDetail: TransactionDetail) => {
+    let lat: number | undefined;
+    let long: number | undefined;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        lat = pos.coords.latitude;
+        long = pos.coords.longitude;
+      });
+    }
+    const latLng = `${lat} ${long}`;
+    updTxnMut.mutate({
+      endToEndId: txnDetail.endToEndId,
+      dbtrAgt: txnDetail.dbtrAgt,
+      gpsCoord: latLng,
+      merchantId: txnDetail.merchantID,
+      productId: txnDetail.productId,
+    });
+  };
+
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
     onSuccess: (data) => {
       setSecurePhrase(data.data.body.securePhrase);
-      setAccessToken(data.data.header.accessToken);
+      Cookies.set('accessToken', data.data.header.accessToken);
       router.push('/secure-phrase');
     },
     onError: (error) => {
@@ -63,7 +89,7 @@ export default function Login() {
       <Steps title="" step={1} />
       <div className="flex flex-col max-w-[960px]  md:flex-row  items-stretch padx bg-slate-100 mx-auto">
         <div className="p-10 md:w-5/6  bg-white shadow-sm leading-[1.5] ">
-          <h3 className="text-[#e9730d] mt-0 text-center text-[calc(1.2rem_+_0.6vw)]  mb-2 font-medium">
+          <h3 className="text-[#e9730d] mt-0 text-center text-[calc(1.3rem_+_0.6vw)]  mb-2 font-medium">
             Welcome to <b>iRakyat</b> Internet Banking
           </h3>
           <span className="text-center font-normal text-sm block">
@@ -114,21 +140,22 @@ export default function Login() {
             <div className="mt-[25px] flex justify-between gap-5 ">
               <input
                 type="button"
-                className="bg-[#e9730d] text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
+                className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
                 data-toggle="modal"
                 data-target="#myModal"
                 value="Cancel"
-                disabled={checkUsernameMut.isLoading}
+                onClick={(e) => cancel(getTransactionDetailQry.data!.data)}
+                disabled={checkUsernameMut.isLoading || updTxnMut.isLoading}
               />
               <input
                 type="submit"
                 name="doSubmit"
                 id="doSubmit"
-                className="bg-[#e9730d] text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
-                value={checkUsernameMut.isLoading ? 'Loading...' : 'Next'}
+                className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
+                value="Next"
                 onClick={handleSumbit}
                 tabIndex={2}
-                disabled={checkUsernameMut.isLoading}
+                disabled={checkUsernameMut.isLoading || updTxnMut.isLoading}
               />
             </div>
           </div>
