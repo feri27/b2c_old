@@ -4,6 +4,7 @@ import { sellerDataAtom } from '@/atoms';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import SeparatorLine from '@/components/SeparatorLine';
+import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import {
   getTransactionNumber,
   postTransactionNumber,
@@ -58,15 +59,37 @@ export default function Home() {
   const merchantId = 'M00088';
   const date = getDate();
 
+  useSetuplocalStorage();
+
   const txnNumQry = useQuery({
     queryKey: ['txn_num'],
     queryFn: getTransactionNumber,
     cacheTime: 0,
+    staleTime: 60 * 1000,
+    onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/transaction-number', method: 'GET', response: data },
+        ])
+      );
+    },
   });
 
   const txnNumMut = useMutation({
     mutationFn: postTransactionNumber,
     onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/transaction-number', method: 'POST', response: data },
+        ])
+      );
+
       const endToEndIDSignature = btoa(endToEndId);
       //?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndID}&EndtoEndIdSignature=${endToEndIDSignature}
       setSellerData({
@@ -469,8 +492,9 @@ export default function Home() {
           <div className="flex flex-col justify-center">
             <input
               type="button"
-              className="cursor-pointer py-1 px-3  block mx-auto w-4/6 sm:w-auto min-w-[20%] bg-[#0d6efd] rounded text-white"
+              className="cursor-pointer disabled:opacity-50 py-1 px-3  block mx-auto w-4/6 sm:w-auto min-w-[20%] bg-[#0d6efd] rounded text-white"
               value="Pay"
+              disabled={txnNumMut.isLoading}
               onClick={handleSubmit}
             />
             <p className="text-[0.7rem] text-center">Version 1.10</p>

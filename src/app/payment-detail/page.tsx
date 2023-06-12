@@ -1,23 +1,17 @@
 'use client';
 import AccountSelection from '@/components/AccountSelection';
 import Steps from '@/components/Steps';
-import { account, accountPayment } from '@/services/account';
+import { Account, account, accountPayment } from '@/services/account';
 import {
   TransactionDetail,
   authorizeTransaction,
   notifyTransaction,
 } from '@/services/transaction';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { verifyOTP } from '@/services/veritfyOtp';
 import { encrypt } from '@/utils/helpers';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
@@ -30,6 +24,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { BsFillInfoCircleFill } from 'react-icons/bs';
 import CountdownText from '@/components/CountdownText';
+import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 
 export default function PaymentDetail() {
   const router = useRouter();
@@ -41,10 +36,35 @@ export default function PaymentDetail() {
   const accessToken = useAccessToken();
   const privateKeyQry = usePrivateKey();
 
+  useSetuplocalStorage();
+
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
     queryFn: async () => account(loginData?.cif ?? ''),
     enabled: loginData?.cif !== undefined,
+
+    onSuccess: (data) => {
+      if (data)
+        authorizeTxnMut.mutate({
+          accessToken,
+          creditorName: transactionDetail?.merchantName ?? '',
+          fromAccountHolder: data.data.accHolderName,
+          fromAccountNo: data.data.accNo,
+          referenceNo: transactionDetail?.recipientReference ?? '',
+          totalAmount: transactionDetail?.amount ?? 0,
+          transactionNo: transactionDetail?.tnxId ?? '',
+          trxAmount: transactionDetail?.amount ?? 0,
+          trxTimestamp: transactionDetail?.currentDT ?? '',
+        });
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/account', method: 'GET', response: data },
+        ])
+      );
+    },
   });
 
   const updTrxMut = useUpdateTxnMutation();
@@ -52,13 +72,28 @@ export default function PaymentDetail() {
   const authorizeTxnMut = useMutation({
     mutationFn: authorizeTransaction,
     onSuccess: (data) => {
-      console.log(data);
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/authorizetransaction', method: 'POST', response: data },
+        ])
+      );
     },
   });
   const notifyTxnMut = useMutation({
     mutationFn: notifyTransaction,
     onSuccess: (data) => {
-      console.log('here in no');
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/notifytransaction', method: 'POST', response: data },
+        ])
+      );
+
       router.push('/payment-success');
     },
   });
@@ -66,6 +101,19 @@ export default function PaymentDetail() {
   const accPaymentMut = useMutation({
     mutationFn: accountPayment,
     onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          {
+            url: '/savingaccountpayment or /currentaccountpayment',
+            method: 'POST',
+            response: data,
+          },
+        ])
+      );
+
       if (accountQry.data)
         notifyTxnMut.mutate({
           accessToken: accessToken ?? '',
@@ -85,6 +133,15 @@ export default function PaymentDetail() {
   const verifyOTPMut = useMutation({
     mutationFn: verifyOTP,
     onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/verifyotp', method: 'POST', response: data },
+        ])
+      );
+
       if (accountQry.data)
         accPaymentMut.mutate({
           body: {
@@ -95,30 +152,10 @@ export default function PaymentDetail() {
             senderName: transactionDetail?.merchantName ?? '',
             trxAmt: transactionDetail?.amount ?? 0,
           },
-          saving: transactionDetail?.merchantAccountType === 'SVGS',
+          saving: transactionDetail?.merchantAccountType[0] === 'SVGS',
         });
     },
   });
-
-  useEffect(() => {
-    if (accountQry.data?.data.accNo && accountQry.data.data.accHolderName) {
-      authorizeTxnMut.mutate({
-        accessToken,
-        creditorName: transactionDetail?.merchantName ?? '',
-        fromAccountHolder: accountQry.data.data.accHolderName,
-        fromAccountNo: accountQry.data.data.accNo,
-        referenceNo: transactionDetail?.recipientReference ?? '',
-        totalAmount: transactionDetail?.amount ?? 0,
-        transactionNo: transactionDetail?.tnxId ?? '',
-        trxAmount: transactionDetail?.amount ?? 0,
-        trxTimestamp: transactionDetail?.currentDT ?? '',
-      });
-    }
-  }, [
-    accountQry.data?.data.accNo,
-    accessToken,
-    accountQry.data?.data.accHolderName,
-  ]);
 
   const proceedHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -141,7 +178,7 @@ export default function PaymentDetail() {
             senderName: transactionDetail?.merchantName ?? '',
             trxAmt: transactionDetail?.amount ?? 0,
           },
-          saving: transactionDetail?.merchantAccountType === 'SVGS',
+          saving: transactionDetail?.merchantAccountType[0] === 'SVGS',
         });
       }
     } else if (!authProceed) {

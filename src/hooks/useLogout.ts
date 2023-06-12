@@ -1,4 +1,5 @@
 import { sellerDataAtom } from '@/atoms';
+import { ResponseHeader } from '@/services/commonTypes';
 import { logout } from '@/services/logout';
 import { useMutation } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
@@ -11,6 +12,14 @@ export function useLogout() {
   const { isLoading, mutate } = useMutation({
     mutationFn: logout,
     onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/login & /notifylogin', method: 'POST', response: data },
+        ])
+      );
       Cookies.remove('accessToken');
       localStorage.removeItem('transactionDetail');
       localStorage.removeItem('loginData');

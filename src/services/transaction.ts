@@ -1,7 +1,7 @@
 import { API_URL } from '@/utils/config';
 import { ResponseHeader } from './commonTypes';
 
-type GetTransactionDetail = {
+export type GetTransactionDetail = {
   data: {
     msgId: string;
     currentDT: string;
@@ -15,7 +15,7 @@ type GetTransactionDetail = {
     merchantID: string;
     messageId: string;
     dbtrAgt: string;
-    merchantAccountType: string;
+    merchantAccountType: Array<string>;
     endToEndId: string;
   };
 };
@@ -58,7 +58,7 @@ type UpdTrxReq = {
 export async function authorizeTransaction(
   body: AuthorizeTransactionReq
 ): Promise<ResponseHeader> {
-  const res = await fetch(`${API_URL}/authorizatransaction`, {
+  const res = await fetch(`${API_URL}/authorizetransaction`, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {

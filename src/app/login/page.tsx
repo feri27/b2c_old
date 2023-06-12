@@ -1,13 +1,14 @@
 'use client';
 import { securePhraseAtom, sellerDataAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
-import { checkUsername } from '@/services/checkUsername';
+import { CheckUsernameRes, checkUsername } from '@/services/checkUsername';
 import {
+  GetTransactionDetail,
   TransactionDetail,
   getTransactionDetail,
 } from '@/services/transaction';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
@@ -18,6 +19,7 @@ import Header from '@/components/Header';
 import LoginSidebar from '@/components/LoginSidebar';
 import Footer from '@/components/Footer';
 import LoginFooter from '@/components/LoginFooter';
+import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 
 export default function Login() {
   const router = useRouter();
@@ -26,6 +28,8 @@ export default function Login() {
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
 
   const { dbtrAgt, endToEndId } = useAtomValue(sellerDataAtom);
+
+  useSetuplocalStorage();
 
   const updTxnMut = useUpdateTxnMutation();
 
@@ -36,6 +40,16 @@ export default function Login() {
         endToEndId: endToEndId ?? '',
         dbtrAgt: dbtrAgt ?? '',
       }),
+    onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/gettransactiondetail', method: 'POST', response: data },
+        ])
+      );
+    },
   });
 
   if (getTransactionDetailQry.data) {
@@ -68,6 +82,15 @@ export default function Login() {
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
     onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/checkusername', method: 'POST', response: data },
+        ])
+      );
+
       setSecurePhrase(data.data.body.securePhrase);
       Cookies.set('accessToken', data.data.header.accessToken, {
         sameSite: 'Strict',

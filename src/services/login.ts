@@ -20,7 +20,7 @@ type LoginRes = {
 
 export type LoginResBody = LoginRes['data']['body'];
 
-type LoginAndNotifyLoginCombined = {
+export type LoginAndNotifyLoginCombined = {
   loginRes: LoginRes;
   notifyRes?: { data: { header: ResponseHeader } };
 };

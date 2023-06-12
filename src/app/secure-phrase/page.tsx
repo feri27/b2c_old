@@ -3,9 +3,9 @@ import { securePhraseAtom, usernameAtom } from '@/atoms';
 import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
 import crypto from 'crypto';
-import { login } from '@/services/login';
+import { LoginAndNotifyLoginCombined, login } from '@/services/login';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -20,14 +20,27 @@ import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginFooter from '@/components/LoginFooter';
+import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 
 export default function SecurePhrase() {
   const router = useRouter();
   const transactionDetail = useTransactionDetail();
   const privateKeyQry = usePrivateKey();
+
+  useSetuplocalStorage();
+
   const loginMut = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
+      const urlres = JSON.parse(localStorage.getItem('urlres')!);
+      localStorage.setItem(
+        'urlres',
+        JSON.stringify([
+          ...urlres,
+          { url: '/login & /notifylogin', method: 'POST', response: data },
+        ])
+      );
+
       if (data.notifyRes?.data.header.status === 1) {
         localStorage.setItem(
           'loginData',

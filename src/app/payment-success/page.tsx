@@ -6,12 +6,16 @@ import SeparatorLine from '@/components/SeparatorLine';
 import Steps from '@/components/Steps';
 import { useAccessToken } from '@/hooks/useAccessToken';
 import { useLogout } from '@/hooks/useLogout';
+import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 
 export default function PaymentSuccess() {
   const transactionDetail = useTransactionDetail();
   const accessToken = useAccessToken();
   const logoutMut = useLogout();
+
+  useSetuplocalStorage();
+
   const handleClick = () => {
     logoutMut.mutate(accessToken);
   };
@@ -93,7 +97,7 @@ export default function PaymentSuccess() {
               </label>
               <div className="flex after:clear-both md:w-2/3">
                 <div className="flex flex-wrap">
-                  <p className="">{transactionDetail?.amount}</p>
+                  <p className="">MYR {transactionDetail?.amount}</p>
                 </div>
               </div>
             </div>

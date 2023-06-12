@@ -19,12 +19,16 @@ export default function AccountSelection({
                 <select
                   name="fromAcc"
                   id="fromAccDisabled"
-                  className="select-bg cursor-not-allowed bg-[#e9ecef] disabled:opacity-[1] !h-[34px] !py-1.5 !px-3 !text-sm"
-                  disabled
+                  className="select-bg bg-[#e9ecef] disabled:opacity-[1] !h-[34px] !py-1.5 !px-3 !text-sm"
                 >
-                  <option value={data?.merchantAccountType}>
-                    {data?.merchantAccountType === 'SVGS' && 'Saving Account'}
-                  </option>
+                  {data?.merchantAccountType.map((accType) => (
+                    <option value={accType}>
+                      {accType === 'SVGS' && 'Saving Account'}
+                      {accType === 'CACC' && 'Current Account'}
+                      {accType === 'CCRD' && 'Credit Card'}
+                      {accType === 'WALL' && 'eWallet'}
+                    </option>
+                  ))}
                 </select>
                 <input type="hidden" name="fromAcc" id="fromAcc" value="" />
               </div>
