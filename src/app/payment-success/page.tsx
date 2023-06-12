@@ -9,6 +9,8 @@ import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 
+const controller = new AbortController();
+
 export default function PaymentSuccess() {
   const transactionDetail = useTransactionDetail();
   const accessToken = useAccessToken();
@@ -17,6 +19,7 @@ export default function PaymentSuccess() {
   useSetuplocalStorage();
 
   const handleClick = () => {
+    controller.abort();
     logoutMut.mutate(accessToken);
   };
 
@@ -130,7 +133,11 @@ export default function PaymentSuccess() {
               disabled={logoutMut.isLoading}
               onClick={handleClick}
             >
-              <CountdownText cb={handleClick} count={3} />
+              <CountdownText
+                cb={handleClick}
+                controller={controller}
+                count={3}
+              />
             </button>
           </div>
         </div>

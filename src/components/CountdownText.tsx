@@ -4,10 +4,12 @@ export default function CountdownText({
   count,
   isNote = false,
   cb,
+  controller,
 }: {
   count: number;
   isNote?: boolean;
   cb?: () => void;
+  controller?: AbortController;
 }) {
   const [countdown, setCountdown] = useState(count);
 
@@ -15,12 +17,12 @@ export default function CountdownText({
     if (!isNote && countdown === 0) {
       cb?.();
     }
-  }, [countdown, cb, isNote]);
+  }, [countdown, isNote]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prevCountdown) => {
-        if (prevCountdown === 0) {
+        if (prevCountdown === 0 || controller?.signal.aborted) {
           clearInterval(timer);
           return prevCountdown;
         }

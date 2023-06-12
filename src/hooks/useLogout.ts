@@ -20,7 +20,7 @@ export function useLogout() {
           { url: '/logout', method: 'POST', response: data },
         ])
       );
-      // Cookies.remove('accessToken');
+      Cookies.remove('accessToken');
       localStorage.removeItem('transactionDetail');
       localStorage.removeItem('loginData');
       setSellerData({ dbtrAgt: '', endToEndId: '' });
