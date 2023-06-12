@@ -59,8 +59,8 @@ export default function LoginFooter() {
                 Firefox, Microsoft Edge and Safari.
               </div>
             </div>
-            <div className="text-center flex space-x-2">
-              Follow Us On
+            <div className="text-center flex items-center space-x-2">
+              <p>Follow Us On</p>
               <a
                 href="https://www.facebook.com/myBANKRAKYAT"
                 className="external-link"
@@ -79,8 +79,8 @@ export default function LoginFooter() {
               >
                 <Image
                   src="/images/Twitter Icon.png"
-                  width={32}
-                  height={32}
+                  width={30}
+                  height={30}
                   alt="Twitter icon"
                 />
               </a>
@@ -96,10 +96,17 @@ export default function LoginFooter() {
                 />
               </a>
             </div>
-            <div className="mx-auto md:mx-0 my-2 ">
+            <div className="w-[160px] flex whitespace-nowrap border border-[#c9bbbf] space-x-2 border-dotted items-center rounded p-2.5 !pl-5 ">
+              <a
+                href="http://www.bankrakyat.com.my/khidmat-pelanggan"
+                target="_blank"
+                className="mr:[5px] text-[#337ab7]"
+              >
+                Contact Us
+              </a>
               <Image
                 src="/images/mail.jpg"
-                width={65}
+                width={36}
                 height={30}
                 alt="Mail icon"
               />

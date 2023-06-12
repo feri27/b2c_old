@@ -44,6 +44,7 @@ export default function PaymentDetail() {
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
     queryFn: async () => account(loginData?.cif ?? ''),
+    enabled: loginData?.cif !== undefined,
   });
 
   const updTrxMut = useUpdateTxnMutation();

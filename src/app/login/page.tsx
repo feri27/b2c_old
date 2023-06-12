@@ -142,7 +142,7 @@ export default function Login() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               size={30}
-              className="text-white sborder-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
+              className="border-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
               style={{ fontSize: 'inherit' }}
             />
           </div>

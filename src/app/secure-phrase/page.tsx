@@ -196,7 +196,7 @@ export default function SecurePhrase() {
                   setPassword(e.target.value);
                 }}
                 size={30}
-                className=" text-white border-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
+                className="text-[#212529] border-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
                 style={{ fontSize: 'inherit' }}
               />
             </div>
