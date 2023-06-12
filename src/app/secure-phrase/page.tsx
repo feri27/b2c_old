@@ -16,6 +16,10 @@ import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useAccessToken } from '@/hooks/useAccessToken';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
 import { TransactionDetail } from '@/services/transaction';
+import SeparatorLine from '@/components/SeparatorLine';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import LoginFooter from '@/components/LoginFooter';
 
 export default function SecurePhrase() {
   const router = useRouter();
@@ -97,13 +101,17 @@ export default function SecurePhrase() {
 
   return (
     <>
-      <Steps title="" step={1} />
-      <div className="flex flex-col max-w-[960px]  md:flex-row  items-stretch padx bg-slate-100 mx-auto">
+      <SeparatorLine bottom={false} />
+      <Header backgroundImg={true} />
+      <div className="min-[576]-w-[41.66667%] mb-2 min-[1200px]:w-[37.3333%] flex justify-end ">
+        <Steps step={1} />
+      </div>
+      <div className="flex flex-col min-[1200px]:max-w-[960px] min-[992px]:max-w-[890px] md:max-w-[720px] min-[576px]:max-w-[540px]  md:flex-row  items-stretch padx  mx-auto">
         <div className="p-10 md:w-5/6  bg-white shadow-sm leading-[1.5] ">
-          <h3 className="text-[#e9730d] mt-0 text-center text-[calc(1.2rem_+_0.6vw)]  mb-2 font-medium">
+          <h3 className="text-[#e9730d] mt-0 leading-[1.2] text-center min-[1200px]-text-[1.75rem] text-[calc(1.2rem_+_0.6vw)]  mb-2 font-medium">
             Welcome to <b>iRakyat</b> Internet Banking
           </h3>
-          <span className="block text-center text-[13px] w-full ">
+          <span className="block text-center text-sm w-full ">
             <strong>Note: </strong>
             Do not login if this is not your chosen Secure Phrase. Please
             contact our Customer Service Representative at 1-300-80-5454.
@@ -128,7 +136,7 @@ export default function SecurePhrase() {
             </ul>
           </div>
           <div className="mb-[15px] font-normal text-sm ">
-            <h3 className="mt-[50px] text-left text-[#dbdbdb] text-lg">
+            <h3 className="mt-[20px] text-left text-[#dbdbdb] text-lg">
               <b className="font-extrabold">Username:</b>
             </h3>
 
@@ -188,7 +196,7 @@ export default function SecurePhrase() {
                   setPassword(e.target.value);
                 }}
                 size={30}
-                className="bg-[#212529] text-white border-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
+                className=" text-white border-[#dbdbdb] outline-none border-solid border py-[5px] pr-[15px] pl-[35px] w-full bg-[url('https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/user-silhouette.svg')] bg-3.75 bg-no-repeat bg-[10px]"
                 style={{ fontSize: 'inherit' }}
               />
             </div>
@@ -233,10 +241,13 @@ export default function SecurePhrase() {
               Change Card
             </a>
           </div>
-          <div className="clear"></div>
+          <button className="text-[#337ab7] text-sm" onClick={cancel}>
+            Cancel Transaction
+          </button>
         </div>
         <LoginSidebar />
       </div>
+      <LoginFooter />
     </>
   );
 }

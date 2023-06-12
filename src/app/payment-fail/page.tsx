@@ -1,4 +1,5 @@
 'use client';
+import CountdownText from '@/components/CountdownText';
 import Steps from '@/components/Steps';
 import { useAccessToken } from '@/hooks/useAccessToken';
 import { useLogout } from '@/hooks/useLogout';
@@ -113,15 +114,14 @@ export default function PaymentFail() {
           />
 
           {/* <!-- <input type="submit" name="doSubmit" className="acc-selc-orange-button" value="Proceed" id="doSubmit" disabled=""> --> */}
-          <input
-            type="button"
-            name="doSubmit"
+          <button
             className="bg-[#f26f21]  w-full min-[480px]:w-auto disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
-            value="Continue with Transaction (3s)"
             id="doSubmit"
             disabled={logoutMut.isLoading}
             onClick={handleClick}
-          />
+          >
+            <CountdownText cb={handleClick} count={3} />
+          </button>
         </div>
       </div>
       <div>

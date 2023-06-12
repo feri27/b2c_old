@@ -1,6 +1,13 @@
 'use client';
 
+import { sellerDataAtom } from '@/atoms';
+import {
+  getTransactionNumber,
+  postTransactionNumber,
+} from '@/services/transaction';
 import { generateEightDigitNum, getDate } from '@/utils/helpers';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useLayoutEffect, useState } from 'react';
 
@@ -44,13 +51,34 @@ function ErrorText({ text }: { text: String | null }) {
 export default function Home() {
   const router = useRouter();
   const [inputs, setInputs] = useState<Inputs>(defaultInputs);
-  const [randNum, setRandNum] = useState('');
+  const setSellerData = useSetAtom(sellerDataAtom);
   const merchantId = 'M00088';
   const date = getDate();
 
-  const trxId = date + merchantId + '61' + randNum;
-  const messageId = date + merchantId + '61RB' + randNum;
-  const endToEndID = date + merchantId + '61RB' + randNum;
+  const txnNumQry = useQuery({
+    queryKey: ['txn_num'],
+    queryFn: getTransactionNumber,
+    refetchOnMount: false,
+  });
+
+  const txnNumMut = useMutation({
+    mutationFn: postTransactionNumber,
+    onSuccess: (data) => {
+      const endToEndIDSignature = btoa(endToEndId);
+      //?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndID}&EndtoEndIdSignature=${endToEndIDSignature}
+      setSellerData({
+        dbtrAgt,
+        endToEndId,
+      });
+      router.push(`/login`);
+    },
+  });
+
+  const trxId = date + merchantId + '861' + (txnNumQry.data?.txn_num ?? '');
+  const messageId =
+    date + merchantId + '861RB' + (txnNumQry.data?.txn_num ?? '');
+  const endToEndId =
+    date + merchantId + '861RB' + (txnNumQry.data?.txn_num ?? '');
   const dbtrAgt = 'BKRM0602';
   const handleSubmit = () => {
     const emptyFields = Object.entries(inputs)
@@ -73,7 +101,6 @@ export default function Home() {
         }
         return input;
       });
-    console.log({ length: emptyFields });
 
     if (emptyFields.length) {
       const errObj: Record<string, any> = {};
@@ -82,17 +109,13 @@ export default function Home() {
       });
       setInputs((prev) => ({ ...prev, ...errObj }));
     } else {
-      const endToEndIDSignature = btoa(endToEndID);
-      router.push(
-        `/login?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndID}&EndtoEndIdSignature=${endToEndIDSignature}`
-      );
+      const txnNum = trxId.slice(-8);
+      const txnStr = trxId.slice(0, -8);
+      const tnxNumPlus1 = +txnNum + 1;
+      const newTxnID = txnStr + tnxNumPlus1.toString().padStart(8, '0');
+      txnNumMut.mutate(newTxnID);
     }
   };
-
-  useLayoutEffect(() => {
-    const num = generateEightDigitNum().replace(/.\s/g, '-').replace(/\./g, '');
-    setRandNum(num);
-  }, []);
 
   const handleCheckBox = (e: ChangeEvent<HTMLInputElement>) => {
     const set = inputs.sourceOfFund.values;
@@ -181,14 +204,14 @@ export default function Home() {
                       type="text"
                       className="table-input outline-none"
                       name="endToEndID"
-                      defaultValue={endToEndID}
+                      defaultValue={endToEndId}
                       readOnly
                     />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" className={thClassName}>
-                    Debiter Agent
+                    Debitor Agent
                   </th>
                   <td className={thClassName}>
                     <input

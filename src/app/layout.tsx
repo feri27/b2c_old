@@ -23,13 +23,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${font.className} x`}>
-        <Provider>
-          <Header />
-          <SeparatorLine />
-          {children}
-          <Footer />
-        </Provider>
+      <body className={`${font.className} bg-[rgba(249,249,249,255)]`}>
+        <Provider>{children}</Provider>
       </body>
     </html>
   );

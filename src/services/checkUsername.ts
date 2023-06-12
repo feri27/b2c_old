@@ -16,6 +16,9 @@ export async function checkUsername(
   const res = await fetch(`${API_URL}/checkusername`, {
     method: 'POST',
     body: JSON.stringify({ username }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   return res.json();
 }

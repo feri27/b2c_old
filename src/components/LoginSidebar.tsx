@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function LoginSidebar() {
   return (
-    <div className="mt-[25px] md:ml-[50px]">
+    <div className="md:ml-[50px]">
       <div className="flex flex-col flex-column-reverse-1200">
         <div className="">
           <h4 className="text-[#0f55aa] mt-[25px] text-[calc(1.275rem_+_.3vw)] mb-2">

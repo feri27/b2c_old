@@ -77,6 +77,12 @@
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
+.bg-img {
+  background-image: url(https://payment.bankrakyat.com.my/fpxonline/fpxui/css/images/frame-bg-header.png);
+  background-size: contain;
+  background-repeat: repeat;
+}
+
 @media print {
   .hide-when-print {
     display: none !important;

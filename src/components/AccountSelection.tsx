@@ -68,7 +68,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className=""></p>
+            <p className="">{data?.recipientReference}</p>
           </div>
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className="">{data?.amount}</p>
+            <p className="">MYR {data?.amount}</p>
           </div>
         </div>
       </div>

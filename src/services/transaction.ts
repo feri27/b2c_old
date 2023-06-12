@@ -61,6 +61,9 @@ export async function authorizeTransaction(
   const res = await fetch(`${API_URL}/authorizatransaction`, {
     method: 'POST',
     body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   return res.json();
 }
@@ -82,6 +85,9 @@ export async function updateTransaction(body: UpdTrxReq) {
   const res = await fetch(`${API_URL}/updatetransaction`, {
     method: 'POST',
     body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   return res.json();
 }
@@ -90,6 +96,29 @@ export async function notifyTransaction(body: NotifyTransactionReq) {
   const res = await fetch(`${API_URL}/notifytransaction`, {
     method: 'POST',
     body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return res.json();
+}
+
+export async function getTransactionNumber(): Promise<{ txn_num: string }> {
+  const res = await fetch(`${API_URL}/transaction-number`);
+  return res.json();
+}
+
+export async function postTransactionNumber(
+  txnID: string
+): Promise<{ message: string }> {
+  console.log({ txnID });
+
+  const res = await fetch(`${API_URL}/transaction-number`, {
+    method: 'POST',
+    body: JSON.stringify({ txnID }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   return res.json();
 }
