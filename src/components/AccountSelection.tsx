@@ -22,7 +22,7 @@ export default function AccountSelection({
                   className="select-bg bg-[#e9ecef] disabled:opacity-[1] !h-[34px] !py-1.5 !px-3 !text-sm"
                 >
                   {data?.merchantAccountType.map((accType) => (
-                    <option value={accType}>
+                    <option key={accType} value={accType}>
                       {accType === 'SVGS' && 'Saving Account'}
                       {accType === 'CACC' && 'Current Account'}
                       {accType === 'CCRD' && 'Credit Card'}

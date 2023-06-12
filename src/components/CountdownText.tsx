@@ -15,7 +15,7 @@ export default function CountdownText({
     if (!isNote && countdown === 0) {
       cb?.();
     }
-  }, [countdown === 0]);
+  }, [countdown, cb, isNote]);
 
   useEffect(() => {
     const timer = setInterval(() => {

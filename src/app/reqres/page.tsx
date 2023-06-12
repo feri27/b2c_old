@@ -63,7 +63,6 @@ export default function ReqRes() {
                 <span className="font-bold">Response:</span>{' '}
                 <ReactMarkdown
                   className="rounded bg-gray-100 p-4"
-                  children={JSON.stringify(savedRequest.response, null, 2)}
                   components={{
                     code: ({ children }) => (
                       <code className="block bg-gray-200 p-2 rounded">
@@ -71,7 +70,9 @@ export default function ReqRes() {
                       </code>
                     ),
                   }}
-                />
+                >
+                  {JSON.stringify(savedRequest.response, null, 2)}
+                </ReactMarkdown>
               </div>
             </div>
           ))}
