@@ -17,10 +17,10 @@ export function useLogout() {
         'urlres',
         JSON.stringify([
           ...urlres,
-          { url: '/login & /notifylogin', method: 'POST', response: data },
+          { url: '/logout', method: 'POST', response: data },
         ])
       );
-      Cookies.remove('accessToken');
+      // Cookies.remove('accessToken');
       localStorage.removeItem('transactionDetail');
       localStorage.removeItem('loginData');
       setSellerData({ dbtrAgt: '', endToEndId: '' });
