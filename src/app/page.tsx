@@ -65,7 +65,6 @@ export default function Home() {
     queryKey: ['txn_num'],
     queryFn: getTransactionNumber,
     cacheTime: 0,
-    staleTime: 60 * 1000,
     onSuccess: (data) => {
       const urlres = JSON.parse(localStorage.getItem('urlres')!);
       localStorage.setItem(
@@ -203,7 +202,7 @@ export default function Home() {
                         type="text"
                         className="table-input outline-none"
                         name="transactionID"
-                        defaultValue={trxId}
+                        value={trxId}
                         readOnly
                       />
                     </td>
@@ -218,7 +217,7 @@ export default function Home() {
                         type="text"
                         className="table-input outline-none"
                         name="messageID"
-                        defaultValue={messageId}
+                        value={messageId}
                         readOnly
                       />
                     </td>
@@ -233,7 +232,7 @@ export default function Home() {
                         type="text"
                         className="table-input outline-none"
                         name="endToEndID"
-                        defaultValue={endToEndId}
+                        value={endToEndId}
                         readOnly
                       />
                     </td>

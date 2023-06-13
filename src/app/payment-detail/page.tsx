@@ -286,7 +286,7 @@ export default function PaymentDetail() {
                   )}
                 </>
               ) : (
-                <div>null</div>
+                <p></p>
               )}
             </div>
           </div>
