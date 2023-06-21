@@ -40,7 +40,7 @@ export default function PaymentDetail() {
   const privateKeyQry = usePrivateKey();
 
   useIsSessionActive(() => {
-    cancel(transactionDetail!, 'E');
+    cancel('E');
   });
 
   useSetuplocalStorage();
@@ -197,7 +197,7 @@ export default function PaymentDetail() {
   useEffect(() => {
     if (transactionDetail && loginData) {
       if (transactionDetail.amount > loginData.mbl.trxLimit) {
-        cancel(transactionDetail, 'UL');
+        cancel('UL');
       } else if (transactionDetail.amount > loginData.mbl.trxLimit * 0.5) {
         setShowOtp(true);
       } else if (transactionDetail.amount < loginData.mbl.trxLimit * 0.5) {
@@ -280,7 +280,7 @@ export default function PaymentDetail() {
             <div className="!mb-[15px] flex-wrap mt-2.5 justify-center gap-5 w-full padx flex">
               <input
                 type="button"
-                onClick={(e) => cancel(transactionDetail!, 'U')}
+                onClick={(e) => cancel('U')}
                 disabled={
                   verifyOTPMut.isLoading ||
                   accPaymentMut.isLoading ||

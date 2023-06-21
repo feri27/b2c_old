@@ -14,7 +14,12 @@ export default function PaymentFail() {
   };
 
   return (
-    <PaymentStatus cb={handleContinue} status="Cancel" tnxDetail={txnDetail} />
+    <PaymentStatus
+      cb={handleContinue}
+      status="Cancel"
+      tnxDetail={txnDetail}
+      isLoading={logouBMut.isLoading}
+    />
   );
 }
 
