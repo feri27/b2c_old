@@ -1,5 +1,4 @@
-import { Account } from '@/services/account';
-import { TransactionDetail } from '@/services/transaction';
+import { TransactionDetail } from '@/services/common/transaction';
 
 export default function AccountSelection({
   data,

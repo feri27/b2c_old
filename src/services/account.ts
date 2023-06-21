@@ -1,4 +1,5 @@
-import { API_URL } from '@/utils/config';
+import { B2C_API_URL } from '@/utils/config';
+import { getSessionID } from '@/utils/helpers';
 
 export type Account = {
   data: {
@@ -20,7 +21,17 @@ type AccPaymentRes = {
 };
 
 export async function account(id: string): Promise<Account> {
-  const res = await fetch(`${API_URL}/account/${id}`);
+  const sessionID = getSessionID();
+  const res = await fetch(`${B2C_API_URL}/account/${id}`, {
+    headers: sessionID
+      ? {
+          'Content-Type': 'application/json',
+          'X-Session-ID': sessionID,
+        }
+      : {
+          'Content-Type': 'application/json',
+        },
+  });
   return res.json();
 }
 
@@ -31,18 +42,35 @@ export async function accountPayment({
   body: AccPaymentRes;
   saving: boolean;
 }) {
-  const config = {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
+  const sessionID = getSessionID();
+
   if (saving) {
-    const res = await fetch(`${API_URL}/savingaccountpayment`, config);
+    const res = await fetch(`${B2C_API_URL}/savingaccountpayment`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: sessionID
+        ? {
+            'Content-Type': 'application/json',
+            'X-Session-ID': sessionID,
+          }
+        : {
+            'Content-Type': 'application/json',
+          },
+    });
     return res.json();
   } else {
-    const res = await fetch(`${API_URL}/currentaccountpayment`, config);
+    const res = await fetch(`${B2C_API_URL}/currentaccountpayment`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: sessionID
+        ? {
+            'Content-Type': 'application/json',
+            'X-Session-ID': sessionID,
+          }
+        : {
+            'Content-Type': 'application/json',
+          },
+    });
     return res.json();
   }
 }

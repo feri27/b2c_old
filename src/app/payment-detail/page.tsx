@@ -1,23 +1,19 @@
 'use client';
 import AccountSelection from '@/components/AccountSelection';
 import Steps from '@/components/Steps';
-import { Account, account, accountPayment } from '@/services/account';
+import { account, accountPayment } from '@/services/account';
 import {
-  TransactionDetail,
   authorizeTransaction,
   notifyTransaction,
 } from '@/services/transaction';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAtomValue, useSetAtom } from 'jotai';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { verifyOTP } from '@/services/veritfyOtp';
 import { encrypt } from '@/utils/helpers';
-import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useLoginData } from '@/hooks/useLoginData';
-import { useAccessToken } from '@/hooks/useAccessToken';
+import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
 import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
@@ -25,16 +21,27 @@ import Footer from '@/components/Footer';
 import { BsFillInfoCircleFill } from 'react-icons/bs';
 import CountdownText from '@/components/CountdownText';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
+import { useIsSessionActive } from '@/hooks/useIsSessionActive';
+import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 
 export default function PaymentDetail() {
   const router = useRouter();
+  const [accessToken, channel] = useAccessTokenAndChannel();
+
+  const { cancel, updTrxMut } = useCancelTransaction({
+    page: '/payment-detail',
+  });
+
   const loginData = useLoginData();
   const transactionDetail = useTransactionDetail();
   const [showOtp, setShowOtp] = useState<boolean | null>(null);
   const [otp, setOtp] = useState<string>('');
   const [authProceed, setAuthProceed] = useState(false);
-  const accessToken = useAccessToken();
   const privateKeyQry = usePrivateKey();
+
+  useIsSessionActive(() => {
+    cancel(transactionDetail!, 'E');
+  });
 
   useSetuplocalStorage();
 
@@ -55,6 +62,7 @@ export default function PaymentDetail() {
           transactionNo: transactionDetail?.tnxId ?? '',
           trxAmount: transactionDetail?.amount ?? 0,
           trxTimestamp: transactionDetail?.currentDT ?? '',
+          channel,
         });
       const urlres = JSON.parse(localStorage.getItem('urlres')!);
       localStorage.setItem(
@@ -66,8 +74,6 @@ export default function PaymentDetail() {
       );
     },
   });
-
-  const updTrxMut = useUpdateTxnMutation();
 
   const authorizeTxnMut = useMutation({
     mutationFn: authorizeTransaction,
@@ -126,6 +132,7 @@ export default function PaymentDetail() {
           trxTimestamp: transactionDetail?.currentDT ?? '',
           sellerName: transactionDetail?.merchantName ?? '',
           trxStatus: 'S',
+          channel,
         });
     },
   });
@@ -166,6 +173,7 @@ export default function PaymentDetail() {
         accessToken,
         iv: iv.toString('base64'),
         otp: encryptedTxt.toString('base64'),
+        channel,
       });
     } else if (authProceed) {
       if (accountQry.data) {
@@ -186,32 +194,10 @@ export default function PaymentDetail() {
     }
   };
 
-  const cancel = useCallback(
-    (txnDetail: TransactionDetail) => {
-      let lat: number | undefined;
-      let long: number | undefined;
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          lat = pos.coords.latitude;
-          long = pos.coords.longitude;
-        });
-      }
-      const latLng = `${lat} ${long}`;
-      updTrxMut.mutate({
-        endToEndId: txnDetail.endToEndId,
-        dbtrAgt: txnDetail.dbtrAgt,
-        gpsCoord: latLng,
-        merchantId: txnDetail.merchantID,
-        productId: txnDetail.productId,
-      });
-    },
-    [updTrxMut]
-  );
-
   useEffect(() => {
     if (transactionDetail && loginData) {
       if (transactionDetail.amount > loginData.mbl.trxLimit) {
-        cancel(transactionDetail);
+        cancel(transactionDetail, 'UL');
       } else if (transactionDetail.amount > loginData.mbl.trxLimit * 0.5) {
         setShowOtp(true);
       } else if (transactionDetail.amount < loginData.mbl.trxLimit * 0.5) {
@@ -294,7 +280,7 @@ export default function PaymentDetail() {
             <div className="!mb-[15px] flex-wrap mt-2.5 justify-center gap-5 w-full padx flex">
               <input
                 type="button"
-                onClick={(e) => cancel(transactionDetail!)}
+                onClick={(e) => cancel(transactionDetail!, 'U')}
                 disabled={
                   verifyOTPMut.isLoading ||
                   accPaymentMut.isLoading ||

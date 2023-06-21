@@ -1,9 +1,9 @@
-import { updateTransaction } from '@/services/transaction';
+import { updateTransaction } from '@/services/common/transaction';
 import { useMutation } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 
-export const useUpdateTxnMutation = () => {
+export const useUpdateTxnMutation = (navigate: boolean, navigateTo: string) => {
   const router = useRouter();
   const mutation = useMutation({
     mutationFn: updateTransaction,
@@ -16,7 +16,9 @@ export const useUpdateTxnMutation = () => {
           { url: '/updatetransaction', method: 'POST', response: data },
         ])
       );
-      router.push('/payment-fail');
+      if (navigate) {
+        router.push(navigateTo);
+      }
     },
   });
 

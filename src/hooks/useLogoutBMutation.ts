@@ -3,8 +3,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useUpdateLoginSessionMutation } from './useUpdateLoginSessionMutation';
 import { getSessionID } from '@/utils/helpers';
 
-export function useLogout(page: string, reason: 'C' | 'S') {
+export function useLogoutBMutation(page: string, reason: 'C' | 'S') {
   const updateLoginSessionMut = useUpdateLoginSessionMutation();
+
   const { isLoading, mutate } = useMutation({
     mutationFn: logout,
     onSuccess: (data) => {
@@ -18,6 +19,8 @@ export function useLogout(page: string, reason: 'C' | 'S') {
       );
 
       const sessionID = getSessionID();
+      console.log({ sessionID });
+
       updateLoginSessionMut.mutate({
         status: 'expired',
         page,

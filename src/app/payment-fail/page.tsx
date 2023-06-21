@@ -1,7 +1,7 @@
 'use client';
 import CountdownText from '@/components/CountdownText';
 import Steps from '@/components/Steps';
-import { useAccessToken } from '@/hooks/useAccessToken';
+import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
@@ -10,14 +10,15 @@ const controller = new AbortController();
 
 export default function PaymentFail() {
   const transactionDetail = useTransactionDetail();
-  const accessToken = useAccessToken();
-  const logoutMut = useLogout();
+  const [accessToken, channel] = useAccessTokenAndChannel();
+
+  const logoutMut = useLogout('/payment-fail', 'S');
 
   useSetuplocalStorage();
 
   const handleClick = () => {
     controller.abort();
-    logoutMut.mutate(accessToken);
+    logoutMut.mutate({ accessToken, channel, page: '/payment-fail' });
   };
 
   const print = () => {

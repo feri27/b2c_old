@@ -48,6 +48,15 @@
   color: #212529;
 }
 
+.select-bg-b2b {
+  height: 30px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  width: 100%;
+  line-height: 1.2 !important;
+  background-color: #e9ecef;
+}
+
 .table {
   width: 100%;
   margin-bottom: 1rem;
@@ -83,8 +92,86 @@
   background-repeat: repeat;
 }
 
+.example-print {
+  display: none;
+}
+
+.navbar {
+  margin-bottom: 0px !important;
+  display: block;
+}
+
+.navbar {
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+  background-image: none !important;
+}
+
+.navbar-ibiz:after {
+  background-color: #fff;
+}
+
+.navContainer {
+  padding: 5px 15px;
+}
+
+.ibiz-logo {
+  height: 50px;
+  padding-left: 10%;
+}
+
+.bkr-logo {
+  height: 100px;
+  padding-right: 10%;
+}
+.pull-right {
+  float: right !important;
+}
+
+.h-between {
+  min-height: calc(100vh - 46vh);
+}
+
+.h-between-b2b {
+  min-height: calc(100vh - 36vh);
+}
+
 @media print {
   .hide-when-print {
     display: none !important;
+  }
+  .non-printable > * {
+    display: none;
+  }
+  .example-print {
+    display: block !important;
+    margin-top: 30px;
+  }
+  @page {
+    margin-left: 0.3in;
+    margin-right: 0.3in;
+    margin-top: 0;
+    margin-bottom: 0.2in;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .separatorLine {
+    height: 5px;
+    margin-bottom: 15px;
+    background-color: #000;
+  }
+  .paymentLabel {
+    text-align: end;
+  }
+  label.paymentLabel.paymentLabelAdd.col-xl-4.col-lg-4.col-md-4.col-12 {
+    width: 33.33333333%;
+    padding-right: 1%;
+  }
+  div.paymentLabelAdd.col-xl-8.col-lg-8.col-md-8.col-12 {
+    width: 66.66666667%;
+    text-align: start;
   }
 }

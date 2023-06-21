@@ -1,4 +1,4 @@
-import { API_URL } from '@/utils/config';
+import { B2C_API_URL } from '@/utils/config';
 import { ResponseHeader } from './commonTypes';
 
 type LoginRes = {
@@ -30,15 +30,17 @@ export async function login({
   password,
   accessToken,
   iv,
+  channel,
 }: {
   username: string;
   password: string;
   accessToken: string;
   iv: string;
+  channel: string;
 }): Promise<LoginAndNotifyLoginCombined> {
-  const body = { username, password, accessToken };
+  const body = { username, password, accessToken, channel, iv };
 
-  const res = await fetch(`${API_URL}/login`, {
+  const res = await fetch(`${B2C_API_URL}/login`, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {
@@ -49,7 +51,7 @@ export async function login({
   if (!(loginRes.data.header.status === 1)) {
     return { loginRes };
   } else {
-    const notifyRes = await fetch(`${API_URL}/notifylogin`, {
+    const notifyRes = await fetch(`${B2C_API_URL}/notifylogin`, {
       method: 'POST',
       body: JSON.stringify({ accessToken }),
       headers: {

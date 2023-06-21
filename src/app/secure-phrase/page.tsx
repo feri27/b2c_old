@@ -1,30 +1,40 @@
 'use client';
-import { securePhraseAtom, usernameAtom } from '@/atoms';
+import { securePhraseAtom, sellerDataAtom, usernameAtom } from '@/atoms';
 import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
-import crypto from 'crypto';
-import { LoginAndNotifyLoginCombined, login } from '@/services/login';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAtom, useSetAtom } from 'jotai';
+import { login } from '@/services/login';
+import { useMutation } from '@tanstack/react-query';
+import { useAtom } from 'jotai';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import { encrypt } from '@/utils/helpers';
+import { encrypt, getSessionID } from '@/utils/helpers';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-import { useAccessToken } from '@/hooks/useAccessToken';
+import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
-import { TransactionDetail } from '@/services/transaction';
 import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import LoginFooter from '@/components/LoginFooter';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
+import { useLoginSessionMutation } from '@/hooks/useLoginSessionMutation';
+import Cookies from 'js-cookie';
+import { useIsSessionActive } from '@/hooks/useIsSessionActive';
+import { useLogout } from '@/hooks/useLogout';
+import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 
 export default function SecurePhrase() {
   const router = useRouter();
+  const [accessToken, channel] = useAccessTokenAndChannel();
   const transactionDetail = useTransactionDetail();
+
+  const { cancel, updTrxMut } = useCancelTransaction({
+    page: '/secure-phrase',
+  });
+
+  useIsSessionActive(() => {});
+
   const privateKeyQry = usePrivateKey();
 
   useSetuplocalStorage();
@@ -46,7 +56,10 @@ export default function SecurePhrase() {
           'loginData',
           JSON.stringify(data.loginRes.data.body)
         );
-        router.push('/payment-detail');
+        loginSessionMut.mutate({
+          page: '/login',
+          userID: data.loginRes.data.body.cif,
+        });
       }
     },
     onError: (error) => {
@@ -54,10 +67,15 @@ export default function SecurePhrase() {
     },
   });
 
-  const updTrxMut = useUpdateTxnMutation();
+  const loginSessionMut = useLoginSessionMutation({
+    onSuccess: (data) => {
+      Cookies.set('sessionID', data.data.sessionID);
+      Cookies.set('loginSessionStatus', 'active');
+      router.push('/payment-detail');
+    },
+  });
 
   const [username] = useAtom(usernameAtom);
-  const accessToken = useAccessToken();
   const [password, setPassword] = useState('');
   const [errorVisible, setErrorVisible] = useState<'hidden' | 'inline'>(
     'hidden'
@@ -70,25 +88,6 @@ export default function SecurePhrase() {
 
   const handleCheck = () => {
     setNextStepVisible('inline');
-  };
-
-  const cancel = () => {
-    let lat: number | undefined;
-    let long: number | undefined;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        lat = pos.coords.latitude;
-        long = pos.coords.longitude;
-      });
-    }
-    const latLng = `${lat} ${long}`;
-    updTrxMut.mutate({
-      endToEndId: transactionDetail?.endToEndId ?? '',
-      dbtrAgt: transactionDetail?.dbtrAgt ?? '',
-      gpsCoord: latLng,
-      merchantId: transactionDetail?.merchantID ?? '',
-      productId: transactionDetail?.productId ?? '',
-    });
   };
 
   const handleSubmit = () => {
@@ -107,6 +106,7 @@ export default function SecurePhrase() {
           password: encryptedTxt.toString('base64'),
           iv: iv.toString('base64'),
           accessToken,
+          channel,
         });
       }
     }
@@ -220,8 +220,12 @@ export default function SecurePhrase() {
                 data-toggle="modal"
                 data-target="#myModal"
                 defaultValue="Cancel"
-                onClick={cancel}
-                disabled={loginMut.isLoading || updTrxMut.isLoading}
+                onClick={() => cancel(transactionDetail!, 'U')}
+                disabled={
+                  loginMut.isLoading ||
+                  updTrxMut.isLoading ||
+                  loginSessionMut.isLoading
+                }
               />
               <input
                 type="submit"
@@ -231,7 +235,11 @@ export default function SecurePhrase() {
                 defaultValue="Login"
                 onClick={handleSubmit}
                 tabIndex={2}
-                disabled={loginMut.isLoading || updTrxMut.isLoading}
+                disabled={
+                  loginMut.isLoading ||
+                  updTrxMut.isLoading ||
+                  loginSessionMut.isLoading
+                }
               />
             </div>
           </div>
@@ -254,7 +262,15 @@ export default function SecurePhrase() {
               Change Card
             </a>
           </div>
-          <button className="text-[#337ab7] text-sm" onClick={cancel}>
+          <button
+            className="text-[#337ab7] text-sm disabled:cursor-not-allowed"
+            onClick={() => cancel(transactionDetail!, 'U')}
+            disabled={
+              loginMut.isLoading ||
+              updTrxMut.isLoading ||
+              loginSessionMut.isLoading
+            }
+          >
             Cancel Transaction
           </button>
         </div>

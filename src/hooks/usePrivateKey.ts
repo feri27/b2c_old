@@ -1,4 +1,4 @@
-import { privateKey } from '@/services/privateKey';
+import { privateKey } from '@/services/common/privateKey';
 import { useQuery } from '@tanstack/react-query';
 
 export function usePrivateKey() {
