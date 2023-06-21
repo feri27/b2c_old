@@ -220,7 +220,7 @@ export default function SecurePhrase() {
                 data-toggle="modal"
                 data-target="#myModal"
                 defaultValue="Cancel"
-                onClick={() => cancel(transactionDetail!, 'U')}
+                onClick={() => cancel('U')}
                 disabled={
                   loginMut.isLoading ||
                   updTrxMut.isLoading ||
@@ -264,7 +264,7 @@ export default function SecurePhrase() {
           </div>
           <button
             className="text-[#337ab7] text-sm disabled:cursor-not-allowed"
-            onClick={() => cancel(transactionDetail!, 'U')}
+            onClick={() => cancel('U')}
             disabled={
               loginMut.isLoading ||
               updTrxMut.isLoading ||
