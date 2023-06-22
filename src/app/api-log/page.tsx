@@ -17,22 +17,21 @@ export default function ApiLog() {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
 
-  const apiLogsQry = useQuery({
-    queryKey: ['apiLogs'],
-    queryFn: retrieveApiLogs,
+  const { isLoading, data, isPreviousData } = useQuery({
+    queryKey: ['apiLogs', page],
+    queryFn: () => retrieveApiLogs(page),
+    keepPreviousData: true,
     refetchOnWindowFocus: false,
   });
 
-  console.log(apiLogsQry.isLoading);
-
-  const itemsPerPage = 10; // Number of items per page
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedRequests = apiLogsQry.data?.data.slice(startIndex, endIndex);
+  // const itemsPerPage = 10; // Number of items per page
+  // const startIndex = (page - 1) * itemsPerPage;
+  // const endIndex = startIndex + itemsPerPage;
+  // const paginatedRequests = data?.data.slice(startIndex, endIndex);
 
   const debouncedValue = useDebouncedValue(searchInput);
 
-  const filteredRequests = paginatedRequests?.filter((val) =>
+  const filteredRequests = data?.data?.filter((val) =>
     val.api_name.includes(debouncedValue)
   );
 
@@ -43,7 +42,9 @@ export default function ApiLog() {
   //   }
   // }, []);
 
-  if (apiLogsQry.isLoading) {
+  console.log(data);
+
+  if (isLoading) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
         Loading...
@@ -53,7 +54,7 @@ export default function ApiLog() {
 
   return (
     <div className="p-4 max-w-5xl overflow-hidden mx-auto flex flex-col gap-5">
-      {apiLogsQry.data && apiLogsQry.data.data.length > 0 ? (
+      {data && data.data.length > 0 ? (
         <>
           <div className="flex justify-center w-full">
             <input
@@ -117,16 +118,20 @@ export default function ApiLog() {
           ))}
           <div className="flex justify-center">
             <button
-              className="mr-2 px-4 py-2 bg-blue-500 text-white rounded"
+              className="mr-2 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 bg-blue-500 text-white rounded"
               disabled={page === 1}
-              onClick={() => setPage(page - 1)}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
             >
               Previous Page
             </button>
             <button
-              className="ml-2 px-4 py-2 bg-blue-500 text-white rounded"
-              disabled={endIndex >= apiLogsQry.data.data.length}
-              onClick={() => setPage(page + 1)}
+              className="ml-2 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 bg-blue-500 text-white rounded"
+              disabled={isPreviousData || data.metadata?.lastPage === page}
+              onClick={() =>
+                setPage((prev) =>
+                  data.metadata?.lastPage !== prev ? prev + 1 : prev
+                )
+              }
             >
               Next Page
             </button>

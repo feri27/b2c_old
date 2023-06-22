@@ -98,23 +98,19 @@ export default function Login() {
     );
   };
 
-  const setData =
-    settingQry.data && 'data' in settingQry?.data
-      ? settingQry.data.data
-      : undefined;
-
   useEffect(() => {
     if (
       getTxnQry.data?.data &&
-      setData &&
+      settingQry.data &&
+      'data' in settingQry?.data &&
       ((/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +setData.cmb_limit) ||
+        getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
         (!/Mobi/i.test(navigator.userAgent) &&
-          getTxnQry.data.data.amount > +setData.cib_limit))
+          getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
     ) {
       glCancel.cancel('GL');
     }
-  }, [getTxnQry.data?.data.amount, setData?.session_expiry]);
+  }, [getTxnQry.data, settingQry?.data]);
 
   if (
     getTxnQry.data?.data &&

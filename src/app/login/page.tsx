@@ -51,24 +51,25 @@ export default function Login() {
       JSON.stringify(getTxnQry.data.data)
     );
   }
-
-  const setData =
-    settingQry.data && 'data' in settingQry?.data
-      ? settingQry.data.data
-      : undefined;
+  console.log(
+    getTxnQry.data?.data !== undefined &&
+      settingQry.data !== undefined &&
+      'data' in settingQry?.data
+  );
 
   useEffect(() => {
     if (
       getTxnQry.data?.data &&
-      setData &&
+      settingQry.data &&
+      'data' in settingQry?.data &&
       ((/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +setData.cmb_limit) ||
+        getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
         (!/Mobi/i.test(navigator.userAgent) &&
-          getTxnQry.data.data.amount > +setData.cib_limit))
+          getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
     ) {
       glCancel.cancel('GL');
     }
-  }, [getTxnQry.data?.data.amount, setData?.session_expiry]);
+  }, [getTxnQry.data, settingQry.data]);
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
