@@ -57,19 +57,19 @@ export default function Login() {
       'data' in settingQry?.data
   );
 
-  useEffect(() => {
-    if (
-      getTxnQry.data?.data &&
-      settingQry.data &&
-      'data' in settingQry?.data &&
-      ((/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
-        (!/Mobi/i.test(navigator.userAgent) &&
-          getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
-    ) {
-      glCancel.cancel('GL');
-    }
-  }, [getTxnQry.data, settingQry.data]);
+  // useEffect(() => {
+  //   if (
+  //     getTxnQry.data?.data &&
+  //     settingQry.data &&
+  //     'data' in settingQry?.data &&
+  //     ((/Mobi/i.test(navigator.userAgent) &&
+  //       getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
+  //       (!/Mobi/i.test(navigator.userAgent) &&
+  //         getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
+  //   ) {
+  //     glCancel.cancel('GL');
+  //   }
+  // }, [getTxnQry.data, settingQry.data]);
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
@@ -182,7 +182,6 @@ export default function Login() {
                   disabled={
                     checkUsernameMut.isLoading ||
                     updTrxMut.isLoading ||
-                    glCancel.updTrxMut.isLoading ||
                     settingQry.isLoading ||
                     getTxnQry.isLoading
                   }
@@ -198,7 +197,6 @@ export default function Login() {
                   disabled={
                     checkUsernameMut.isLoading ||
                     updTrxMut.isLoading ||
-                    glCancel.updTrxMut.isLoading ||
                     settingQry.isLoading ||
                     getTxnQry.isLoading
                   }
@@ -226,6 +224,37 @@ export default function Login() {
             <div className="clear"></div>
           </div>
           <LoginSidebar />
+        </div>
+        <LoginFooter />
+      </>
+    );
+  } else if (
+    getTxnQry.data?.data &&
+    settingQry.data &&
+    'data' in settingQry?.data &&
+    ((/Mobi/i.test(navigator.userAgent) &&
+      getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
+      (!/Mobi/i.test(navigator.userAgent) &&
+        getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
+  ) {
+    return (
+      <>
+        <SeparatorLine bottom={false} />
+        <Header backgroundImg={true} />
+        <div className="h-between"></div>
+        <div className="z-100 fixed inset-0 bg-black opacity-70">
+          <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">
+            <p className="text-xl text-red-500">
+              The system is currently under maintenance
+            </p>
+            <button
+              disabled={glCancel.updTrxMut.isLoading}
+              className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
+              onClick={() => glCancel.cancel('GL')}
+            >
+              OK
+            </button>
+          </div>
         </div>
         <LoginFooter />
       </>

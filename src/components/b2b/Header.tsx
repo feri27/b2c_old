@@ -1,6 +1,10 @@
 import Image from 'next/image';
 
-export default function Header() {
+export default function Header({
+  maintenance = false,
+}: {
+  maintenance?: boolean;
+}) {
   return (
     <header>
       <nav className="border border-solid border-transparent relative rounded">
@@ -23,7 +27,35 @@ export default function Header() {
           </div>
         </div>
       </nav>
-      <div className="h-10 bg-[#005aaa]" />
+      <div className="h-12 md:h-10 bg-[#005aaa]">
+        {maintenance && (
+          <ul className="flex justify-center md:text-sm text-[13px] text-white space-x-4 items-center h-full flex-wrap">
+            <li>
+              <b>Prayer Time (Kuala Lumpur, MY)</b>
+            </li>
+            <li>
+              <span className="mpt-prayer-0-name">Subuh&nbsp;</span>
+              <span className="mpt-prayer-0-time">5:58 AM</span>
+            </li>
+            <li>
+              <span className="mpt-prayer-2-name">Zohor&nbsp;</span>
+              <span className="mpt-prayer-2-time">1:16 PM</span>
+            </li>
+            <li>
+              <span className="mpt-prayer-3-name active">Asar&nbsp;</span>
+              <span className="mpt-prayer-3-time active">4:27 PM</span>
+            </li>
+            <li>
+              <span className="mpt-prayer-4-name">Maghrib&nbsp;</span>
+              <span className="mpt-prayer-4-time">7:21 PM</span>
+            </li>
+            <li>
+              <span className="mpt-prayer-5-name">Isyak&nbsp;</span>
+              <span className="mpt-prayer-5-time">8:31 PM</span>
+            </li>
+          </ul>
+        )}
+      </div>
     </header>
   );
 }
