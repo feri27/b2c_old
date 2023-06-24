@@ -28,6 +28,7 @@ import Modal from '@/components/common/Modal';
 export default function PaymentDetail() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
+  const [isActive, setIsActive] = useState<boolean>(true);
 
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/payment-detail',
@@ -40,7 +41,7 @@ export default function PaymentDetail() {
   const [authProceed, setAuthProceed] = useState(false);
   const privateKeyQry = usePrivateKey();
 
-  const isActive = useIsSessionActive();
+  useIsSessionActive(setIsActive);
 
   useSetuplocalStorage();
 

@@ -1,5 +1,5 @@
 'use client';
-import { securePhraseAtom, sellerDataAtom, usernameAtom } from '@/atoms';
+import { securePhraseAtom, usernameAtom } from '@/atoms';
 import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
 import { login } from '@/services/login';
@@ -9,9 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import { encrypt, getSessionID } from '@/utils/helpers';
-import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
-import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { encrypt } from '@/utils/helpers';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
 import SeparatorLine from '@/components/SeparatorLine';
@@ -21,20 +19,19 @@ import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useLoginSessionMutation } from '@/hooks/useLoginSessionMutation';
 import Cookies from 'js-cookie';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
-import { useLogout } from '@/hooks/useLogout';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
 
 export default function SecurePhrase() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
-  const transactionDetail = useTransactionDetail();
+  const [isActive, setIsActive] = useState<boolean>(true);
 
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/secure-phrase',
   });
 
-  const isActive = useIsSessionActive();
+  useIsSessionActive(setIsActive);
 
   const privateKeyQry = usePrivateKey();
 

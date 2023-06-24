@@ -26,13 +26,14 @@ export default function PaymentInitiate() {
   const [accessToken, channel] = useAccessTokenAndChannel();
   const availableBalance =
     (loginBData?.trxLimit ?? 0) - (loginBData?.usedLimit ?? 0);
+  const [isActive, setIsActive] = useState<boolean>(true);
 
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/payment-initiate',
     navigateTo: '/b2b/payment-fail',
   });
 
-  const isActive = useIsSessionActive();
+  useIsSessionActive(setIsActive);
 
   const createTxnMut = useMutation({
     mutationFn: createTxn,

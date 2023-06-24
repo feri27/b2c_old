@@ -22,6 +22,8 @@ import Modal from '@/components/common/Modal';
 
 export default function Login() {
   const router = useRouter();
+  const [isActive, setIsActive] = useState<boolean>(true);
+
   const [username, setUsername] = useAtom(usernameAtom);
   const [_, setSecurePhrase] = useAtom(securePhraseAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
@@ -36,7 +38,7 @@ export default function Login() {
 
   const getTxnQry = useTransactionDetailQuery(sellerData, '/login');
 
-  const isActive = useIsSessionActive();
+  useIsSessionActive(setIsActive);
 
   useSetuplocalStorage();
 

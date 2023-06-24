@@ -2,7 +2,6 @@
 import CountdownText from '@/components/CountdownText';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
-import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
@@ -10,7 +9,6 @@ import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 const controller = new AbortController();
 
 export default function PaymentFail() {
-  useIsSessionActive();
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
 

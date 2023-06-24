@@ -5,7 +5,6 @@ import Header from '@/components/Header';
 import SeparatorLine from '@/components/SeparatorLine';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
-import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
@@ -13,7 +12,6 @@ import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 const controller = new AbortController();
 
 export default function PaymentSuccess() {
-  useIsSessionActive();
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
   const logoutMut = useLogout('/payment-success', 'C');

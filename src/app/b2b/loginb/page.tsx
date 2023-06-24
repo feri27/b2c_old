@@ -27,7 +27,7 @@ import Modal from '@/components/common/Modal';
 export default function Login() {
   const router = useRouter();
   const sellerData = useAtomValue(sellerDataAtom);
-  const setLoginData = useSetAtom(loginBDataAtom);
+  const [isActive, setIsActive] = useState<boolean>(true);
   const [userID, setUserID] = useAtom(userIDAtom);
   const [corporateLogonID, setCorporateLogonID] = useAtom(corporateLogonIDAtom);
   const [password, setPassword] = useState('');
@@ -47,7 +47,7 @@ export default function Login() {
     navigateTo: '/b2b/maintenance',
   });
 
-  const isActive = useIsSessionActive();
+  useIsSessionActive(setIsActive);
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
