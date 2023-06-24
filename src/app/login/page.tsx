@@ -18,6 +18,7 @@ import { useSettingQuery } from '@/hooks/useSettingQuery';
 import { useTransactionDetailQuery } from '@/hooks/useTransactionDetailQuery';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
+import Modal from '@/components/common/Modal';
 
 export default function Login() {
   const router = useRouter();
@@ -35,11 +36,7 @@ export default function Login() {
 
   const getTxnQry = useTransactionDetailQuery(sellerData, '/login');
 
-  useIsSessionActive(() => {
-    if (getTxnQry.data?.data) {
-      cancel('E');
-    }
-  });
+  const isActive = useIsSessionActive();
 
   useSetuplocalStorage();
 
@@ -104,6 +101,25 @@ export default function Login() {
     }
   };
 
+  if (!isActive) {
+    return (
+      <>
+        <SeparatorLine bottom={false} />
+        <Header backgroundImg={true} />
+        <div className="h-between"></div>
+        <Modal
+          text="Your session has expired"
+          isLoading={updTrxMut.isLoading}
+          cb={() => {
+            if (getTxnQry.data?.data) {
+              cancel('E');
+            }
+          }}
+        />
+        <LoginFooter />
+      </>
+    );
+  }
   if (
     getTxnQry.data?.data &&
     settingQry.data &&

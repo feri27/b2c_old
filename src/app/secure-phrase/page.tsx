@@ -23,6 +23,7 @@ import Cookies from 'js-cookie';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLogout } from '@/hooks/useLogout';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
+import Modal from '@/components/common/Modal';
 
 export default function SecurePhrase() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function SecurePhrase() {
     page: '/secure-phrase',
   });
 
-  useIsSessionActive(() => {});
+  const isActive = useIsSessionActive();
 
   const privateKeyQry = usePrivateKey();
 
@@ -111,6 +112,22 @@ export default function SecurePhrase() {
       }
     }
   };
+
+  if (!isActive) {
+    return (
+      <>
+        <SeparatorLine bottom={false} />
+        <Header backgroundImg={true} />
+        <div className="h-between-b2b"></div>
+        <Modal
+          text="Your session has expired"
+          isLoading={updTrxMut.isLoading}
+          cb={() => cancel('E')}
+        />
+        <LoginFooter />
+      </>
+    );
+  }
 
   return (
     <>

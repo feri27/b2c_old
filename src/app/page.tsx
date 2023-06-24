@@ -145,8 +145,6 @@ export default function Home() {
   };
 
   const handleCheckBox = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.checked);
-
     const set = inputs.sourceOfFund.values;
     if (set.has(e.target.value) && !e.target.checked) {
       set.delete(e.target.value);
@@ -163,11 +161,10 @@ export default function Home() {
     }
   };
 
-  console.log(inputs.sourceOfFund.values);
-
   useEffect(() => {
     const sessionStatus = Cookies.get('sessionStatus');
-    if (sessionStatus) return;
+    const sessionID = Cookies.get('sessionID');
+    if (sessionID || (sessionStatus && sessionStatus === 'active')) return;
     Cookies.set('sessionStatus', 'active');
   }, []);
 

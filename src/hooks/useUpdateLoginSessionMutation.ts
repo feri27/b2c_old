@@ -11,9 +11,11 @@ export function useUpdateLoginSessionMutation() {
   const updateLoginSessionMut = useMutation({
     mutationFn: updateLoginSession,
     onSuccess: (data) => {
-      console.log({ data });
-
-      if (data.message === 'success') {
+      if (
+        data.message === 'success' ||
+        data.message.includes('session not found') ||
+        data.message.includes('privilege')
+      ) {
         Cookies.remove('accessToken');
         Cookies.remove('channel');
         localStorage.removeItem('transactionDetail');

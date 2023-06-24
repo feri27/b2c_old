@@ -23,6 +23,7 @@ import CountdownText from '@/components/CountdownText';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
+import Modal from '@/components/common/Modal';
 
 export default function PaymentDetail() {
   const router = useRouter();
@@ -39,9 +40,7 @@ export default function PaymentDetail() {
   const [authProceed, setAuthProceed] = useState(false);
   const privateKeyQry = usePrivateKey();
 
-  useIsSessionActive(() => {
-    cancel('E');
-  });
+  const isActive = useIsSessionActive();
 
   useSetuplocalStorage();
 
@@ -205,6 +204,23 @@ export default function PaymentDetail() {
       }
     }
   }, [loginData, transactionDetail, cancel]);
+
+  if (!isActive) {
+    return (
+      <>
+        <Header />
+        <SeparatorLine />
+        <div className="h-between-b2b"></div>
+        <Modal
+          text="Your session has expired"
+          isLoading={updTrxMut.isLoading}
+          cb={() => cancel('E')}
+        />
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <Header />

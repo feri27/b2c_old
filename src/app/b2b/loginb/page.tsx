@@ -22,6 +22,7 @@ import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import Header from '@/components/b2b/Header';
 import Footer from '@/components/b2b/Footer';
+import Modal from '@/components/common/Modal';
 
 export default function Login() {
   const router = useRouter();
@@ -46,11 +47,7 @@ export default function Login() {
     navigateTo: '/b2b/maintenance',
   });
 
-  useIsSessionActive(() => {
-    if (getTxnQry.data?.data) {
-      cancel('E');
-    }
-  });
+  const isActive = useIsSessionActive();
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
@@ -113,6 +110,27 @@ export default function Login() {
   //     glCancel.cancel('GL');
   //   }
   // }, [getTxnQry.data, settingQry?.data]);
+
+  console.log('isActive', isActive);
+
+  if (!isActive) {
+    return (
+      <>
+        <Header />
+        <div className="h-between-b2b"></div>
+        <Modal
+          text="Your session has expired"
+          isLoading={updTrxMut.isLoading}
+          cb={() => {
+            if (getTxnQry.data?.data) {
+              cancel('E');
+            }
+          }}
+        />
+        <Footer />
+      </>
+    );
+  }
 
   if (
     getTxnQry.data?.data &&
@@ -211,12 +229,12 @@ export default function Login() {
                             <button
                               type="button"
                               value="Cancel"
+                              onClick={() => cancel('U')}
                               className="cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed text-base  rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
                               disabled={
                                 loginAndNotifyMut.isLoading ||
                                 loginSessionMut.isLoading ||
-                                updTrxMut.isLoading ||
-                                glCancel.updTrxMut.isLoading
+                                updTrxMut.isLoading
                               }
                             >
                               Cancel
@@ -230,8 +248,7 @@ export default function Login() {
                                 validateInput() ||
                                 loginAndNotifyMut.isLoading ||
                                 loginSessionMut.isLoading ||
-                                updTrxMut.isLoading ||
-                                glCancel.updTrxMut.isLoading
+                                updTrxMut.isLoading
                               }
                             >
                               Login
@@ -317,20 +334,25 @@ export default function Login() {
       <>
         <Header />
         <div className="h-between-b2b"></div>
-        <div className="z-100 fixed inset-0 bg-black opacity-70">
+        <Modal
+          text="The system is currently under maintenance"
+          isLoading={glCancel.updTrxMut.isLoading}
+          cb={() => glCancel.cancel('GL')}
+        />
+        {/* <div className="z-100 fixed inset-0 bg-black opacity-70">
           <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">
             <p className="text-xl text-red-500">
-              The system is currently under maintenance
+              
             </p>
             <button
-              disabled={glCancel.updTrxMut.isLoading}
+              disabled={}
               className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
               onClick={() => glCancel.cancel('GL')}
             >
               OK
             </button>
           </div>
-        </div>
+        </div> */}
         <Footer />
       </>
     );
