@@ -1,6 +1,5 @@
 import Cookies from 'js-cookie';
 import { useRouter, usePathname } from 'next/navigation';
-import { useLayoutEffect, useState } from 'react';
 
 type SessionStatus = 'active' | 'expired' | undefined;
 
@@ -28,12 +27,11 @@ export function useIsSessionActive() {
         return isActive;
       default:
         router.push('/');
-        return;
+        return isActive;
     }
   } else if (loginSessStatus === 'active' || sessStatus === 'active') {
     const sessionExpiry = parseInt(sessExp);
     const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-    console.log('session', currentTimeInSeconds > sessionExpiry);
     if (currentTimeInSeconds > sessionExpiry) {
       isActive = false;
     }

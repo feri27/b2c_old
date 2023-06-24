@@ -1,10 +1,12 @@
 'use client';
 import PaymentStatus from '@/components/b2b/PaymentStatus';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
+import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLogoutBMutation } from '@/hooks/useLogoutBMutation';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 
 export default function PaymentDetails() {
+  useIsSessionActive();
   const txnDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
 

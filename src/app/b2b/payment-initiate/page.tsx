@@ -50,8 +50,6 @@ export default function PaymentInitiate() {
     cancel('UL');
   }
 
-  console.log(loginBData?.fromAccountList);
-
   const validateForm = () => {
     return selectedAccount === undefined;
   };
