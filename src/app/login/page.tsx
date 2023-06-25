@@ -121,9 +121,9 @@ export default function Login() {
     settingQry.data &&
     'data' in settingQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < +settingQry.data.data.cmb_limit) ||
+      getTxnQry.data.data.amount < +settingQry.data.data.rmb_limit) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < +settingQry.data.data.cib_limit))
+        getTxnQry.data.data.amount < +settingQry.data.data.rib_limit))
   ) {
     return (
       <>
