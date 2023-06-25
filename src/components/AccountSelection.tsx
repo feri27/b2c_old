@@ -1,14 +1,25 @@
 import { TransactionDetail } from '@/services/common/transaction';
+import { SetStateAction } from 'jotai';
+import { Dispatch } from 'react';
 
 export default function AccountSelection({
   data,
+  clicked,
+  accType,
+  setAccType,
 }: {
   data?: TransactionDetail | null;
+  clicked: boolean;
+  accType: string;
+  setAccType: Dispatch<SetStateAction<string>>;
 }) {
   return (
     <>
       <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
-        <label className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3">
+        <label
+          htmlFor="fromAccDisabled"
+          className="mb-[5px] text-[#212529] font-bold text-sm md:w-1/3"
+        >
           From Account :
         </label>
         <div className="w-full md:w-2/3">
@@ -18,7 +29,10 @@ export default function AccountSelection({
                 <select
                   name="fromAcc"
                   id="fromAccDisabled"
-                  className="select-bg bg-[#e9ecef] disabled:opacity-[1] !h-[34px] !py-1.5 !px-3 !text-sm"
+                  disabled={clicked}
+                  value={accType}
+                  onChange={(e) => setAccType(e.target.value)}
+                  className="select-bg disabled:cursor-not-allowed bg-[#e9ecef] disabled:opacity-30 !h-[34px] !py-1.5 !px-3 !text-sm"
                 >
                   {data?.merchantAccountType.map((accType) => (
                     <option key={accType} value={accType}>

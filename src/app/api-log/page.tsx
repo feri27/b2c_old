@@ -42,8 +42,6 @@ export default function ApiLog() {
   //   }
   // }, []);
 
-  console.log(data);
-
   if (isLoading) {
     return (
       <div className="w-full h-screen flex justify-center items-center">

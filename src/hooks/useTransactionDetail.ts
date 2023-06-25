@@ -6,7 +6,6 @@ export function useTransactionDetail() {
     useState<TransactionDetail | null>(null);
   useLayoutEffect(() => {
     const storedTnxData = localStorage.getItem('transactionDetail');
-    console.log({ storedTnxData });
 
     setTransactionDetail(storedTnxData ? JSON.parse(storedTnxData) : null);
   }, []);

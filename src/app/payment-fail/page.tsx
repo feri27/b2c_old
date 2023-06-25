@@ -5,13 +5,12 @@ import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-
-const controller = new AbortController();
+import { useEffect, useState } from 'react';
 
 export default function PaymentFail() {
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
-
+  const [controller, setController] = useState(new AbortController());
   const logoutMut = useLogout('/payment-fail', 'S');
 
   useSetuplocalStorage();
@@ -22,8 +21,11 @@ export default function PaymentFail() {
   };
 
   const print = () => {
+    controller.abort();
+    setController(new AbortController());
     window.print();
   };
+
   return (
     <div className="xl:max-w-[1140px] w-full sm:max-w-[540px] md:max-w-[720px] lg:[960px] mx-auto padx md:px-0">
       <Steps title="Payment Details" step={3} />

@@ -19,7 +19,6 @@ export function useLogoutBMutation(page: string, reason: 'C' | 'S') {
       );
 
       const sessionID = getSessionID();
-      console.log({ sessionID });
 
       updateLoginSessionMut.mutate({
         status: 'expired',

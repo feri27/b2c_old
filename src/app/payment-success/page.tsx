@@ -8,12 +8,12 @@ import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-
-const controller = new AbortController();
+import { useEffect, useState } from 'react';
 
 export default function PaymentSuccess() {
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
+  const [controller, setController] = useState(new AbortController());
   const logoutMut = useLogout('/payment-success', 'C');
 
   useSetuplocalStorage();
@@ -25,6 +25,7 @@ export default function PaymentSuccess() {
 
   const print = () => {
     controller.abort();
+    setController(new AbortController());
     window.print();
   };
 

@@ -66,8 +66,6 @@ export async function getTransactionNumber(): Promise<{ txn_num: string }> {
 export async function postTransactionNumber(
   txnID: string
 ): Promise<{ message: string }> {
-  console.log({ txnID });
-
   const res = await fetch(`${COMMON_API_URL}/transaction-number`, {
     method: 'POST',
     body: JSON.stringify({ txnID }),

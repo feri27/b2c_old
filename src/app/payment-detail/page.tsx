@@ -25,6 +25,8 @@ import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
 
+const abortController = new AbortController();
+
 export default function PaymentDetail() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
@@ -40,6 +42,7 @@ export default function PaymentDetail() {
   const [otp, setOtp] = useState<string>('');
   const [authProceed, setAuthProceed] = useState(false);
   const privateKeyQry = usePrivateKey();
+  const [accountType, setAccountType] = useState('SVGS');
 
   useIsSessionActive(setIsActive);
 
@@ -159,7 +162,7 @@ export default function PaymentDetail() {
             senderName: transactionDetail?.merchantName ?? '',
             trxAmt: transactionDetail?.amount ?? 0,
           },
-          saving: transactionDetail?.merchantAccountType[0] === 'SVGS',
+          saving: accountType === 'SVGS',
         });
     },
   });
@@ -176,6 +179,7 @@ export default function PaymentDetail() {
         channel,
       });
     } else if (authProceed) {
+      abortController.abort();
       if (accountQry.data) {
         accPaymentMut.mutate({
           body: {
@@ -241,7 +245,17 @@ export default function PaymentDetail() {
           {/* <input type="hidden" name="SYNCHRONIZER_URI" value="/fpxonline/fpxui/logout/show" id="SYNCHRONIZER_URI"> --> */}
           <div className="mb-[15px] bg-white border border-solid border-[#ddd] rounded shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
             <div className="py-[15px] px-[30px]">
-              <AccountSelection data={transactionDetail} />
+              <AccountSelection
+                clicked={
+                  verifyOTPMut.isLoading ||
+                  accPaymentMut.isLoading ||
+                  notifyTxnMut.isLoading ||
+                  updTrxMut.isLoading
+                }
+                accType={accountType}
+                setAccType={setAccountType}
+                data={transactionDetail}
+              />
               {showOtp !== null && showOtp ? (
                 <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row">
                   <label className="mb-[5px] w-full text-[#212529] font-bold text-sm md:w-1/3">
@@ -283,7 +297,11 @@ export default function PaymentDetail() {
                   {authProceed && (
                     <div className="-mx-[15px] mb-[15px] flex flex-col md:flex-row text-sm">
                       <div className=" pl-[2.5em]">
-                        <CountdownText count={50} isNote={true} />
+                        <CountdownText
+                          count={50}
+                          isNote={true}
+                          controller={abortController}
+                        />
                       </div>
                     </div>
                   )}
@@ -302,7 +320,9 @@ export default function PaymentDetail() {
                   verifyOTPMut.isLoading ||
                   accPaymentMut.isLoading ||
                   notifyTxnMut.isLoading ||
-                  updTrxMut.isLoading
+                  updTrxMut.isLoading ||
+                  accountQry.isLoading ||
+                  authorizeTxnMut.isLoading
                 }
                 defaultValue="Cancel"
                 className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none w-full min-[480px]:w-auto !rounded-md   flex justify-center items-center"
@@ -322,7 +342,9 @@ export default function PaymentDetail() {
                   verifyOTPMut.isLoading ||
                   accPaymentMut.isLoading ||
                   notifyTxnMut.isLoading ||
-                  updTrxMut.isLoading
+                  updTrxMut.isLoading ||
+                  accountQry.isLoading ||
+                  authorizeTxnMut.isLoading
                 }
                 id="doSubmit"
               />

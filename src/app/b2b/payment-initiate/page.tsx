@@ -12,20 +12,18 @@ import { createTxn } from '@/services/b2b/transaction';
 import { useMutation } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function PaymentInitiate() {
   const router = useRouter();
   const loginBData = useLoginBData();
   const [selectedAccount, setSelectedAccount] = useState<
     FromAccount | undefined
-  >(loginBData?.fromAccountList[0]);
+  >();
   const corporateLogonID = useAtomValue(corporateLogonIDAtom);
   const userID = useAtomValue(userIDAtom);
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
-  const availableBalance =
-    (loginBData?.trxLimit ?? 0) - (loginBData?.usedLimit ?? 0);
   const [isActive, setIsActive] = useState<boolean>(true);
 
   const { cancel, updTrxMut } = useCancelTransaction({
@@ -38,10 +36,13 @@ export default function PaymentInitiate() {
   const createTxnMut = useMutation({
     mutationFn: createTxn,
     onSuccess: (data) => {
-      console.log(data);
       router.push('/b2b/payment-details');
     },
   });
+
+  useEffect(() => {
+    setSelectedAccount(loginBData?.fromAccountList[0]);
+  }, [loginBData?.fromAccountList[0]]);
 
   if (
     transactionDetail &&
@@ -112,7 +113,9 @@ export default function PaymentInitiate() {
               <div className="flex marginx w-full justify-center">
                 <div className="w-full padx md:w-3/4 ">
                   <select
-                    className="select-bg select-bg-b2b mb-[10px]"
+                    className="select-bg disabled:cursor-not-allowed disabled:opacity-30 select-bg-b2b mb-[10px]"
+                    value={selectedAccount?.fromAccName}
+                    disabled={createTxnMut.isLoading || updTrxMut.isLoading}
                     onChange={(e) => {
                       const acc = loginBData?.fromAccountList.find(
                         (account) => account.fromAccName === e.target.value
@@ -142,7 +145,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    defaultValue={availableBalance}
+                    value={selectedAccount?.fromAccAmount}
                     readOnly
                   />
                 </div>

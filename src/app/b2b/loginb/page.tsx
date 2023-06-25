@@ -99,19 +99,13 @@ export default function Login() {
 
   useEffect(() => {
     if (
-      getTxnQry.data?.data &&
       settingQry.data &&
       'data' in settingQry?.data &&
-      ((/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
-        (!/Mobi/i.test(navigator.userAgent) &&
-          getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
+      Number(settingQry.data.data.maintain_b2b) === 1
     ) {
-      cancel('GL');
+      glCancel.cancel('M');
     }
-  }, [getTxnQry.data, settingQry?.data]);
-
-  console.log('isActive', isActive);
+  }, [, settingQry?.data]);
 
   if (!isActive) {
     return (
@@ -234,7 +228,9 @@ export default function Login() {
                               disabled={
                                 loginAndNotifyMut.isLoading ||
                                 loginSessionMut.isLoading ||
-                                updTrxMut.isLoading
+                                updTrxMut.isLoading ||
+                                settingQry.isLoading ||
+                                getTxnQry.isLoading
                               }
                             >
                               Cancel
@@ -248,7 +244,9 @@ export default function Login() {
                                 validateInput() ||
                                 loginAndNotifyMut.isLoading ||
                                 loginSessionMut.isLoading ||
-                                updTrxMut.isLoading
+                                updTrxMut.isLoading ||
+                                settingQry.isLoading ||
+                                getTxnQry.isLoading
                               }
                             >
                               Login
@@ -325,16 +323,19 @@ export default function Login() {
     getTxnQry.data?.data &&
     settingQry.data &&
     'data' in settingQry?.data &&
-    Number(settingQry.data.data.maintain_b2b) === 1
+    ((/Mobi/i.test(navigator.userAgent) &&
+      getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
+      (!/Mobi/i.test(navigator.userAgent) &&
+        getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
   ) {
     return (
       <>
         <Header />
         <div className="h-between-b2b"></div>
         <Modal
-          text="The system is currently under maintenance"
-          isLoading={glCancel.updTrxMut.isLoading}
-          cb={() => glCancel.cancel('M')}
+          text="You are unable to proceed with the transaction as the amount is more than the allowed limit"
+          isLoading={updTrxMut.isLoading}
+          cb={() => cancel('GL')}
         />
         {/* <div className="z-100 fixed inset-0 bg-black opacity-70">
           <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">

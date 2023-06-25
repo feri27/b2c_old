@@ -60,9 +60,7 @@ export default function SecurePhrase() {
         });
       }
     },
-    onError: (error) => {
-      console.log(error);
-    },
+    onError: (error) => {},
   });
 
   const loginSessionMut = useLoginSessionMutation({
@@ -96,7 +94,6 @@ export default function SecurePhrase() {
       setErrorVisible('hidden');
       if (privateKeyQry.data) {
         const secret = privateKeyQry.data.private_key;
-        console.log({ secret });
 
         const { encryptedTxt, iv } = encrypt(password, secret);
         loginMut.mutate({
@@ -184,7 +181,11 @@ export default function SecurePhrase() {
               Secure Phrase
             </h4>
             <div className="relative w-[120px] h-[35px]">
-              <Image alt="secure phrase image" src={'/images/demo.jpg'} fill />
+              <Image
+                alt="secure phrase image"
+                src={`data:image/png;base64,${securePhrase}`}
+                fill
+              />
             </div>
           </div>
           <div className="mb-[15px] font-normal text-sm">
@@ -252,7 +253,8 @@ export default function SecurePhrase() {
                 disabled={
                   loginMut.isLoading ||
                   updTrxMut.isLoading ||
-                  loginSessionMut.isLoading
+                  loginSessionMut.isLoading ||
+                  privateKeyQry.isLoading
                 }
               />
             </div>
@@ -282,7 +284,8 @@ export default function SecurePhrase() {
             disabled={
               loginMut.isLoading ||
               updTrxMut.isLoading ||
-              loginSessionMut.isLoading
+              loginSessionMut.isLoading ||
+              privateKeyQry.isLoading
             }
           >
             Cancel Transaction

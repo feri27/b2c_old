@@ -1,4 +1,10 @@
-import { initialSellerData, sellerDataAtom } from '@/atoms';
+import {
+  corporateLogonIDAtom,
+  initialSellerData,
+  sellerDataAtom,
+  userIDAtom,
+  usernameAtom,
+} from '@/atoms';
 import { updateLoginSession } from '@/services/common/loginSession';
 import { useMutation } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
@@ -8,6 +14,9 @@ import { useRouter } from 'next/navigation';
 export function useUpdateLoginSessionMutation() {
   const router = useRouter();
   const setSellerData = useSetAtom(sellerDataAtom);
+  const setUsername = useSetAtom(usernameAtom);
+  const setUserID = useSetAtom(userIDAtom);
+  const setCorporateLogonID = useSetAtom(corporateLogonIDAtom);
   const updateLoginSessionMut = useMutation({
     mutationFn: updateLoginSession,
     onSuccess: (data) => {
@@ -22,6 +31,9 @@ export function useUpdateLoginSessionMutation() {
         localStorage.removeItem('loginData');
         localStorage.removeItem('loginBData');
         setSellerData(initialSellerData);
+        setUsername('');
+        setUserID('');
+        setCorporateLogonID('');
         Cookies.remove('sessionExpiry');
         Cookies.remove('sessionID');
         Cookies.set('sessionStatus', 'expired');

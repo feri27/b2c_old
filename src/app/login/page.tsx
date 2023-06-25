@@ -52,17 +52,13 @@ export default function Login() {
   }
   useEffect(() => {
     if (
-      getTxnQry.data?.data &&
       settingQry.data &&
       'data' in settingQry?.data &&
-      ((/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry.data.data.rmb_limit) ||
-        (!/Mobi/i.test(navigator.userAgent) &&
-          getTxnQry.data.data.amount > +settingQry.data.data.rib_limit))
+      Number(settingQry.data.data.maintain_b2c) === 1
     ) {
-      cancel('GL');
+      glCancel.cancel('GL');
     }
-  }, [getTxnQry.data, settingQry.data]);
+  }, [settingQry.data]);
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
@@ -82,9 +78,7 @@ export default function Login() {
       });
       router.push('/secure-phrase');
     },
-    onError: (error) => {
-      console.log(error);
-    },
+    onError: (error) => {},
   });
 
   const handleSumbit = () => {
@@ -190,7 +184,7 @@ export default function Login() {
                   data-toggle="modal"
                   data-target="#myModal"
                   value="Cancel"
-                  onClick={(e) => cancel('U')}
+                  onClick={() => cancel('U')}
                   disabled={
                     checkUsernameMut.isLoading ||
                     updTrxMut.isLoading ||
@@ -241,9 +235,13 @@ export default function Login() {
       </>
     );
   } else if (
+    getTxnQry.data?.data &&
     settingQry.data &&
     'data' in settingQry?.data &&
-    Number(settingQry.data.data.maintain_b2c) === 1
+    ((/Mobi/i.test(navigator.userAgent) &&
+      getTxnQry.data.data.amount > +settingQry.data.data.rmb_limit) ||
+      (!/Mobi/i.test(navigator.userAgent) &&
+        getTxnQry.data.data.amount > +settingQry.data.data.rib_limit))
   ) {
     return (
       <>
@@ -253,12 +251,13 @@ export default function Login() {
         <div className="z-100 fixed inset-0 bg-black opacity-70">
           <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">
             <p className="text-xl text-red-500">
-              The system is currently under maintenance
+              You are unable to proceed with the transaction as the amount is
+              more than the allowed limit
             </p>
             <button
-              disabled={glCancel.updTrxMut.isLoading}
+              disabled={updTrxMut.isLoading}
               className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
-              onClick={() => glCancel.cancel('M')}
+              onClick={() => cancel('GL')}
             >
               OK
             </button>

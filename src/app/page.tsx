@@ -264,6 +264,7 @@ export default function Home() {
                   </th>
                   <td className={thClassName}>
                     <select
+                    value={inputs.merchantAccountType.value}
                       onChange={(e) =>
                         setInputs((val) => ({
                           ...val,
@@ -440,6 +441,8 @@ export default function Home() {
                   </th>
                   <td className={thClassName}>
                     <select
+                    value={inputs.channel.value}
+
                       className="select-bg !bg-white !border !border-solid !border-[#ced4da] !rounded !h-[26px] !py-0.5 !px-2.5 !outline-[#dee1e6]"
                       onChange={(e) =>
                         setInputs((val) => ({
