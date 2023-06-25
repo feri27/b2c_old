@@ -29,7 +29,7 @@ type UpdTrxReq = {
   productId: string;
   page: string;
   sessionID?: string;
-  reason: 'U' | 'C' | 'GL' | 'UL' | 'E';
+  reason: 'U' | 'C' | 'GL' | 'UL' | 'E' | 'M';
 };
 
 export async function getTransactionDetail({

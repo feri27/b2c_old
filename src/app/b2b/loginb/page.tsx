@@ -97,19 +97,19 @@ export default function Login() {
     );
   };
 
-  // useEffect(() => {
-  //   if (
-  //     getTxnQry.data?.data &&
-  //     settingQry.data &&
-  //     'data' in settingQry?.data &&
-  //     ((/Mobi/i.test(navigator.userAgent) &&
-  //       getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
-  //       (!/Mobi/i.test(navigator.userAgent) &&
-  //         getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
-  //   ) {
-  //     glCancel.cancel('GL');
-  //   }
-  // }, [getTxnQry.data, settingQry?.data]);
+  useEffect(() => {
+    if (
+      getTxnQry.data?.data &&
+      settingQry.data &&
+      'data' in settingQry?.data &&
+      ((/Mobi/i.test(navigator.userAgent) &&
+        getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
+        (!/Mobi/i.test(navigator.userAgent) &&
+          getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
+    ) {
+      cancel('GL');
+    }
+  }, [getTxnQry.data, settingQry?.data]);
 
   console.log('isActive', isActive);
 
@@ -325,10 +325,7 @@ export default function Login() {
     getTxnQry.data?.data &&
     settingQry.data &&
     'data' in settingQry?.data &&
-    ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
-      (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
+    Number(settingQry.data.data.maintain_b2b) === 1
   ) {
     return (
       <>
@@ -337,7 +334,7 @@ export default function Login() {
         <Modal
           text="The system is currently under maintenance"
           isLoading={glCancel.updTrxMut.isLoading}
-          cb={() => glCancel.cancel('GL')}
+          cb={() => glCancel.cancel('M')}
         />
         {/* <div className="z-100 fixed inset-0 bg-black opacity-70">
           <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">

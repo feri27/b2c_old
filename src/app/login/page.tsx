@@ -50,25 +50,19 @@ export default function Login() {
       JSON.stringify(getTxnQry.data.data)
     );
   }
-  console.log(
-    getTxnQry.data?.data !== undefined &&
-      settingQry.data !== undefined &&
-      'data' in settingQry?.data
-  );
-
-  // useEffect(() => {
-  //   if (
-  //     getTxnQry.data?.data &&
-  //     settingQry.data &&
-  //     'data' in settingQry?.data &&
-  //     ((/Mobi/i.test(navigator.userAgent) &&
-  //       getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
-  //       (!/Mobi/i.test(navigator.userAgent) &&
-  //         getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
-  //   ) {
-  //     glCancel.cancel('GL');
-  //   }
-  // }, [getTxnQry.data, settingQry.data]);
+  useEffect(() => {
+    if (
+      getTxnQry.data?.data &&
+      settingQry.data &&
+      'data' in settingQry?.data &&
+      ((/Mobi/i.test(navigator.userAgent) &&
+        getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
+        (!/Mobi/i.test(navigator.userAgent) &&
+          getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
+    ) {
+      cancel('GL');
+    }
+  }, [getTxnQry.data, settingQry.data]);
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
@@ -247,13 +241,9 @@ export default function Login() {
       </>
     );
   } else if (
-    getTxnQry.data?.data &&
     settingQry.data &&
     'data' in settingQry?.data &&
-    ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount > +settingQry.data.data.cmb_limit) ||
-      (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry.data.data.cib_limit))
+    Number(settingQry.data.data.maintain_b2c) === 1
   ) {
     return (
       <>
@@ -268,7 +258,7 @@ export default function Login() {
             <button
               disabled={glCancel.updTrxMut.isLoading}
               className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
-              onClick={() => glCancel.cancel('GL')}
+              onClick={() => glCancel.cancel('M')}
             >
               OK
             </button>

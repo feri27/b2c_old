@@ -21,7 +21,7 @@ export function useCancelTransaction({
   );
 
   const cancel = useCallback(
-    (reason: 'U' | 'GL' | 'UL' | 'C' | 'E') => {
+    (reason: 'U' | 'GL' | 'UL' | 'C' | 'E' | 'M') => {
       let lat: number | undefined;
       let long: number | undefined;
       if (navigator.geolocation) {
