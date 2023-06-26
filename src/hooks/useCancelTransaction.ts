@@ -29,7 +29,7 @@ export function useCancelTransaction({
     }
     const latLng = `${lat} ${long}`;
 
-    const sessionID = getSessionID();
+    const sessionID = getSessionID() ?? undefined;
     if (txnDetail) {
       updTrxMutation.mutate({
         endToEndId: txnDetail.endToEndId,

@@ -14,6 +14,7 @@ export function useLoginSessionMutation({
   const { isLoading, mutate } = useMutation({
     mutationFn: createLoginSession,
     onSuccess,
+    onError,
   });
   return { isLoading, mutate };
 }
