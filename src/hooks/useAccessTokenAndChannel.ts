@@ -10,7 +10,7 @@ export function useAccessTokenAndChannel() {
       setAccessToken(accessTkn);
     }
     if (chnl) {
-      setChannel(channel);
+      setChannel(chnl);
     }
   }, []);
   return [accessToken, channel];

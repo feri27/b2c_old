@@ -58,7 +58,7 @@ export default function Login() {
     ) {
       glCancel.cancel('GL', getTxnQry.data.data);
     }
-  }, [settingQry.data]);
+  }, [settingQry.data, getTxnQry.data]);
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
@@ -73,9 +73,7 @@ export default function Login() {
       );
 
       setSecurePhrase(data.data.body.securePhrase);
-      sessionStorage.setItem('accessToken', data.data.header.accessToken, {
-        sameSite: 'Strict',
-      });
+      sessionStorage.setItem('accessToken', data.data.header.accessToken);
       router.push('/secure-phrase');
     },
     onError: (error) => {

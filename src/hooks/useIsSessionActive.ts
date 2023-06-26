@@ -5,7 +5,7 @@ import { Dispatch, useLayoutEffect } from 'react';
 type SessionStatus = 'active' | 'expired' | undefined;
 
 export function useIsSessionActive(
-  setIsActiver: Dispatch<SetStateAction<boolean>>
+  setIsActive: Dispatch<SetStateAction<boolean>>
 ) {
   const pathName = usePathname();
   const router = useRouter();
@@ -37,7 +37,7 @@ export function useIsSessionActive(
       const sessionExpiry = parseInt(sessExp);
       const currentTimeInSeconds = Math.floor(Date.now() / 1000);
       if (currentTimeInSeconds > sessionExpiry) {
-        setIsActiver(false);
+        setIsActive(false);
       }
     }
   }, []);
