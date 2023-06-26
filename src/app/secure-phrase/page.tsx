@@ -21,6 +21,7 @@ import Cookies from 'js-cookie';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
+import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 
 export default function SecurePhrase() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function SecurePhrase() {
   const privateKeyQry = usePrivateKey();
 
   useSetuplocalStorage();
+  const transactionDetail = useTransactionDetail();
 
   const loginMut = useMutation({
     mutationFn: login,
@@ -116,7 +118,7 @@ export default function SecurePhrase() {
         <Modal
           text="Your session has expired"
           isLoading={updTrxMut.isLoading}
-          cb={() => cancel('E')}
+          cb={() => cancel('E', transactionDetail)}
         />
         <LoginFooter />
       </>
@@ -235,7 +237,7 @@ export default function SecurePhrase() {
                 data-toggle="modal"
                 data-target="#myModal"
                 defaultValue="Cancel"
-                onClick={() => cancel('U')}
+                onClick={() => cancel('U', transactionDetail)}
                 disabled={
                   loginMut.isLoading ||
                   updTrxMut.isLoading ||
@@ -280,7 +282,7 @@ export default function SecurePhrase() {
           </div>
           <button
             className="text-[#337ab7] text-sm disabled:cursor-not-allowed"
-            onClick={() => cancel('U')}
+            onClick={() => cancel('U', transactionDetail)}
             disabled={
               loginMut.isLoading ||
               updTrxMut.isLoading ||

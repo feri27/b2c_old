@@ -201,7 +201,7 @@ export default function PaymentDetail() {
   useEffect(() => {
     if (transactionDetail && loginData) {
       if (transactionDetail.amount > loginData.mbl.trxLimit) {
-        cancel('UL');
+        cancel('UL', transactionDetail);
       } else if (transactionDetail.amount > loginData.mbl.trxLimit * 0.5) {
         setShowOtp(true);
       } else if (transactionDetail.amount < loginData.mbl.trxLimit * 0.5) {
@@ -219,7 +219,7 @@ export default function PaymentDetail() {
         <Modal
           text="Your session has expired"
           isLoading={updTrxMut.isLoading}
-          cb={() => cancel('E')}
+          cb={() => cancel('E', transactionDetail)}
         />
         <Footer />
       </>
@@ -315,7 +315,7 @@ export default function PaymentDetail() {
             <div className="!mb-[15px] flex-wrap mt-2.5 justify-center gap-5 w-full padx flex">
               <input
                 type="button"
-                onClick={(e) => cancel('U')}
+                onClick={(e) => cancel('U', transactionDetail)}
                 disabled={
                   verifyOTPMut.isLoading ||
                   accPaymentMut.isLoading ||

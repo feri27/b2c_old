@@ -49,7 +49,7 @@ export default function PaymentInitiate() {
     loginBData &&
     transactionDetail.amount > loginBData.trxLimit - loginBData.usedLimit
   ) {
-    cancel('UL');
+    cancel('UL', transactionDetail);
   }
 
   const validateForm = () => {
@@ -87,7 +87,7 @@ export default function PaymentInitiate() {
         <Modal
           text="Your session has expired"
           isLoading={updTrxMut.isLoading}
-          cb={() => cancel('E')}
+          cb={() => cancel('E', transactionDetail)}
         />
       </Layout>
     );
@@ -224,7 +224,7 @@ export default function PaymentInitiate() {
           <div className="!mb-2.5 flex justify-center">
             <button
               // href="ibiz_paymentDetails-Fail.html"
-              onClick={() => cancel('U')}
+              onClick={() => cancel('U', transactionDetail)}
               disabled={createTxnMut.isLoading || updTrxMut.isLoading}
               className="border border-solid disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-center border-[#006fb3] py-[5px] px-[25px] leading-[1.2] w-[150px] m-2.5 text-[0.8rem] !rounded-[20px] bg-white"
             >

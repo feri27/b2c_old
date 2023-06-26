@@ -27,7 +27,7 @@ export default function Login() {
   const [username, setUsername] = useAtom(usernameAtom);
   const [_, setSecurePhrase] = useAtom(securePhraseAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
-  const [accessToken, channel] = useAccessTokenAndChannel();
+  const [__, channel] = useAccessTokenAndChannel();
   const sellerData = useAtomValue(sellerDataAtom);
 
   const { cancel, updTrxMut } = useCancelTransaction({ page: '/login' });
@@ -52,11 +52,12 @@ export default function Login() {
   }
   useEffect(() => {
     if (
+      getTxnQry.data &&
       settingQry.data &&
       'data' in settingQry?.data &&
       Number(settingQry.data.data.maintain_b2c) === 1
     ) {
-      glCancel.cancel('GL');
+      glCancel.cancel('GL', getTxnQry.data.data);
     }
   }, [settingQry.data]);
 
@@ -102,7 +103,7 @@ export default function Login() {
           isLoading={updTrxMut.isLoading}
           cb={() => {
             if (getTxnQry.data?.data) {
-              cancel('E');
+              cancel('E', getTxnQry.data.data);
             }
           }}
         />
@@ -178,20 +179,19 @@ export default function Login() {
             </div>
             <div className="mb-[15px] font-normal text-sm">
               <div className="mt-[25px] flex justify-between gap-5 ">
-                <input
-                  type="button"
+                <button
                   className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
-                  data-toggle="modal"
-                  data-target="#myModal"
                   value="Cancel"
-                  onClick={() => cancel('U')}
+                  onClick={() => cancel('U', getTxnQry?.data?.data)}
                   disabled={
                     checkUsernameMut.isLoading ||
                     updTrxMut.isLoading ||
                     settingQry.isLoading ||
                     getTxnQry.isLoading
                   }
-                />
+                >
+                  Cancel
+                </button>
                 <input
                   type="submit"
                   name="doSubmit"
@@ -257,7 +257,7 @@ export default function Login() {
             <button
               disabled={updTrxMut.isLoading}
               className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
-              onClick={() => cancel('GL')}
+              onClick={() => cancel('GL', getTxnQry.data?.data)}
             >
               OK
             </button>

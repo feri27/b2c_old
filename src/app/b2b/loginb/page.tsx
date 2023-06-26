@@ -99,11 +99,12 @@ export default function Login() {
 
   useEffect(() => {
     if (
+      getTxnQry.data &&
       settingQry.data &&
       'data' in settingQry?.data &&
       Number(settingQry.data.data.maintain_b2b) === 1
     ) {
-      glCancel.cancel('M');
+      glCancel.cancel('M', getTxnQry.data.data);
     }
   }, [, settingQry?.data]);
 
@@ -117,7 +118,7 @@ export default function Login() {
           isLoading={updTrxMut.isLoading}
           cb={() => {
             if (getTxnQry.data?.data) {
-              cancel('E');
+              cancel('E', getTxnQry.data.data);
             }
           }}
         />
@@ -223,7 +224,7 @@ export default function Login() {
                             <button
                               type="button"
                               value="Cancel"
-                              onClick={() => cancel('U')}
+                              onClick={() => cancel('U', getTxnQry.data?.data)}
                               className="cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed text-base  rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
                               disabled={
                                 loginAndNotifyMut.isLoading ||
@@ -335,7 +336,7 @@ export default function Login() {
         <Modal
           text="You are unable to proceed with the transaction as the amount is more than the allowed limit"
           isLoading={updTrxMut.isLoading}
-          cb={() => cancel('GL')}
+          cb={() => cancel('GL', getTxnQry.data?.data)}
         />
         {/* <div className="z-100 fixed inset-0 bg-black opacity-70">
           <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">

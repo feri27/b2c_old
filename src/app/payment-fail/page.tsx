@@ -55,7 +55,7 @@ export default function PaymentFail() {
             <div className="w-full md:w-2/3">
               <div id="accountSummary">
                 <div className="flex w-full flex-wrap ">
-                  <div className="md:w-2/3">UnSuccessful</div>
+                  <div className="md:w-2/3">Cancel</div>
                 </div>
               </div>
             </div>
