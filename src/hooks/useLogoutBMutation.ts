@@ -2,8 +2,14 @@ import { logout } from '@/services/logout';
 import { useMutation } from '@tanstack/react-query';
 import { useUpdateLoginSessionMutation } from './useUpdateLoginSessionMutation';
 import { getSessionID } from '@/utils/helpers';
+import { Dispatch } from 'react';
+import { SetStateAction } from 'jotai';
 
-export function useLogoutBMutation(page: string, reason: 'C' | 'S') {
+export function useLogoutBMutation(
+  page: string,
+  reason: 'C' | 'S',
+  setIsClicked: Dispatch<SetStateAction<boolean>>
+) {
   const updateLoginSessionMut = useUpdateLoginSessionMutation();
 
   const { isLoading, mutate } = useMutation({
@@ -26,6 +32,9 @@ export function useLogoutBMutation(page: string, reason: 'C' | 'S') {
         sessionID: sessionID!,
         reason,
       });
+    },
+    onError: () => {
+      setIsClicked(false);
     },
   });
   return {

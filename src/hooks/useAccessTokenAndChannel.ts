@@ -1,12 +1,11 @@
-import Cookies from 'js-cookie';
 import { useLayoutEffect, useState } from 'react';
 
 export function useAccessTokenAndChannel() {
   const [accessToken, setAccessToken] = useState('');
   const [channel, setChannel] = useState('');
   useLayoutEffect(() => {
-    const accessTkn = Cookies.get('accessToken');
-    const chnl = Cookies.get('channel');
+    const accessTkn = sessionStorage.getItem('accessToken');
+    const chnl = sessionStorage.getItem('channel');
     if (accessTkn) {
       setAccessToken(accessTkn);
     }

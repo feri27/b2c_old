@@ -43,7 +43,7 @@ export default function PaymentDetail() {
   const [authProceed, setAuthProceed] = useState(false);
   const privateKeyQry = usePrivateKey();
   const [accountType, setAccountType] = useState('SVGS');
-
+  const [isClicked, setIsClicked] = useState(false);
   useIsSessionActive(setIsActive);
 
   useSetuplocalStorage();
@@ -52,7 +52,6 @@ export default function PaymentDetail() {
     queryKey: ['account', loginData?.cif],
     queryFn: async () => account(loginData?.cif ?? ''),
     enabled: loginData?.cif !== undefined,
-
     onSuccess: (data) => {
       if (data)
         authorizeTxnMut.mutate({
@@ -105,6 +104,9 @@ export default function PaymentDetail() {
 
       router.push('/payment-success');
     },
+    onError: () => {
+      setIsClicked(false);
+    },
   });
 
   const accPaymentMut = useMutation({
@@ -138,6 +140,9 @@ export default function PaymentDetail() {
           channel,
         });
     },
+    onError: () => {
+      setIsClicked(false);
+    },
   });
 
   const verifyOTPMut = useMutation({
@@ -165,6 +170,9 @@ export default function PaymentDetail() {
           saving: accountType === 'SVGS',
         });
     },
+    onError: () => {
+      setIsClicked(false);
+    },
   });
 
   const proceedHandler = (e: FormEvent) => {
@@ -178,6 +186,7 @@ export default function PaymentDetail() {
         otp: encryptedTxt.toString('base64'),
         channel,
       });
+      setIsClicked(true);
     } else if (authProceed) {
       abortController.abort();
       if (accountQry.data) {
@@ -192,6 +201,7 @@ export default function PaymentDetail() {
           },
           saving: transactionDetail?.merchantAccountType[0] === 'SVGS',
         });
+        setIsClicked(true);
       }
     } else if (!authProceed) {
       setAuthProceed(true);
@@ -246,12 +256,7 @@ export default function PaymentDetail() {
           <div className="mb-[15px] bg-white border border-solid border-[#ddd] rounded shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
             <div className="py-[15px] px-[30px]">
               <AccountSelection
-                clicked={
-                  verifyOTPMut.isLoading ||
-                  accPaymentMut.isLoading ||
-                  notifyTxnMut.isLoading ||
-                  updTrxMut.isLoading
-                }
+                clicked={authProceed}
                 accType={accountType}
                 setAccType={setAccountType}
                 data={transactionDetail}
@@ -316,14 +321,7 @@ export default function PaymentDetail() {
               <input
                 type="button"
                 onClick={(e) => cancel('U', transactionDetail)}
-                disabled={
-                  verifyOTPMut.isLoading ||
-                  accPaymentMut.isLoading ||
-                  notifyTxnMut.isLoading ||
-                  updTrxMut.isLoading ||
-                  accountQry.isLoading ||
-                  authorizeTxnMut.isLoading
-                }
+                disabled={isClicked || updTrxMut.isLoading}
                 defaultValue="Cancel"
                 className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none w-full min-[480px]:w-auto !rounded-md   flex justify-center items-center"
               />
@@ -338,14 +336,7 @@ export default function PaymentDetail() {
                     ? "I've approved/reject my transaction via iSecure"
                     : 'Proceed'
                 }
-                disabled={
-                  verifyOTPMut.isLoading ||
-                  accPaymentMut.isLoading ||
-                  notifyTxnMut.isLoading ||
-                  updTrxMut.isLoading ||
-                  accountQry.isLoading ||
-                  authorizeTxnMut.isLoading
-                }
+                disabled={isClicked || updTrxMut.isLoading}
                 id="doSubmit"
               />
             </div>

@@ -16,7 +16,6 @@ import { useSettingQuery } from '@/hooks/useSettingQuery';
 import { useTransactionDetailQuery } from '@/hooks/useTransactionDetailQuery';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
 import { useLoginSessionMutation } from '@/hooks/useLoginSessionMutation';
-import Cookies from 'js-cookie';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
@@ -32,7 +31,7 @@ export default function Login() {
   const [corporateLogonID, setCorporateLogonID] = useAtom(corporateLogonIDAtom);
   const [password, setPassword] = useState('');
   const [_, channel] = useAccessTokenAndChannel();
-
+  const [isClicked, setIsClicked] = useState(false);
   const settingQry = useSettingQuery(channel as 'B2C' | 'B2B', '/b2b/loginb');
 
   const getTxnQry = useTransactionDetailQuery(sellerData, '/b2b/loginb');
@@ -51,9 +50,12 @@ export default function Login() {
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
-      Cookies.set('sessionID', data.data.sessionID);
-      Cookies.set('loginSessionStatus', 'active');
+      sessionStorage.setItem('sessionID', data.data.sessionID);
+      sessionStorage.setItem('loginSessionStatus', 'active');
       router.push('/b2b/payment-initiate');
+    },
+    onError: () => {
+      setIsClicked(false);
     },
   });
   const loginAndNotifyMut = useMutation({
@@ -72,6 +74,9 @@ export default function Login() {
         loginSessionMut.mutate({ page: '/b2b/loginb', userID: userID });
       }
     },
+    onError: () => {
+      setIsClicked(false);
+    },
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -86,6 +91,7 @@ export default function Login() {
         credential: encryptedTxt.toString('base64'),
         credentialIv: iv.toString('base64'),
       });
+      setIsClicked(true);
     }
   };
 
@@ -226,13 +232,7 @@ export default function Login() {
                               value="Cancel"
                               onClick={() => cancel('U', getTxnQry.data?.data)}
                               className="cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed text-base  rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
-                              disabled={
-                                loginAndNotifyMut.isLoading ||
-                                loginSessionMut.isLoading ||
-                                updTrxMut.isLoading ||
-                                settingQry.isLoading ||
-                                getTxnQry.isLoading
-                              }
+                              disabled={isClicked || updTrxMut.isLoading}
                             >
                               Cancel
                             </button>
@@ -243,11 +243,8 @@ export default function Login() {
                               className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-base rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
                               disabled={
                                 validateInput() ||
-                                loginAndNotifyMut.isLoading ||
-                                loginSessionMut.isLoading ||
-                                updTrxMut.isLoading ||
-                                settingQry.isLoading ||
-                                getTxnQry.isLoading
+                                isClicked ||
+                                updTrxMut.isLoading
                               }
                             >
                               Login

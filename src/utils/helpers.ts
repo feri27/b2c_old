@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import Cookies from 'js-cookie';
 export function generateEightDigitNum() {
   let randomNumber = Math.floor(Math.random() * 100000000);
   let paddedNumber = randomNumber.toString().padStart(8, '0');
@@ -33,6 +32,6 @@ export function sessionExpiryTime(seconds: number) {
 }
 
 export function getSessionID() {
-  const sessionID = Cookies.get('sessionID');
+  const sessionID = sessionStorage.getItem('sessionID');
   return sessionID;
 }

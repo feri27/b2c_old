@@ -1,5 +1,4 @@
 import { SetStateAction } from 'jotai';
-import Cookies from 'js-cookie';
 import { useRouter, usePathname } from 'next/navigation';
 import { Dispatch, useLayoutEffect } from 'react';
 
@@ -12,9 +11,11 @@ export function useIsSessionActive(
   const router = useRouter();
 
   useLayoutEffect(() => {
-    const sessExp = Cookies.get('sessionExpiry');
-    const sessStatus = Cookies.get('sessionStatus') as SessionStatus;
-    const loginSessStatus = Cookies.get('loginSessionStatus') as SessionStatus;
+    const sessExp = sessionStorage.getItem('sessionExpiry');
+    const sessStatus = sessionStorage.getItem('sessionStatus') as SessionStatus;
+    const loginSessStatus = sessionStorage.getItem(
+      'loginSessionStatus'
+    ) as SessionStatus;
     if (
       !sessExp ||
       (sessExp && !sessStatus) ||

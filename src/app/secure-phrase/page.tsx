@@ -17,7 +17,6 @@ import Header from '@/components/Header';
 import LoginFooter from '@/components/LoginFooter';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useLoginSessionMutation } from '@/hooks/useLoginSessionMutation';
-import Cookies from 'js-cookie';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
@@ -27,7 +26,7 @@ export default function SecurePhrase() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
   const [isActive, setIsActive] = useState<boolean>(true);
-
+  const [isClicked, setIsClicked] = useState(false);
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/secure-phrase',
   });
@@ -62,14 +61,19 @@ export default function SecurePhrase() {
         });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      setIsClicked(false);
+    },
   });
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
-      Cookies.set('sessionID', data.data.sessionID);
-      Cookies.set('loginSessionStatus', 'active');
+      sessionStorage.setItem('sessionID', data.data.sessionID);
+      sessionStorage.setItem('loginSessionStatus', 'active');
       router.push('/payment-detail');
+    },
+    onError: () => {
+      setIsClicked(false);
     },
   });
 
@@ -105,6 +109,7 @@ export default function SecurePhrase() {
           accessToken,
           channel,
         });
+        setIsClicked(true);
       }
     }
   };
@@ -238,11 +243,7 @@ export default function SecurePhrase() {
                 data-target="#myModal"
                 defaultValue="Cancel"
                 onClick={() => cancel('U', transactionDetail)}
-                disabled={
-                  loginMut.isLoading ||
-                  updTrxMut.isLoading ||
-                  loginSessionMut.isLoading
-                }
+                disabled={isClicked || updTrxMut.isLoading}
               />
               <input
                 type="submit"
@@ -252,12 +253,7 @@ export default function SecurePhrase() {
                 defaultValue="Login"
                 onClick={handleSubmit}
                 tabIndex={2}
-                disabled={
-                  loginMut.isLoading ||
-                  updTrxMut.isLoading ||
-                  loginSessionMut.isLoading ||
-                  privateKeyQry.isLoading
-                }
+                disabled={isClicked || updTrxMut.isLoading}
               />
             </div>
           </div>
@@ -283,12 +279,7 @@ export default function SecurePhrase() {
           <button
             className="text-[#337ab7] text-sm disabled:cursor-not-allowed"
             onClick={() => cancel('U', transactionDetail)}
-            disabled={
-              loginMut.isLoading ||
-              updTrxMut.isLoading ||
-              loginSessionMut.isLoading ||
-              privateKeyQry.isLoading
-            }
+            disabled={isClicked || updTrxMut.isLoading}
           >
             Cancel Transaction
           </button>

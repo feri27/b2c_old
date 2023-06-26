@@ -1,7 +1,6 @@
 import { retrieveSetting } from '@/services/common/setting';
 import { sessionExpiryTime } from '@/utils/helpers';
 import { useQuery } from '@tanstack/react-query';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 
 export function useSettingQuery(channel: 'B2B' | 'B2C', page: string) {
@@ -18,13 +17,16 @@ export function useSettingQuery(channel: 'B2B' | 'B2C', page: string) {
           router.push('/maintenance');
           return;
         }
-        const sessExp = Cookies.get('sessionExpiry');
+        const sessExp = sessionStorage.getItem('sessionExpiry');
         if (!sessExp) {
           const sessionToBeExpiredIn = sessionExpiryTime(
             data.data.session_expiry
           );
-          Cookies.set('sessionExpiry', sessionToBeExpiredIn.toString());
-          Cookies.set('sessionStatus', 'active');
+          sessionStorage.setItem(
+            'sessionExpiry',
+            sessionToBeExpiredIn.toString()
+          );
+          sessionStorage.setItem('sessionStatus', 'active');
         }
       }
     },

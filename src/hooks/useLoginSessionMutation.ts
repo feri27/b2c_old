@@ -6,8 +6,10 @@ import { useMutation } from '@tanstack/react-query';
 
 export function useLoginSessionMutation({
   onSuccess,
+  onError,
 }: {
   onSuccess: (data: LoginSessionRes) => void;
+  onError: (error: unknown) => void;
 }) {
   const { isLoading, mutate } = useMutation({
     mutationFn: createLoginSession,

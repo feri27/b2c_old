@@ -8,7 +8,6 @@ import {
 import { updateLoginSession } from '@/services/common/loginSession';
 import { useMutation } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 
 export function useUpdateLoginSessionMutation() {
@@ -25,8 +24,8 @@ export function useUpdateLoginSessionMutation() {
         data.message.includes('session not found') ||
         data.message.includes('privilege')
       ) {
-        Cookies.remove('accessToken');
-        Cookies.remove('channel');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('channel');
         localStorage.removeItem('transactionDetail');
         localStorage.removeItem('loginData');
         localStorage.removeItem('loginBData');
@@ -34,10 +33,10 @@ export function useUpdateLoginSessionMutation() {
         setUsername('');
         setUserID('');
         setCorporateLogonID('');
-        Cookies.remove('sessionExpiry');
-        Cookies.remove('sessionID');
-        Cookies.set('sessionStatus', 'expired');
-        Cookies.set('loginSessionStatus', 'expired');
+        sessionStorage.removeItem('sessionExpiry');
+        sessionStorage.removeItem('sessionID');
+        sessionStorage.setItem('sessionStatus', 'expired');
+        sessionStorage.setItem('loginSessionStatus', 'expired');
         router.push('/');
       }
     },

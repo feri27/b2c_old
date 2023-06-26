@@ -6,8 +6,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useAtom, useAtomValue } from 'jotai';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
-import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
 import LoginSidebar from '@/components/LoginSidebar';
@@ -29,6 +27,7 @@ export default function Login() {
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
   const [__, channel] = useAccessTokenAndChannel();
   const sellerData = useAtomValue(sellerDataAtom);
+  const [isClicked, setIsClicked] = useState(false);
 
   const { cancel, updTrxMut } = useCancelTransaction({ page: '/login' });
   const glCancel = useCancelTransaction({
@@ -74,12 +73,14 @@ export default function Login() {
       );
 
       setSecurePhrase(data.data.body.securePhrase);
-      Cookies.set('accessToken', data.data.header.accessToken, {
+      sessionStorage.setItem('accessToken', data.data.header.accessToken, {
         sameSite: 'Strict',
       });
       router.push('/secure-phrase');
     },
-    onError: (error) => {},
+    onError: (error) => {
+      setIsClicked(false);
+    },
   });
 
   const handleSumbit = () => {
@@ -89,6 +90,7 @@ export default function Login() {
     } else {
       setVisible('hidden');
       checkUsernameMut.mutate({ username, channel });
+      setIsClicked(true);
     }
   };
 
@@ -183,12 +185,7 @@ export default function Login() {
                   className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
                   value="Cancel"
                   onClick={() => cancel('U', getTxnQry?.data?.data)}
-                  disabled={
-                    checkUsernameMut.isLoading ||
-                    updTrxMut.isLoading ||
-                    settingQry.isLoading ||
-                    getTxnQry.isLoading
-                  }
+                  disabled={isClicked || updTrxMut.isLoading}
                 >
                   Cancel
                 </button>
@@ -200,12 +197,7 @@ export default function Login() {
                   value="Next"
                   onClick={handleSumbit}
                   tabIndex={2}
-                  disabled={
-                    checkUsernameMut.isLoading ||
-                    updTrxMut.isLoading ||
-                    settingQry.isLoading ||
-                    getTxnQry.isLoading
-                  }
+                  disabled={isClicked || updTrxMut.isLoading}
                 />
               </div>
             </div>

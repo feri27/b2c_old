@@ -11,13 +11,14 @@ export default function PaymentFail() {
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
   const [controller, setController] = useState(new AbortController());
-  const logoutMut = useLogout('/payment-fail', 'S');
-
+  const [isClicked, setIsClicked] = useState(false);
+  const logoutMut = useLogout('/payment-fail', 'S', setIsClicked);
   useSetuplocalStorage();
 
   const handleClick = () => {
     controller.abort();
     logoutMut.mutate({ accessToken, channel, page: '/payment-fail' });
+    setIsClicked(true);
   };
 
   const print = () => {
@@ -118,7 +119,7 @@ export default function PaymentFail() {
             type="button"
             onClick={print}
             value="Print"
-            disabled={logoutMut.isLoading}
+            disabled={isClicked}
             className="bg-[#f26f21]  w-full disabled:opacity-50 min-[480px]:w-auto cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
           />
 
@@ -126,7 +127,7 @@ export default function PaymentFail() {
           <button
             className="bg-[#f26f21]  w-full min-[480px]:w-auto disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
             id="doSubmit"
-            disabled={logoutMut.isLoading}
+            disabled={isClicked}
             onClick={handleClick}
           >
             <CountdownText cb={handleClick} controller={controller} count={3} />

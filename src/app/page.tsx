@@ -10,7 +10,6 @@ import { generateEightDigitNum, getDate } from '@/utils/helpers';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { channel } from 'diagnostics_channel';
 import { useSetAtom } from 'jotai';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useLayoutEffect, useState } from 'react';
 
@@ -56,6 +55,7 @@ function ErrorText({ text }: { text: String | null }) {
 export default function Home() {
   const router = useRouter();
   const [inputs, setInputs] = useState<Inputs>(defaultInputs);
+  const [isClicked, setIsClicked] = useState(false);
   const setSellerData = useSetAtom(sellerDataAtom);
   const merchantId = 'M00088';
   const date = getDate();
@@ -87,9 +87,7 @@ export default function Home() {
         sourceOfFund: inputs.sourceOfFund.values,
         merchantName: inputs.merchantName.value,
       });
-      Cookies.set('channel', inputs.channel.value, {
-        sameSite: 'Strict',
-      });
+      sessionStorage.setItem('channel', inputs.channel.value);
       if (inputs.channel.value === 'B2B') {
         setInputs(defaultInputs);
         router.push(`/b2b/loginb`);
@@ -141,6 +139,7 @@ export default function Home() {
       const newTxnID = txnStr + tnxNumPlus1.toString().padStart(8, '0');
 
       txnNumMut.mutate(newTxnID);
+      setIsClicked(true);
     }
   };
 
@@ -162,10 +161,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const sessionStatus = Cookies.get('sessionStatus');
-    const sessionID = Cookies.get('sessionID');
+    console.log('run');
+
+    const sessionStatus = sessionStorage.getItem('sessionStatus');
+    const sessionID = sessionStorage.getItem('sessionID');
     if (sessionID || (sessionStatus && sessionStatus === 'active')) return;
-    Cookies.set('sessionStatus', 'active');
+    sessionStorage.setItem('sessionStatus', 'active');
   }, []);
 
   const thClassName = 'py-1.5 px-[0.3rem] text-start';
@@ -264,7 +265,7 @@ export default function Home() {
                   </th>
                   <td className={thClassName}>
                     <select
-                    value={inputs.merchantAccountType.value}
+                      value={inputs.merchantAccountType.value}
                       onChange={(e) =>
                         setInputs((val) => ({
                           ...val,
@@ -441,8 +442,7 @@ export default function Home() {
                   </th>
                   <td className={thClassName}>
                     <select
-                    value={inputs.channel.value}
-
+                      value={inputs.channel.value}
                       className="select-bg !bg-white !border !border-solid !border-[#ced4da] !rounded !h-[26px] !py-0.5 !px-2.5 !outline-[#dee1e6]"
                       onChange={(e) =>
                         setInputs((val) => ({
@@ -525,7 +525,7 @@ export default function Home() {
             type="button"
             className="cursor-pointer disabled:opacity-50 py-1 px-3  block mx-auto w-4/6 sm:w-auto min-w-[20%] bg-[#0d6efd] rounded text-white"
             value="Pay"
-            disabled={txnNumMut.isLoading}
+            disabled={isClicked}
             onClick={handleSubmit}
           />
           <p className="text-[0.7rem] text-center">Version 1.10</p>

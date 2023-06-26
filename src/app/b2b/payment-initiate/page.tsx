@@ -25,7 +25,7 @@ export default function PaymentInitiate() {
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
   const [isActive, setIsActive] = useState<boolean>(true);
-
+  const [isClicked, setIsClicked] = useState(false);
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/payment-initiate',
     navigateTo: '/b2b/payment-fail',
@@ -37,6 +37,9 @@ export default function PaymentInitiate() {
     mutationFn: createTxn,
     onSuccess: (data) => {
       router.push('/b2b/payment-details');
+    },
+    onError: () => {
+      setIsClicked(false);
     },
   });
 
@@ -78,6 +81,7 @@ export default function PaymentInitiate() {
       trxStatus: 'C',
       trxTimestamp: transactionDetail?.currentDT ?? '',
     });
+    setIsClicked(true);
   };
 
   if (!isActive) {
@@ -115,7 +119,7 @@ export default function PaymentInitiate() {
                   <select
                     className="select-bg disabled:cursor-not-allowed disabled:opacity-30 select-bg-b2b mb-[10px]"
                     value={selectedAccount?.fromAccName}
-                    disabled={createTxnMut.isLoading || updTrxMut.isLoading}
+                    disabled={isClicked || updTrxMut.isLoading}
                     onChange={(e) => {
                       const acc = loginBData?.fromAccountList.find(
                         (account) => account.fromAccName === e.target.value
@@ -145,7 +149,13 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    value={selectedAccount?.fromAccAmount}
+                    value={selectedAccount?.fromAccAmount.toLocaleString(
+                      'en-US',
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
                     readOnly
                   />
                 </div>
@@ -225,7 +235,7 @@ export default function PaymentInitiate() {
             <button
               // href="ibiz_paymentDetails-Fail.html"
               onClick={() => cancel('U', transactionDetail)}
-              disabled={createTxnMut.isLoading || updTrxMut.isLoading}
+              disabled={isClicked || updTrxMut.isLoading}
               className="border border-solid disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-center border-[#006fb3] py-[5px] px-[25px] leading-[1.2] w-[150px] m-2.5 text-[0.8rem] !rounded-[20px] bg-white"
             >
               Cancel
@@ -238,9 +248,7 @@ export default function PaymentInitiate() {
               value="Submit"
               id="doSubmit"
               onClick={handleSubmit}
-              disabled={
-                validateForm() || createTxnMut.isLoading || updTrxMut.isLoading
-              }
+              disabled={validateForm() || isClicked || updTrxMut.isLoading}
             />
           </div>
         </div>
