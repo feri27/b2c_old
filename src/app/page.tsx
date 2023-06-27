@@ -161,8 +161,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    console.log('run');
-
     const sessionStatus = sessionStorage.getItem('sessionStatus');
     const sessionID = sessionStorage.getItem('sessionID');
     if (sessionID || (sessionStatus && sessionStatus === 'active')) return;

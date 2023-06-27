@@ -1,7 +1,7 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect } from 'react';
 
 export function useSetuplocalStorage() {
-  useLayoutEffect(() => {
+  useEffect(() => {
     const urlres = localStorage.getItem('urlres');
     if (!urlres) {
       localStorage.setItem('urlres', JSON.stringify([]));

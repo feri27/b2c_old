@@ -1,6 +1,6 @@
 import { SetStateAction } from 'jotai';
 import { useRouter, usePathname } from 'next/navigation';
-import { Dispatch, useLayoutEffect } from 'react';
+import { Dispatch, useEffect } from 'react';
 
 type SessionStatus = 'active' | 'expired' | undefined;
 
@@ -10,7 +10,7 @@ export function useIsSessionActive(
   const pathName = usePathname();
   const router = useRouter();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const sessExp = sessionStorage.getItem('sessionExpiry');
     const sessStatus = sessionStorage.getItem('sessionStatus') as SessionStatus;
     const loginSessStatus = sessionStorage.getItem(

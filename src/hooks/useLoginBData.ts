@@ -1,9 +1,9 @@
 import { LoginBResBody } from '@/services/b2b/auth';
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function useLoginBData() {
   const [loginBData, setLoginBData] = useState<LoginBResBody | null>(null);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const storedLgBData = localStorage.getItem('loginBData');
     setLoginBData(storedLgBData ? JSON.parse(storedLgBData) : null);
   }, []);
