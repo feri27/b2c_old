@@ -68,7 +68,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{tnxDetail?.merchantName}</p>
+                    <p>{tnxDetail?.creditorName}</p>
                   </div>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function PaymentStatus({
                     Pay To :
                   </label>
                   <div className="paymentLabelAdd col-xl-8 col-lg-8 col-md-8 col-12">
-                    {tnxDetail?.merchantName}
+                    {tnxDetail?.creditorName}
                   </div>
                 </div>
                 <div className="form-group mb-4 flex w-full space-x-1 ">
