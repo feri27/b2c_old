@@ -22,7 +22,12 @@ export type LoginResBody = LoginRes['data']['body'];
 
 export type LoginAndNotifyLoginCombined = {
   loginRes: LoginRes;
-  notifyRes?: { data: { header: ResponseHeader } };
+  notifyRes?: {
+    data: {
+      header: ResponseHeader;
+      body: { mfa: { method: string; validity: number } };
+    };
+  };
 };
 
 export async function login({
@@ -31,14 +36,16 @@ export async function login({
   accessToken,
   iv,
   channel,
+  txnAmount,
 }: {
   username: string;
   password: string;
   accessToken: string;
   iv: string;
   channel: string;
+  txnAmount: number;
 }): Promise<LoginAndNotifyLoginCombined> {
-  const body = { username, password, accessToken, channel, iv };
+  const body = { username, password, accessToken, channel, iv, txnAmount };
 
   const res = await fetch(`${B2C_API_URL}/login`, {
     method: 'POST',
@@ -53,7 +60,7 @@ export async function login({
   } else {
     const notifyRes = await fetch(`${B2C_API_URL}/notifylogin`, {
       method: 'POST',
-      body: JSON.stringify({ accessToken }),
+      body: JSON.stringify({ accessToken, channel, txnAmount }),
       headers: {
         'Content-Type': 'application/json',
       },

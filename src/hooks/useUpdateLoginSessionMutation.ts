@@ -1,21 +1,16 @@
-import {
-  corporateLogonIDAtom,
-  initialSellerData,
-  sellerDataAtom,
-  userIDAtom,
-  usernameAtom,
-} from '@/atoms';
+import { corporateLogonIDAtom, userIDAtom, usernameAtom } from '@/atoms';
 import { updateLoginSession } from '@/services/common/loginSession';
 import { useMutation } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
+import { useTransactionDetail } from './useTransactionDetail';
 
 export function useUpdateLoginSessionMutation() {
   const router = useRouter();
-  const setSellerData = useSetAtom(sellerDataAtom);
   const setUsername = useSetAtom(usernameAtom);
   const setUserID = useSetAtom(userIDAtom);
   const setCorporateLogonID = useSetAtom(corporateLogonIDAtom);
+  const txnDetail = useTransactionDetail();
   const updateLoginSessionMut = useMutation({
     mutationFn: updateLoginSession,
     onSuccess: (data) => {
@@ -24,20 +19,24 @@ export function useUpdateLoginSessionMutation() {
         data.message.includes('session not found') ||
         data.message.includes('privilege')
       ) {
+        const redirectURL = txnDetail?.redirectURL;
         sessionStorage.removeItem('accessToken');
         sessionStorage.removeItem('channel');
-        localStorage.removeItem('transactionDetail');
-        localStorage.removeItem('loginData');
+        sessionStorage.removeItem('transactionDetail');
+        sessionStorage.removeItem('loginData');
         localStorage.removeItem('loginBData');
-        setSellerData(initialSellerData);
+        sessionStorage.removeItem('merchantData');
+        sessionStorage.removeItem('exp');
+
         setUsername('');
         setUserID('');
         setCorporateLogonID('');
         sessionStorage.removeItem('sessionExpiry');
         sessionStorage.removeItem('sessionID');
+        sessionStorage.removeItem('mfa');
         sessionStorage.setItem('sessionStatus', 'expired');
         sessionStorage.setItem('loginSessionStatus', 'expired');
-        router.push('/');
+        window.location.href = redirectURL!;
       }
     },
   });

@@ -21,6 +21,7 @@ import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 
 export default function SecurePhrase() {
   const router = useRouter();
@@ -30,8 +31,11 @@ export default function SecurePhrase() {
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/secure-phrase',
   });
-
-  useIsSessionActive(setIsActive);
+  useCheckMaintenaceTime();
+  useIsSessionActive(() => {
+    cancel('E', transactionDetail);
+    sessionStorage.setItem('exp', 'true');
+  });
 
   const privateKeyQry = usePrivateKey();
 
@@ -41,17 +45,17 @@ export default function SecurePhrase() {
   const loginMut = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      const urlres = JSON.parse(localStorage.getItem('urlres')!);
-      localStorage.setItem(
-        'urlres',
-        JSON.stringify([
-          ...urlres,
-          { url: '/login & /notifylogin', method: 'POST', response: data },
-        ])
-      );
+      console.log(data);
 
       if (data.notifyRes?.data.header.status === 1) {
-        localStorage.setItem(
+        sessionStorage.setItem(
+          'mfa',
+          JSON.stringify({
+            method: data.notifyRes.data.body.mfa.method,
+            validity: data.notifyRes.data.body.mfa.validity,
+          })
+        );
+        sessionStorage.setItem(
           'loginData',
           JSON.stringify(data.loginRes.data.body)
         );
@@ -59,6 +63,8 @@ export default function SecurePhrase() {
           page: '/login',
           userID: data.loginRes.data.body.cif,
         });
+      } else {
+        cancel('FR', transactionDetail);
       }
     },
     onError: (error) => {
@@ -108,27 +114,28 @@ export default function SecurePhrase() {
           iv: iv.toString('base64'),
           accessToken,
           channel,
+          txnAmount: +transactionDetail!.amount,
         });
         setIsClicked(true);
       }
     }
   };
 
-  if (!isActive) {
-    return (
-      <>
-        <SeparatorLine bottom={false} />
-        <Header backgroundImg={true} />
-        <div className="h-between-b2b"></div>
-        <Modal
-          text="Your session has expired"
-          isLoading={updTrxMut.isLoading}
-          cb={() => cancel('E', transactionDetail)}
-        />
-        <LoginFooter />
-      </>
-    );
-  }
+  // if (!isActive) {
+  //   return (
+  //     <>
+  //       <SeparatorLine bottom={false} />
+  //       <Header backgroundImg={true} />
+  //       <div className="h-between-b2b"></div>
+  //       <Modal
+  //         text="Your session has expired"
+  //         isLoading={updTrxMut.isLoading}
+  //         cb={() => cancel('E', transactionDetail)}
+  //       />
+  //       <LoginFooter />
+  //     </>
+  //   );
+  // }
 
   return (
     <>

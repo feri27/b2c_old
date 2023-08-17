@@ -1,8 +1,8 @@
 'use client';
-import { securePhraseAtom, sellerDataAtom, usernameAtom } from '@/atoms';
+import { securePhraseAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
 import { checkUsername } from '@/services/checkUsername';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAtom, useAtomValue } from 'jotai';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -17,38 +17,75 @@ import { useTransactionDetailQuery } from '@/hooks/useTransactionDetailQuery';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
+import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
+import { useMerchantData } from '@/hooks/useMerchantData';
+import { getSessionID } from '@/utils/helpers';
+import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 
 export default function Login() {
   const router = useRouter();
   const [isActive, setIsActive] = useState<boolean>(true);
-
   const [username, setUsername] = useAtom(usernameAtom);
   const [_, setSecurePhrase] = useAtom(securePhraseAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
   const [__, channel] = useAccessTokenAndChannel();
-  const sellerData = useAtomValue(sellerDataAtom);
+  const merchantData = useMerchantData();
   const [isClicked, setIsClicked] = useState(false);
-
+  const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
+  useCheckMaintenaceTime();
+  const getTxnQry = useTransactionDetailQuery(
+    merchantData,
+    '/login',
+    fetchTxnDetail
+  );
   const { cancel, updTrxMut } = useCancelTransaction({ page: '/login' });
+
   const glCancel = useCancelTransaction({
     page: '/login',
     navigateTo: '/maintenance',
   });
+  const updateTxnMut = useUpdateTxnMutation(false, '', (data) => {
+    if (
+      ('statusCode' in data && data['statusCode'] === 'ACTC') ||
+      data['statusCode'] === 'ACSP'
+    ) {
+      setFetchTxnDetail(true);
+    } else if ('error' in data && data['error'] === 'timeout') {
+      cancel('TO', merchantData);
+    } else {
+      cancel('FR', merchantData);
+    }
+  });
 
-  const getTxnQry = useTransactionDetailQuery(sellerData, '/login');
-
-  useIsSessionActive(setIsActive);
+  useIsSessionActive(() => {
+    cancel('E', merchantData);
+    sessionStorage.setItem('exp', 'true');
+  });
 
   useSetuplocalStorage();
 
   const settingQry = useSettingQuery(channel as 'B2C' | 'B2B', '/login');
 
-  if (getTxnQry.data) {
-    localStorage.setItem(
-      'transactionDetail',
-      JSON.stringify(getTxnQry.data.data)
-    );
-  }
+  useEffect(() => {
+    if (merchantData.endToEndIDSignature !== '') {
+      const signature = atob(merchantData.endToEndIDSignature);
+      if (signature !== merchantData.endToEndId) {
+        cancel('VF', merchantData);
+      } else {
+        const sessionID = getSessionID();
+        updateTxnMut.mutate({
+          dbtrAgt: merchantData.dbtrAgt,
+          endToEndId: merchantData.endToEndId,
+          gpsCoord: '',
+          merchantId: merchantData.msgId,
+          page: '/login',
+          reason: 'VP',
+          sessionID,
+          channel,
+        });
+      }
+    }
+  }, [merchantData.endToEndIDSignature]);
   useEffect(() => {
     if (
       getTxnQry.data &&
@@ -63,20 +100,16 @@ export default function Login() {
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
     onSuccess: (data) => {
-      const urlres = JSON.parse(localStorage.getItem('urlres')!);
-      localStorage.setItem(
-        'urlres',
-        JSON.stringify([
-          ...urlres,
-          { url: '/checkusername', method: 'POST', response: data },
-        ])
-      );
-
-      setSecurePhrase(data.data.body.securePhrase);
-      sessionStorage.setItem('accessToken', data.data.header.accessToken);
-      router.push('/secure-phrase');
+      if (data.data.header.errorId || 'message' in data) {
+        cancel('FR', merchantData);
+      } else {
+        setSecurePhrase(data.data.body.securePhrase);
+        sessionStorage.setItem('accessToken', data.data.header.accessToken);
+        router.push('/secure-phrase');
+      }
     },
     onError: (error) => {
+      cancel('FR', merchantData);
       setIsClicked(false);
     },
   });
@@ -92,25 +125,25 @@ export default function Login() {
     }
   };
 
-  if (!isActive) {
-    return (
-      <>
-        <SeparatorLine bottom={false} />
-        <Header backgroundImg={true} />
-        <div className="h-between"></div>
-        <Modal
-          text="Your session has expired"
-          isLoading={updTrxMut.isLoading}
-          cb={() => {
-            if (getTxnQry.data?.data) {
-              cancel('E', getTxnQry.data.data);
-            }
-          }}
-        />
-        <LoginFooter />
-      </>
-    );
-  }
+  // if (!isActive) {
+  //   return (
+  //     <>
+  //       <SeparatorLine bottom={false} />
+  //       <Header backgroundImg={true} />
+  //       <div className="h-between"></div>
+  //       <Modal
+  //         text="Your session has expired"
+  //         isLoading={updTrxMut.isLoading}
+  //         cb={() => {
+  //           if (getTxnQry.data?.data) {
+  //             cancel('E', getTxnQry.data.data);
+  //           }
+  //         }}
+  //       />
+  //       <LoginFooter />
+  //     </>
+  //   );
+  // }
   if (
     getTxnQry.data?.data &&
     settingQry.data &&

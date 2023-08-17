@@ -4,9 +4,7 @@ import React from 'react';
 //TODO: need some work
 export default function Footer() {
   return (
-    <footer
-      className={`before:box-border mx-auto padx bg-white mt-[50px] after:box-border block text-sm`}
-    >
+    <footer className="before:box-border mx-auto padx bg-white mt-[50px] after:box-border  text-sm">
       <div className="min-h-[38px] pt-6 px-3.5 pb-3.5" role="contentinfo">
         <div className="flex justify-between flex-wrap items-center">
           <div className="">

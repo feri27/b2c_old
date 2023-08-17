@@ -1,15 +1,11 @@
 'use client';
-
-import { sellerDataAtom } from '@/atoms';
-import { useIsSessionActive } from '@/hooks/useIsSessionActive';
+import { submitMerchantData } from '@/services/common/merchantDate';
 import {
   getTransactionNumber,
   postTransactionNumber,
 } from '@/services/common/transaction';
-import { generateEightDigitNum, getDate } from '@/utils/helpers';
+import { getDate } from '@/utils/helpers';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { channel } from 'diagnostics_channel';
-import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useLayoutEffect, useState } from 'react';
 
@@ -27,12 +23,18 @@ type Inputs = {
   amount: InputState;
   merchantAccountType: InputState;
   customerName: InputState;
-  paymentDescription: InputState;
+  username: InputState;
   merchantName: InputState;
   productID: InputState;
   recipientReference: InputState;
   sourceOfFund: SrcOfFundInputState;
   channel: InputState;
+  customerMBL: InputState;
+  customerMSL: InputState;
+  customerUsedMBL: InputState;
+  customerUsedMSL: InputState;
+  mfaMethod: InputState;
+  redirectURL: InputState;
 };
 
 const defaultInputState = { error: null, value: '' };
@@ -40,12 +42,18 @@ const defaultInputs: Inputs = {
   customerName: defaultInputState,
   merchantAccountType: defaultInputState,
   merchantName: defaultInputState,
-  paymentDescription: defaultInputState,
+  username: defaultInputState,
   productID: defaultInputState,
   sourceOfFund: { error: null, values: new Set<string>() },
   recipientReference: defaultInputState,
   amount: defaultInputState,
   channel: defaultInputState,
+  customerMBL: defaultInputState,
+  customerMSL: defaultInputState,
+  customerUsedMBL: defaultInputState,
+  customerUsedMSL: defaultInputState,
+  mfaMethod: defaultInputState,
+  redirectURL: defaultInputState,
 };
 
 function ErrorText({ text }: { text: String | null }) {
@@ -55,58 +63,89 @@ function ErrorText({ text }: { text: String | null }) {
 export default function Home() {
   const router = useRouter();
   const [inputs, setInputs] = useState<Inputs>(defaultInputs);
+  const [expiryDate, setExpiryDate] = useState<{
+    value: string;
+    error: string | null;
+  }>({ value: '', error: null });
   const [isClicked, setIsClicked] = useState(false);
-  const setSellerData = useSetAtom(sellerDataAtom);
-  const merchantId = 'M00088';
   const date = getDate();
 
   const txnNumQry = useQuery({
     queryKey: ['txn_num'],
     queryFn: getTransactionNumber,
-    cacheTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   const txnNumMut = useMutation({
     mutationFn: postTransactionNumber,
-    onSuccess: (data) => {
-      const endToEndIDSignature = btoa(endToEndId);
-      //?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndID}&EndtoEndIdSignature=${endToEndIDSignature}
-      setSellerData({
-        dbtrAgt,
-        endToEndId,
-        trxId,
-        messageId,
-        merchantId,
-        amount: inputs.amount.value,
-        channel: inputs.channel.value,
-        customerName: inputs.customerName.value,
-        merchantAccountType: inputs.merchantAccountType.value,
-        paymentDescription: inputs.paymentDescription.value,
-        productID: inputs.productID.value,
-        recipientReference: inputs.recipientReference.value,
-        sourceOfFund: inputs.sourceOfFund.values,
-        merchantName: inputs.merchantName.value,
-      });
-      sessionStorage.setItem('channel', inputs.channel.value);
-      if (inputs.channel.value === 'B2B') {
-        setInputs(defaultInputs);
-        router.push(`/b2b/loginb`);
-      } else {
-        setInputs(defaultInputs);
-        router.push('/login');
-      }
+    onError: () => {
+      setIsClicked(false);
     },
   });
 
-  const trxId = date + merchantId + '861' + (txnNumQry.data?.txn_num ?? '');
-  const messageId =
-    date + merchantId + '861RB' + (txnNumQry.data?.txn_num ?? '');
+  const merchantDataMut = useMutation({
+    mutationFn: submitMerchantData,
+    onSuccess: (data) => {
+      if ('id' in data) {
+        sessionStorage.setItem(
+          'merchantData',
+          JSON.stringify({
+            dbtrAgt,
+            endToEndId,
+            txnId: trxId,
+            msgId: messageId,
+            merchantId,
+            amount: +inputs.amount.value,
+            channel: inputs.channel.value,
+            creditorName: inputs.customerName.value,
+            mfaMethod: inputs.mfaMethod.value,
+            username: inputs.username.value,
+            refs1: inputs.recipientReference.value,
+            accptblSrcOfFunds: Array.from(inputs.sourceOfFund.values).join(','),
+            merchantName: inputs.merchantName.value,
+            endToEndIDSignature,
+          })
+        );
+        sessionStorage.setItem('channel', inputs.channel.value);
+        if (inputs.channel.value === 'B2B') {
+          setInputs(defaultInputs);
+          router.push(`/b2b/loginb`);
+        } else {
+          setInputs(defaultInputs);
+          router.push('/login');
+        }
+      }
+    },
+    onError: () => {
+      setIsClicked(false);
+    },
+  });
+  const merchantId = 'BKRM0602';
+  const cc =
+    inputs.channel.value === 'B2C'
+      ? 'RB'
+      : inputs.channel.value === 'B2B'
+      ? 'CB'
+      : '';
+  const trxId =
+    date + merchantId + '862' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
+  const messageId = date + merchantId + '862' + (txnNumQry.data?.txn_num ?? '');
   const endToEndId =
-    date + merchantId + '861RB' + (txnNumQry.data?.txn_num ?? '');
-  const dbtrAgt = 'BKRM0602';
+    date + merchantId + '862' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
+  const dbtrAgt = merchantId;
+  const endToEndIDSignature = btoa(endToEndId);
+  const redirectURL = `http://54.255.0.143:3000/RPP/MY/Redirect/Consent?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndId}&EndtoEndIdSignature=${endToEndIDSignature}`;
+
   const handleSubmit = () => {
+    if (!expiryDate.value) {
+      setExpiryDate((prev) => ({ ...prev, error: 'please select date' }));
+    }
     const emptyFields = Object.entries(inputs)
       .filter((input) => {
+        if (input[0] === 'merchantAccountType' || input[0] === 'productID') {
+          return false;
+        }
         if (input[0] === 'sourceOfFund') {
           const ipt = input[1] as SrcOfFundInputState;
           return !ipt.values || ipt.values.size === 0;
@@ -120,6 +159,8 @@ export default function Home() {
           input[1].error = 'please select a value';
         } else if (input[0] === 'sourceOfFund') {
           input[1].error = 'please choose at least one';
+        } else if (input[0] === 'mfaMethod') {
+          input[1].error = 'please choose a value';
         } else {
           input[1].error = 'please enter a value';
         }
@@ -138,12 +179,30 @@ export default function Home() {
       const tnxNumPlus1 = +txnNum + 1;
       const newTxnID = txnStr + tnxNumPlus1.toString().padStart(8, '0');
 
-      txnNumMut.mutate(newTxnID);
+      // txnNumMut.mutate(newTxnID);
+      merchantDataMut.mutate({
+        endToEndId,
+        txnId: trxId,
+        msgId: messageId,
+        amount: +inputs.amount.value,
+        payerName: inputs.customerName.value,
+        username: inputs.username.value,
+        redirectUrl: inputs.redirectURL.value,
+        refs1: inputs.recipientReference.value,
+        accptblSrcOfFunds: Array.from(inputs.sourceOfFund.values).join(','),
+        creditorName: inputs.merchantName.value,
+        customerMBL: inputs.customerMBL.value,
+        customerMSL: inputs.customerMSL.value,
+        customerUsedMBL: inputs.customerUsedMBL.value,
+        customerUsedMSL: inputs.customerUsedMSL.value,
+        mfaMethod: inputs.mfaMethod.value,
+        xpryDt: expiryDate.value,
+      });
       setIsClicked(true);
     }
   };
 
-  const handleCheckBox = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleSrcOfFundCheckBox = (e: ChangeEvent<HTMLInputElement>) => {
     const set = inputs.sourceOfFund.values;
     if (set.has(e.target.value) && !e.target.checked) {
       set.delete(e.target.value);
@@ -182,7 +241,7 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody className="[&>*:nth-child(odd)]:bg-[var(--bs-table-striped-bg)] ">
-                <tr className="table-row ">
+                {/* <tr className="table-row ">
                   <th scope="row" className={thClassName}>
                     Merchant ID
                   </th>
@@ -194,6 +253,21 @@ export default function Home() {
                       defaultValue={merchantId}
                       readOnly
                       className="table-input outline-none"
+                    />
+                  </td>
+                </tr> */}
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    Message ID
+                  </th>
+                  <td className={thClassName}>
+                    <input
+                      id="messageID"
+                      type="text"
+                      className="table-input outline-none"
+                      name="messageID"
+                      value={messageId}
+                      readOnly
                     />
                   </td>
                 </tr>
@@ -212,21 +286,7 @@ export default function Home() {
                     />
                   </td>
                 </tr>
-                <tr>
-                  <th scope="row" className={thClassName}>
-                    Message ID
-                  </th>
-                  <td className={thClassName}>
-                    <input
-                      id="messageID"
-                      type="text"
-                      className="table-input outline-none"
-                      name="messageID"
-                      value={messageId}
-                      readOnly
-                    />
-                  </td>
-                </tr>
+
                 <tr>
                   <th scope="row" className={thClassName}>
                     End to End ID
@@ -257,7 +317,7 @@ export default function Home() {
                     />
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <th scope="row" className={thClassName}>
                     Merchant Account Type
                   </th>
@@ -283,7 +343,7 @@ export default function Home() {
                     </select>
                     <ErrorText text={inputs.merchantAccountType.error} />
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <th colSpan={2} className={`${thClassName}  pb-[25px]`}></th>
                 </tr>
@@ -298,7 +358,31 @@ export default function Home() {
               <tbody className="[&>*:nth-child(odd)]:bg-[var(--bs-table-striped-bg)]">
                 <tr>
                   <th scope="row" className={thClassName}>
-                    Customer Name
+                    Redirect URL
+                  </th>
+                  <td className={thClassName}>
+                    <input
+                      id="redirectURL"
+                      type="text"
+                      className="table-input outline-none"
+                      name="redirectURL"
+                      value={inputs.redirectURL.value}
+                      onChange={(e) => {
+                        setInputs((val) => ({
+                          ...val,
+                          redirectURL: {
+                            error: null,
+                            value: e.target.value,
+                          },
+                        }));
+                      }}
+                    />
+                    <ErrorText text={inputs.redirectURL.error} />
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    Payer Name
                   </th>
                   <td className={thClassName}>
                     <input
@@ -322,31 +406,31 @@ export default function Home() {
                 </tr>
                 <tr>
                   <th scope="row" className={thClassName}>
-                    Payment Description
+                    Username
                   </th>
                   <td className={thClassName}>
                     <input
-                      id="paymentDescription"
+                      id="username"
                       type="text"
                       className="table-input outline-none"
-                      name="paymentDescription"
-                      value={inputs.paymentDescription.value}
+                      name="username"
+                      value={inputs.username.value}
                       onChange={(e) => {
                         setInputs((val) => ({
                           ...val,
-                          paymentDescription: {
+                          username: {
                             error: null,
                             value: e.target.value,
                           },
                         }));
                       }}
                     />
-                    <ErrorText text={inputs.paymentDescription.error} />
+                    <ErrorText text={inputs.username.error} />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" className={thClassName}>
-                    Merchant Name
+                    Creditor Name
                   </th>
                   <td className={thClassName}>
                     <input
@@ -391,8 +475,98 @@ export default function Home() {
                 </tr>
                 <tr>
                   <th scope="row" className={thClassName}>
-                    Product ID
+                    Customer MBL
                   </th>
+                  <td className={thClassName}>
+                    <input
+                      id="customerMBL"
+                      type="number"
+                      className="table-input outline-none"
+                      name="customerMBL"
+                      value={inputs.customerMBL.value}
+                      onChange={(e) => {
+                        setInputs((val) => ({
+                          ...val,
+                          customerMBL: { error: null, value: e.target.value },
+                        }));
+                      }}
+                    />
+                    <ErrorText text={inputs.amount.error} />
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    Customer UsedMBL
+                  </th>
+                  <td className={thClassName}>
+                    <input
+                      id="customerUsedMBL"
+                      type="number"
+                      className="table-input outline-none"
+                      name="customerUsedMBL"
+                      value={inputs.customerUsedMBL.value}
+                      onChange={(e) => {
+                        setInputs((val) => ({
+                          ...val,
+                          customerUsedMBL: {
+                            error: null,
+                            value: e.target.value,
+                          },
+                        }));
+                      }}
+                    />
+                    <ErrorText text={inputs.amount.error} />
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    Customer MSL
+                  </th>
+                  <td className={thClassName}>
+                    <input
+                      id="customerMSL"
+                      type="number"
+                      className="table-input outline-none"
+                      name="customerMSL"
+                      value={inputs.customerMSL.value}
+                      onChange={(e) => {
+                        setInputs((val) => ({
+                          ...val,
+                          customerMSL: { error: null, value: e.target.value },
+                        }));
+                      }}
+                    />
+                    <ErrorText text={inputs.amount.error} />
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    Customer UsedMSL
+                  </th>
+                  <td className={thClassName}>
+                    <input
+                      id="customerUsedMSL"
+                      type="number"
+                      className="table-input outline-none"
+                      name="customerUsedMSL"
+                      value={inputs.customerUsedMSL.value}
+                      onChange={(e) => {
+                        setInputs((val) => ({
+                          ...val,
+                          customerUsedMSL: {
+                            error: null,
+                            value: e.target.value,
+                          },
+                        }));
+                      }}
+                    />
+                    <ErrorText text={inputs.amount.error} />
+                  </td>
+                </tr>
+                {/* <tr>
+                  <th scope="row" className={thClassName}>
+                    Product ID
+                  </th> 
                   <td className={thClassName}>
                     <input
                       id="productID"
@@ -409,7 +583,7 @@ export default function Home() {
                     />
                     <ErrorText text={inputs.productID.error} />
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <th scope="row" className={thClassName}>
                     Recipient Reference
@@ -432,6 +606,25 @@ export default function Home() {
                       }}
                     />
                     <ErrorText text={inputs.recipientReference.error} />
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    Expiry Date and Time
+                  </th>
+
+                  <td className={thClassName}>
+                    <input
+                      type="datetime-local"
+                      id="datetime"
+                      value={expiryDate.value}
+                      onChange={(e) =>
+                        setExpiryDate({ value: e.target.value, error: null })
+                      }
+                      className="table-input outline-none ml-1"
+                      name="datetime"
+                    />
+                    <ErrorText text={expiryDate.error} />
                   </td>
                 </tr>
                 <tr>
@@ -470,8 +663,8 @@ export default function Home() {
                         className="scale-[1.2]"
                         type="checkbox"
                         id="casa"
-                        value="CASA"
-                        onChange={handleCheckBox}
+                        value="01"
+                        onChange={handleSrcOfFundCheckBox}
                       />
                       <label
                         className="inline-block  pl-[0.15rem] hover:cursor-pointer"
@@ -485,8 +678,8 @@ export default function Home() {
                         className="scale-[1.2]"
                         type="checkbox"
                         id="creditCard"
-                        value="Credit Card"
-                        onChange={handleCheckBox}
+                        value="02"
+                        onChange={handleSrcOfFundCheckBox}
                       />
                       <label
                         className="inline-block pl-[0.15rem] hover:cursor-pointer"
@@ -501,8 +694,8 @@ export default function Home() {
                         className="scale-[1.2]"
                         type="checkbox"
                         id="eWallet"
-                        value="eWallet"
-                        onChange={handleCheckBox}
+                        value="03"
+                        onChange={handleSrcOfFundCheckBox}
                       />
                       <label
                         className="inline-block pl-[0.15rem] hover:cursor-pointer"
@@ -512,6 +705,36 @@ export default function Home() {
                       </label>
                     </div>
                     <ErrorText text={inputs.sourceOfFund.error} />
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className={thClassName}>
+                    MFA Method
+                  </th>
+                  <td className={thClassName}>
+                    <select
+                      value={inputs.mfaMethod.value}
+                      className="select-bg !bg-white !border !border-solid !border-[#ced4da] !rounded !h-[26px] !py-0.5 !px-2.5 !outline-[#dee1e6]"
+                      onChange={(e) =>
+                        setInputs((val) => ({
+                          ...val,
+                          mfaMethod: {
+                            error: null,
+                            value: e.target.value,
+                          },
+                        }))
+                      }
+                    >
+                      <option value=""></option>
+                      <option value="SMS">SMS OTP</option>
+                      <option value="MO">Mobile (iSecure) OTP</option>
+                      <option value="MA">Mobile (iSecure) Approval</option>
+                      <option value="NIL">Transaction Not Allowed</option>
+                      <option value="NR">
+                        Not ready or onboarded iSecure yet
+                      </option>
+                    </select>
+                    <ErrorText text={inputs.mfaMethod.error} />
                   </td>
                 </tr>
               </tbody>

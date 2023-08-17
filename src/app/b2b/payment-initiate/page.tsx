@@ -31,7 +31,10 @@ export default function PaymentInitiate() {
     navigateTo: '/b2b/payment-fail',
   });
 
-  useIsSessionActive(setIsActive);
+  useIsSessionActive(() => {
+    cancel('E', transactionDetail);
+    sessionStorage.setItem('exp', 'true');
+  });
 
   const createTxnMut = useMutation({
     mutationFn: createTxn,
@@ -73,7 +76,7 @@ export default function PaymentInitiate() {
       fromAccType: selectedAccount?.fromAccType ?? '',
       otherPmtDetails: transactionDetail?.recipientReference ?? '',
       referenceNo: transactionDetail?.recipientReference ?? '',
-      sellerName: transactionDetail?.merchantName ?? '',
+      sellerName: transactionDetail?.creditorName ?? '',
       sellerOrdNo: transactionDetail?.recipientReference ?? '',
       totalAmount: transactionDetail?.amount ?? 0.0,
       trxAmount: transactionDetail?.amount ?? 0.0,
@@ -84,18 +87,18 @@ export default function PaymentInitiate() {
     setIsClicked(true);
   };
 
-  if (!isActive) {
-    return (
-      <Layout>
-        <div className="h-between-b2b"></div>
-        <Modal
-          text="Your session has expired"
-          isLoading={updTrxMut.isLoading}
-          cb={() => cancel('E', transactionDetail)}
-        />
-      </Layout>
-    );
-  }
+  // if (!isActive) {
+  //   return (
+  //     <Layout>
+  //       <div className="h-between-b2b"></div>
+  //       <Modal
+  //         text="Your session has expired"
+  //         isLoading={updTrxMut.isLoading}
+  //         cb={() => cancel('E', transactionDetail)}
+  //       />
+  //     </Layout>
+  //   );
+  // }
 
   return (
     <Layout>
@@ -171,7 +174,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    defaultValue={transactionDetail?.merchantName}
+                    defaultValue={transactionDetail?.creditorName}
                     readOnly
                   />
                 </div>

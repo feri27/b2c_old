@@ -1,21 +1,46 @@
 import { B2C_API_URL, COMMON_API_URL } from '@/utils/config';
+import { channel } from 'diagnostics_channel';
+
+export type Reason =
+  | 'U'
+  | 'C'
+  | 'GL'
+  | 'UL'
+  | 'E'
+  | 'M'
+  | 'VF'
+  | 'VP'
+  | 'TO'
+  | 'FR'
+  | 'ALF'
+  | 'MFA';
 
 export type GetTransactionDetail = {
   data: {
-    msgId: string;
+    msgid: string;
     currentDT: string;
     tnxId: string;
     amount: number;
-    merchantName: string;
+    payerName: string;
+    creditorName: string;
     currency: string;
+    redirectURL: string;
     recipientReference: string;
-    paymentDescription: string;
     productId: string;
     merchantID: string;
-    messageId: string;
     dbtrAgt: string;
-    merchantAccountType: Array<string>;
     endToEndId: string;
+    sourceOfFunds: string;
+    xpryDt: string;
+    frBIC: string;
+    toBIC: string;
+    dbtrAcctId: string;
+    dbtrAcctTp: string;
+    dbtrAgtBIC: string;
+    cdtrAcctId: string;
+    cdtrAcctTp: string;
+    cdtrAgtBIC: string;
+    bizSvc: string;
   };
 };
 
@@ -26,23 +51,26 @@ type UpdTrxReq = {
   endToEndId: string;
   gpsCoord: string;
   merchantId: string;
-  productId: string;
+  // productId: string;
   page: string;
   sessionID?: string;
-  reason: 'U' | 'C' | 'GL' | 'UL' | 'E' | 'M';
+  channel: string;
+  reason: Reason;
 };
 
 export async function getTransactionDetail({
   endToEndId,
   dbtrAgt,
   page,
+  channel,
 }: {
   endToEndId: string;
   dbtrAgt: string;
   page: string;
+  channel: string;
 }): Promise<GetTransactionDetail> {
   const res = await fetch(
-    `${B2C_API_URL}/gettransactiondetail?endToEndId=${endToEndId}&dbtrAgt=${dbtrAgt}&page=${page}`
+    `${B2C_API_URL}/gettransactiondetail?endToEndId=${endToEndId}&dbtrAgt=${dbtrAgt}&page=${page}&channel=${channel}`
   );
   return res.json();
 }

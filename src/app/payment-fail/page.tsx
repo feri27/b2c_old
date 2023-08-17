@@ -13,7 +13,15 @@ export default function PaymentFail() {
   const [controller, setController] = useState(new AbortController());
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-fail', 'S', setIsClicked);
+  const [expired, setExpired] = useState<boolean>();
   useSetuplocalStorage();
+
+  useEffect(() => {
+    const exp = sessionStorage.getItem('exp');
+    if (exp && exp === 'true') {
+      setExpired(true);
+    }
+  }, []);
 
   const handleClick = () => {
     controller.abort();
@@ -56,7 +64,13 @@ export default function PaymentFail() {
             <div className="w-full md:w-2/3">
               <div id="accountSummary">
                 <div className="flex w-full flex-wrap ">
-                  <div className="md:w-2/3">Cancel</div>
+                  <div className="md:w-2/3">
+                    {expired === undefined
+                      ? ''
+                      : expired
+                      ? 'Unsuccessful - Transaction has encountered timeout error'
+                      : 'Cancel'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -107,7 +121,7 @@ export default function PaymentFail() {
             </label>
             <div className="flex after:clear-both md:w-2/3">
               <div className="flex flex-wrap">
-                <p className="">{transactionDetail?.messageId}</p>
+                <p className="">{transactionDetail?.msgid}</p>
               </div>
             </div>
           </div>

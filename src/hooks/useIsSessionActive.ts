@@ -1,15 +1,14 @@
 import { SetStateAction } from 'jotai';
 import { useRouter, usePathname } from 'next/navigation';
 import { Dispatch, useEffect } from 'react';
+import { useTransactionDetail } from './useTransactionDetail';
 
 type SessionStatus = 'active' | 'expired' | undefined;
 
-export function useIsSessionActive(
-  setIsActive: Dispatch<SetStateAction<boolean>>
-) {
+export function useIsSessionActive(cb: () => void) {
   const pathName = usePathname();
   const router = useRouter();
-
+  const txnDetail = useTransactionDetail();
   useEffect(() => {
     const sessExp = sessionStorage.getItem('sessionExpiry');
     const sessStatus = sessionStorage.getItem('sessionStatus') as SessionStatus;
@@ -19,8 +18,7 @@ export function useIsSessionActive(
     if (
       !sessExp ||
       (sessExp && !sessStatus) ||
-      (sessExp && sessStatus === 'expired') ||
-      (sessExp && loginSessStatus === 'expired')
+      (sessExp && sessStatus === 'expired')
     ) {
       switch (pathName) {
         case '/':
@@ -33,12 +31,22 @@ export function useIsSessionActive(
           router.push('/');
           return;
       }
-    } else if (loginSessStatus === 'active' || sessStatus === 'active') {
+    } else if (sessStatus === 'active' || loginSessStatus === 'active') {
       const sessionExpiry = parseInt(sessExp);
+      const xpryDTtime =
+        txnDetail !== null
+          ? Math.floor(new Date(txnDetail.xpryDt).getTime() / 1000)
+          : undefined;
       const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-      if (currentTimeInSeconds > sessionExpiry) {
-        setIsActive(false);
+      console.log({ xpryDTtime });
+
+      if (
+        currentTimeInSeconds > sessionExpiry ||
+        (xpryDTtime && currentTimeInSeconds > xpryDTtime)
+      ) {
+        // setIsActive(false);
+        cb();
       }
     }
-  }, []);
+  }, [txnDetail]);
 }

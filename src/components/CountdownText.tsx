@@ -1,23 +1,27 @@
-import { useEffect, useState } from 'react';
+import { SetStateAction } from 'jotai';
+import { Dispatch, useEffect, useState } from 'react';
 
 export default function CountdownText({
   count,
   isNote = false,
   cb,
   controller,
+  setTimerOff,
 }: {
   count: number;
   isNote?: boolean;
   cb?: () => void;
   controller?: AbortController;
+  setTimerOff?: Dispatch<SetStateAction<boolean>>;
 }) {
   const [countdown, setCountdown] = useState(count);
 
   useEffect(() => {
-    if (!isNote && countdown === 0) {
+    if (countdown === 0) {
       cb?.();
+      setTimerOff?.(true);
     }
-  }, [countdown, isNote]);
+  }, [countdown]);
 
   useEffect(() => {
     const timer = setInterval(() => {

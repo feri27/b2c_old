@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  corporateLogonIDAtom,
-  loginBDataAtom,
-  sellerDataAtom,
-  userIDAtom,
-} from '@/atoms';
+import { corporateLogonIDAtom, loginBDataAtom, userIDAtom } from '@/atoms';
 import { loginB } from '@/services/b2b/auth';
 import { encrypt } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
@@ -22,19 +17,18 @@ import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import Header from '@/components/b2b/Header';
 import Footer from '@/components/b2b/Footer';
 import Modal from '@/components/common/Modal';
+import { useMerchantData } from '@/hooks/useMerchantData';
 
 export default function Login() {
   const router = useRouter();
-  const sellerData = useAtomValue(sellerDataAtom);
-  const [isActive, setIsActive] = useState<boolean>(true);
   const [userID, setUserID] = useAtom(userIDAtom);
   const [corporateLogonID, setCorporateLogonID] = useAtom(corporateLogonIDAtom);
   const [password, setPassword] = useState('');
   const [_, channel] = useAccessTokenAndChannel();
   const [isClicked, setIsClicked] = useState(false);
   const settingQry = useSettingQuery(channel as 'B2C' | 'B2B', '/b2b/loginb');
-
-  const getTxnQry = useTransactionDetailQuery(sellerData, '/b2b/loginb');
+  const merchantData = useMerchantData();
+  const getTxnQry = useTransactionDetailQuery(merchantData, '/b2b/loginb');
   const privateKeyQry = usePrivateKey();
 
   const { cancel, updTrxMut } = useCancelTransaction({
@@ -46,7 +40,10 @@ export default function Login() {
     navigateTo: '/b2b/maintenance',
   });
 
-  useIsSessionActive(setIsActive);
+  useIsSessionActive(() => {
+    cancel('E', merchantData);
+    sessionStorage.setItem('exp', 'true');
+  });
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
@@ -114,24 +111,24 @@ export default function Login() {
     }
   }, [, settingQry?.data]);
 
-  if (!isActive) {
-    return (
-      <>
-        <Header />
-        <div className="h-between-b2b"></div>
-        <Modal
-          text="Your session has expired"
-          isLoading={updTrxMut.isLoading}
-          cb={() => {
-            if (getTxnQry.data?.data) {
-              cancel('E', getTxnQry.data.data);
-            }
-          }}
-        />
-        <Footer />
-      </>
-    );
-  }
+  // if (!isActive) {
+  //   return (
+  //     <>
+  //       <Header />
+  //       <div className="h-between-b2b"></div>
+  //       <Modal
+  //         text="Your session has expired"
+  //         isLoading={updTrxMut.isLoading}
+  //         cb={() => {
+  //           if (getTxnQry.data?.data) {
+  //             cancel('E', getTxnQry.data.data);
+  //           }
+  //         }}
+  //       />
+  //       <Footer />
+  //     </>
+  //   );
+  // }
 
   if (
     getTxnQry.data?.data &&
@@ -275,7 +272,7 @@ export default function Login() {
                         <th scope="row" className="w-[41.7%] p-4 text-right">
                           Pay To
                         </th>
-                        <td>{getTxnQry.data.data.merchantName}</td>
+                        <td>{getTxnQry.data.data.creditorName}</td>
                       </tr>
                       <tr>
                         <th className="w-[41.7%] p-4 text-right" scope="row">

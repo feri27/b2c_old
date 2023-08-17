@@ -34,12 +34,15 @@ export default function AccountSelection({
                   onChange={(e) => setAccType(e.target.value)}
                   className="select-bg disabled:cursor-not-allowed bg-[#e9ecef] disabled:opacity-30 !h-[34px] !py-1.5 !px-3 !text-sm"
                 >
-                  {data?.merchantAccountType.map((accType) => (
+                  {data?.sourceOfFunds.split(',').map((accType) => (
                     <option key={accType} value={accType}>
-                      {accType === 'SVGS' && 'Saving Account'}
+                      {/* {accType === 'SVGS' && 'Saving Account'}
                       {accType === 'CACC' && 'Current Account'}
                       {accType === 'CCRD' && 'Credit Card'}
-                      {accType === 'WALL' && 'eWallet'}
+                      {accType === 'WALL' && 'eWallet'} */}
+                      {accType === '01' && 'Saving Account'}
+                      {accType === '02' && 'Credit Card'}
+                      {accType === '03' && 'eWallet'}
                     </option>
                   ))}
                 </select>
@@ -65,7 +68,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className="">{data?.merchantName}</p>
+            <p className="">{data?.creditorName}</p>
           </div>
         </div>
       </div>
@@ -75,7 +78,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className="">{data?.messageId}</p>
+            <p className="">{data?.msgid}</p>
           </div>
         </div>
       </div>

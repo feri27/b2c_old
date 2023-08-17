@@ -1,8 +1,9 @@
-import { TransactionDetail } from '@/services/common/transaction';
+import { Reason, TransactionDetail } from '@/services/common/transaction';
 import { useUpdateTxnMutation } from './useUpdateTxnMutation';
 import { useCallback, useMemo } from 'react';
 import { getSessionID } from '@/utils/helpers';
 import { useTransactionDetail } from './useTransactionDetail';
+import { MerchantData } from './useMerchantData';
 
 export function useCancelTransaction({
   page,
@@ -16,8 +17,8 @@ export function useCancelTransaction({
   const updTrxMutation = useUpdateTxnMutation(navigate, navigateTo);
 
   const cancel = (
-    reason: 'U' | 'GL' | 'UL' | 'C' | 'E' | 'M',
-    txnDetail: TransactionDetail | null | undefined
+    reason: Reason,
+    txnDetail: TransactionDetail | MerchantData | null | undefined
   ) => {
     let lat: number | undefined;
     let long: number | undefined;
@@ -29,17 +30,19 @@ export function useCancelTransaction({
     }
     const latLng = `${lat} ${long}`;
 
-    const sessionID = getSessionID() ?? undefined;
+    const sessionID = getSessionID();
+    const channel = sessionStorage.getItem('channel');
     if (txnDetail) {
       updTrxMutation.mutate({
         endToEndId: txnDetail.endToEndId,
         dbtrAgt: txnDetail.dbtrAgt,
         gpsCoord: latLng,
-        merchantId: txnDetail.merchantID,
-        productId: txnDetail.productId,
+        merchantId: 'merchantID' in txnDetail ? txnDetail.merchantID : '',
+        // productId: txnDetail.productId,
         page,
         reason,
         sessionID,
+        channel: channel!,
       });
     }
   };

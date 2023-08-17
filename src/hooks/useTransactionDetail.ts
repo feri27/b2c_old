@@ -5,7 +5,7 @@ export function useTransactionDetail() {
   const [transactionDetail, setTransactionDetail] =
     useState<TransactionDetail | null>(null);
   useEffect(() => {
-    const storedTnxData = localStorage.getItem('transactionDetail');
+    const storedTnxData = sessionStorage.getItem('transactionDetail');
 
     setTransactionDetail(storedTnxData ? JSON.parse(storedTnxData) : null);
   }, []);

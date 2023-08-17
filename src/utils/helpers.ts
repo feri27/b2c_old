@@ -33,5 +33,5 @@ export function sessionExpiryTime(seconds: number) {
 
 export function getSessionID() {
   const sessionID = sessionStorage.getItem('sessionID');
-  return sessionID;
+  return sessionID ?? undefined;
 }
