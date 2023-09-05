@@ -1,9 +1,9 @@
 'use client';
-import { securePhraseAtom, usernameAtom } from '@/atoms';
+import { cancelTypeAtom, securePhraseAtom, usernameAtom } from '@/atoms';
 import Steps from '@/components/Steps';
 import { checkUsername } from '@/services/checkUsername';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import SeparatorLine from '@/components/SeparatorLine';
@@ -21,10 +21,13 @@ import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { getSessionID } from '@/utils/helpers';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
+import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
+import { useCheckSignature } from '@/hooks/useCheckSignature';
+import { useCheckGlobalLimit } from '@/hooks/useCheckGlobalLimit';
 
 export default function Login() {
   const router = useRouter();
-  const [isActive, setIsActive] = useState<boolean>(true);
+  const setCancelType = useSetAtom(cancelTypeAtom);
   const [username, setUsername] = useAtom(usernameAtom);
   const [_, setSecurePhrase] = useAtom(securePhraseAtom);
   const [visible, setVisible] = useState<'hidden' | 'inline'>('hidden');
@@ -32,7 +35,9 @@ export default function Login() {
   const merchantData = useMerchantData();
   const [isClicked, setIsClicked] = useState(false);
   const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
-  useCheckMaintenaceTime();
+  const [fetchSettings, setFetchSettings] = useState(false);
+
+  useCheckMaintenaceTime('B2C');
   const getTxnQry = useTransactionDetailQuery(
     merchantData,
     '/login',
@@ -50,8 +55,9 @@ export default function Login() {
       data['statusCode'] === 'ACSP'
     ) {
       setFetchTxnDetail(true);
-    } else if ('error' in data && data['error'] === 'timeout') {
+    } else if ('message' in data && data['message'] === 'timeout') {
       cancel('TO', merchantData);
+      setCancelType('TO');
     } else {
       cancel('FR', merchantData);
     }
@@ -64,38 +70,22 @@ export default function Login() {
 
   useSetuplocalStorage();
 
-  const settingQry = useSettingQuery(channel as 'B2C' | 'B2B', '/login');
+  useSettingQuery(channel as 'B2C' | 'B2B', '/login', fetchSettings);
+  const approvedTxnLogQry = useGetApprovedTransactionLog();
 
-  useEffect(() => {
-    if (merchantData.endToEndIDSignature !== '') {
-      const signature = atob(merchantData.endToEndIDSignature);
-      if (signature !== merchantData.endToEndId) {
-        cancel('VF', merchantData);
-      } else {
-        const sessionID = getSessionID();
-        updateTxnMut.mutate({
-          dbtrAgt: merchantData.dbtrAgt,
-          endToEndId: merchantData.endToEndId,
-          gpsCoord: '',
-          merchantId: merchantData.msgId,
-          page: '/login',
-          reason: 'VP',
-          sessionID,
-          channel,
-        });
-      }
-    }
-  }, [merchantData.endToEndIDSignature]);
-  useEffect(() => {
-    if (
-      getTxnQry.data &&
-      settingQry.data &&
-      'data' in settingQry?.data &&
-      Number(settingQry.data.data.maintain_b2c) === 1
-    ) {
-      glCancel.cancel('GL', getTxnQry.data.data);
-    }
-  }, [settingQry.data, getTxnQry.data]);
+  useCheckSignature({
+    cancel,
+    updateTxnMut,
+    channel: channel || 'B2C',
+  });
+
+  useCheckGlobalLimit(
+    getTxnQry.data,
+    approvedTxnLogQry.data,
+    glCancel.cancel,
+    'B2C',
+    setFetchSettings
+  );
 
   const checkUsernameMut = useMutation({
     mutationFn: checkUsername,
@@ -146,12 +136,14 @@ export default function Login() {
   // }
   if (
     getTxnQry.data?.data &&
-    settingQry.data &&
-    'data' in settingQry.data &&
+    (getTxnQry.data.data.status === 'ACTC' ||
+      getTxnQry.data?.data.status === 'ACSP') &&
+    approvedTxnLogQry.data &&
+    'txnLog' in approvedTxnLogQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < +settingQry.data.data.rmb_limit) ||
+      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cRMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < +settingQry.data.data.rib_limit))
+        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cRIB))
   ) {
     return (
       <>
@@ -253,38 +245,6 @@ export default function Login() {
             <div className="clear"></div>
           </div>
           <LoginSidebar />
-        </div>
-        <LoginFooter />
-      </>
-    );
-  } else if (
-    getTxnQry.data?.data &&
-    settingQry.data &&
-    'data' in settingQry?.data &&
-    ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount > +settingQry.data.data.rmb_limit) ||
-      (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry.data.data.rib_limit))
-  ) {
-    return (
-      <>
-        <SeparatorLine bottom={false} />
-        <Header backgroundImg={true} />
-        <div className="h-between"></div>
-        <div className="z-100 fixed inset-0 bg-black opacity-70">
-          <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">
-            <p className="text-xl text-red-500">
-              You are unable to proceed with the transaction as the amount is
-              more than the allowed limit
-            </p>
-            <button
-              disabled={updTrxMut.isLoading}
-              className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
-              onClick={() => cancel('GL', getTxnQry.data?.data)}
-            >
-              OK
-            </button>
-          </div>
         </div>
         <LoginFooter />
       </>

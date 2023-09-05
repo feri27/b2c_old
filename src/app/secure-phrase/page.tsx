@@ -31,7 +31,7 @@ export default function SecurePhrase() {
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/secure-phrase',
   });
-  useCheckMaintenaceTime();
+  useCheckMaintenaceTime('B2C');
   useIsSessionActive(() => {
     cancel('E', transactionDetail);
     sessionStorage.setItem('exp', 'true');

@@ -3,7 +3,11 @@ import { sessionExpiryTime } from '@/utils/helpers';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
-export function useSettingQuery(channel: 'B2B' | 'B2C', page: string) {
+export function useSettingQuery(
+  channel: 'B2B' | 'B2C',
+  page: string,
+  enabled: boolean
+) {
   const router = useRouter();
   const { isLoading, data } = useQuery({
     queryKey: ['setting'],
@@ -30,6 +34,7 @@ export function useSettingQuery(channel: 'B2B' | 'B2C', page: string) {
         }
       }
     },
+    enabled: enabled,
   });
   return {
     isLoading,

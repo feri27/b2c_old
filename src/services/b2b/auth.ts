@@ -25,8 +25,8 @@ type LoginBRes = {
 export type LoginBResBody = LoginBRes['data']['body'];
 
 export type LoginAndNotifyLoginCombined = {
-  loginRes: LoginBRes;
-  notifyRes?: { data: { header: ResponseHeader } };
+  loginRes: LoginBRes | { message: string };
+  notifyRes?: { data: { header: ResponseHeader } } | { message: string };
 };
 
 export async function loginB({
@@ -57,18 +57,18 @@ export async function loginB({
       'Content-Type': 'application/json',
     },
   });
-  const loginRes = (await res.json()) as LoginBRes;
-  if (!(loginRes.data.header.status === 1)) {
+  const loginRes = (await res.json()) as LoginBRes | { message: string };
+  if ('message' in loginRes || !(loginRes.data.header.status === 1)) {
     return { loginRes };
   } else {
-    const notifyRes = await fetch(`${B2B_API_URL}/notify-loginb`, {
+    const notifyResponse = await fetch(`${B2B_API_URL}/notify-loginb`, {
       method: 'POST',
       body: JSON.stringify({ accessToken }),
       headers: {
         'Content-Type': 'application/json',
       },
     });
-    const result = await notifyRes.json();
+    const result = await notifyResponse.json();
     return {
       loginRes,
       notifyRes: result,

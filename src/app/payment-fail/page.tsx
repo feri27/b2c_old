@@ -1,10 +1,12 @@
 'use client';
+import { cancelTypeAtom } from '@/atoms';
 import CountdownText from '@/components/CountdownText';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
 import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
 
 export default function PaymentFail() {
@@ -14,6 +16,7 @@ export default function PaymentFail() {
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-fail', 'S', setIsClicked);
   const [expired, setExpired] = useState<boolean>();
+  const cancelType = useAtomValue(cancelTypeAtom);
   useSetuplocalStorage();
 
   useEffect(() => {
@@ -22,6 +25,15 @@ export default function PaymentFail() {
       setExpired(true);
     }
   }, []);
+
+  const description =
+    cancelType === ''
+      ? ''
+      : cancelType === 'TO'
+      ? 'Unsuccessful - Transaction has encountered timeout error'
+      : cancelType === 'EXP'
+      ? 'Unsuccessful - Transaction has expired'
+      : 'Transaction has been canceled';
 
   const handleClick = () => {
     controller.abort();
@@ -64,13 +76,7 @@ export default function PaymentFail() {
             <div className="w-full md:w-2/3">
               <div id="accountSummary">
                 <div className="flex w-full flex-wrap ">
-                  <div className="md:w-2/3">
-                    {expired === undefined
-                      ? ''
-                      : expired
-                      ? 'Unsuccessful - Transaction has encountered timeout error'
-                      : 'Cancel'}
-                  </div>
+                  <div className="md:w-2/3">{description}</div>
                 </div>
               </div>
             </div>

@@ -43,7 +43,7 @@ export default function PaymentDetail() {
     page: '/payment-detail',
   });
   const updateTxnMut = useUpdateTxnMutation(false, '');
-  useCheckMaintenaceTime();
+  useCheckMaintenaceTime('B2C');
   const loginData = useLoginData();
   const transactionDetail = useTransactionDetail();
   const [timerOff, setTimerOff] = useState<boolean>(false);
@@ -134,6 +134,14 @@ export default function PaymentDetail() {
           reason: 'MFA',
           sessionID,
           channel,
+          amount:
+            transactionDetail !== null
+              ? transactionDetail.amount.toString()
+              : '',
+          payerName: transactionDetail?.payerName ?? '',
+          cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
+          dbtrAcctId: transactionDetail?.dbtrAcctId ?? '',
+          dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
         });
         if (accountQry.data)
           notifyTxnMut.mutate({
@@ -393,7 +401,7 @@ export default function PaymentDetail() {
       }
       let newSocket = socket;
       if (!newSocket) {
-        newSocket = io('http://localhost:5000');
+        newSocket = io('http://http://54.169.180.154:5000');
         setSocket(newSocket);
         newSocket.emit('start', { txnID: transactionDetail?.tnxId });
       }

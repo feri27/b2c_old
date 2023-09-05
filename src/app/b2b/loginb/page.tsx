@@ -1,6 +1,11 @@
 'use client';
 
-import { corporateLogonIDAtom, loginBDataAtom, userIDAtom } from '@/atoms';
+import {
+  cancelTypeAtom,
+  corporateLogonIDAtom,
+  loginBDataAtom,
+  userIDAtom,
+} from '@/atoms';
 import { loginB } from '@/services/b2b/auth';
 import { encrypt } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
@@ -16,21 +21,34 @@ import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import Header from '@/components/b2b/Header';
 import Footer from '@/components/b2b/Footer';
-import Modal from '@/components/common/Modal';
 import { useMerchantData } from '@/hooks/useMerchantData';
+import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
+import { useCheckSignature } from '@/hooks/useCheckSignature';
+import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
+import { useCheckGlobalLimit } from '@/hooks/useCheckGlobalLimit';
+import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
 
 export default function Login() {
   const router = useRouter();
   const [userID, setUserID] = useAtom(userIDAtom);
+  const setCancelType = useSetAtom(cancelTypeAtom);
   const [corporateLogonID, setCorporateLogonID] = useAtom(corporateLogonIDAtom);
   const [password, setPassword] = useState('');
   const [_, channel] = useAccessTokenAndChannel();
   const [isClicked, setIsClicked] = useState(false);
-  const settingQry = useSettingQuery(channel as 'B2C' | 'B2B', '/b2b/loginb');
   const merchantData = useMerchantData();
-  const getTxnQry = useTransactionDetailQuery(merchantData, '/b2b/loginb');
   const privateKeyQry = usePrivateKey();
+  const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
+  const [fetchSettings, setFetchSettings] = useState(false);
 
+  useCheckMaintenaceTime('B2B');
+
+  const getTxnQry = useTransactionDetailQuery(
+    merchantData,
+    '/login',
+    fetchTxnDetail
+  );
+  const approvedTxnLogQry = useGetApprovedTransactionLog();
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/loginb',
     navigateTo: '/b2b/payment-fail',
@@ -39,10 +57,30 @@ export default function Login() {
     page: '/b2b/loginb',
     navigateTo: '/b2b/maintenance',
   });
+  useSettingQuery('B2B', '/b2b/loginb', fetchSettings);
+  const updateTxnMut = useUpdateTxnMutation(false, '', (data) => {
+    if (
+      ('statusCode' in data && data['statusCode'] === 'ACTC') ||
+      data['statusCode'] === 'ACSP'
+    ) {
+      setFetchTxnDetail(true);
+    } else if ('message' in data && data['message'] === 'timeout') {
+      cancel('TO', merchantData);
+      setCancelType('TO');
+    } else {
+      cancel('FR', merchantData);
+    }
+  });
 
   useIsSessionActive(() => {
     cancel('E', merchantData);
     sessionStorage.setItem('exp', 'true');
+  });
+
+  useCheckSignature({
+    cancel,
+    updateTxnMut,
+    channel: channel || 'B2C',
   });
 
   const loginSessionMut = useLoginSessionMutation({
@@ -58,9 +96,25 @@ export default function Login() {
   const loginAndNotifyMut = useMutation({
     mutationFn: loginB,
     onSuccess: (data) => {
-      if (data.notifyRes?.data.header.status === 1) {
+      if (
+        'message' in data.loginRes &&
+        data.loginRes.message.includes('TIMEOUT')
+      ) {
+        glCancel.cancel('TO', merchantData);
+      } else if (
+        data.notifyRes &&
+        'message' in data.notifyRes &&
+        data.notifyRes.message.includes('TIMEOUT')
+      ) {
+        glCancel.cancel('TO', merchantData);
+      } else if (
+        data.notifyRes &&
+        'data' in data.notifyRes &&
+        data.notifyRes.data.header.status === 1 &&
+        'data' in data.loginRes
+      ) {
         const loginRes = data.loginRes.data.body;
-        localStorage.setItem(
+        sessionStorage.setItem(
           'loginBData',
           JSON.stringify({
             fromAccountList: loginRes.fromAccountList,
@@ -68,21 +122,29 @@ export default function Login() {
             usedLimit: loginRes.usedLimit,
           })
         );
+        sessionStorage.setItem(
+          'accessToken',
+          data.loginRes.data.header.accessToken
+        );
         loginSessionMut.mutate({ page: '/b2b/loginb', userID: userID });
+      } else {
+        glCancel.cancel('C', merchantData);
       }
     },
     onError: () => {
       setIsClicked(false);
+      glCancel.cancel('C', merchantData);
     },
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const accessToken = sessionStorage.getItem('accessToken') ?? '';
     if (privateKeyQry.data) {
       const privateKey = privateKeyQry.data.private_key;
       const { encryptedTxt, iv } = encrypt(password, privateKey);
       loginAndNotifyMut.mutate({
-        accessToken: 'dsdsdsd',
+        accessToken,
         corporateLogonID,
         userID,
         credential: encryptedTxt.toString('base64'),
@@ -100,16 +162,13 @@ export default function Login() {
     );
   };
 
-  useEffect(() => {
-    if (
-      getTxnQry.data &&
-      settingQry.data &&
-      'data' in settingQry?.data &&
-      Number(settingQry.data.data.maintain_b2b) === 1
-    ) {
-      glCancel.cancel('M', getTxnQry.data.data);
-    }
-  }, [, settingQry?.data]);
+  useCheckGlobalLimit(
+    getTxnQry.data,
+    approvedTxnLogQry.data,
+    glCancel.cancel,
+    'B2B',
+    setFetchSettings
+  );
 
   // if (!isActive) {
   //   return (
@@ -132,12 +191,14 @@ export default function Login() {
 
   if (
     getTxnQry.data?.data &&
-    settingQry.data &&
-    'data' in settingQry.data &&
+    (getTxnQry.data.data.status === 'ACTC' ||
+      getTxnQry.data?.data.status === 'ACSP') &&
+    approvedTxnLogQry.data &&
+    'txnLog' in approvedTxnLogQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < +settingQry.data.data.cmb_limit) ||
+      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cCMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < +settingQry.data.data.cib_limit))
+        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cCIB))
   ) {
     return (
       <>
@@ -311,41 +372,6 @@ export default function Login() {
             </div>
           </div>
         </main>
-        <Footer />
-      </>
-    );
-  } else if (
-    getTxnQry.data?.data &&
-    settingQry.data &&
-    'data' in settingQry?.data &&
-    ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount > +settingQry?.data.data.cmb_limit) ||
-      (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount > +settingQry?.data.data.cib_limit))
-  ) {
-    return (
-      <>
-        <Header />
-        <div className="h-between-b2b"></div>
-        <Modal
-          text="You are unable to proceed with the transaction as the amount is more than the allowed limit"
-          isLoading={updTrxMut.isLoading}
-          cb={() => cancel('GL', getTxnQry.data?.data)}
-        />
-        {/* <div className="z-100 fixed inset-0 bg-black opacity-70">
-          <div className="z-100 fixed top-[50%] left-[50%] w-[80%] -translate-x-[50%] -translate-y-[50%] transform  rounded bg-gray-200 md:w-[30%] h-[40%] flex flex-col items-center justify-evenly">
-            <p className="text-xl text-red-500">
-              
-            </p>
-            <button
-              disabled={}
-              className="disabled:cursor-not-allowed disabled:opacity-50 rounded bg-red-500 px-4 py-1 text-white"
-              onClick={() => glCancel.cancel('GL')}
-            >
-              OK
-            </button>
-          </div>
-        </div> */}
         <Footer />
       </>
     );

@@ -7,9 +7,11 @@ type LoginBData = {
   usedLimit: number;
 };
 
+type CancelType = 'TO' | 'EXP' | 'U' | 'GL' | 'UL' | 'FLD' | '';
+
 export const usernameAtom = atom<string>('');
 export const securePhraseAtom = atom<string>('');
-// export const sellerDataAtom = atom<SellerData>(initialSellerData);
+export const cancelTypeAtom = atom<CancelType>('');
 export const corporateLogonIDAtom = atom('');
 export const userIDAtom = atom('');
 export const loginBDataAtom = atom<LoginBData | null>(null);

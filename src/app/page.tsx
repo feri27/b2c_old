@@ -1,5 +1,6 @@
 'use client';
 import { submitMerchantData } from '@/services/common/merchantDate';
+import { signMessage } from '@/services/common/signAndVerifyMessage';
 import {
   getTransactionNumber,
   postTransactionNumber,
@@ -8,6 +9,8 @@ import { getDate } from '@/utils/helpers';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useLayoutEffect, useState } from 'react';
+// import forge from 'node-forge';
+// import { readFileSync } from 'fs';
 
 type InputState = {
   value: string;
@@ -68,6 +71,7 @@ export default function Home() {
     error: string | null;
   }>({ value: '', error: null });
   const [isClicked, setIsClicked] = useState(false);
+  const [endToEndIDSignature, setEndToEndIDSignature] = useState('');
   const date = getDate();
 
   const txnNumQry = useQuery({
@@ -75,6 +79,39 @@ export default function Home() {
     queryFn: getTransactionNumber,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
+  });
+
+  const signMessageMut = useMutation({
+    mutationFn: signMessage,
+    onSuccess: (data) => {
+      setEndToEndIDSignature(data.signedMessage);
+      const txnNum = trxId.slice(-8);
+      const txnStr = trxId.slice(0, -8);
+      const tnxNumPlus1 = +txnNum + 1;
+      const newTxnID = txnStr + tnxNumPlus1.toString().padStart(8, '0');
+      txnNumMut.mutate(newTxnID);
+      merchantDataMut.mutate({
+        endToEndId,
+        txnId: trxId,
+        msgId: messageId,
+        amount: +inputs.amount.value,
+        payerName: inputs.customerName.value,
+        username: inputs.username.value,
+        redirectUrl: inputs.redirectURL.value,
+        refs1: inputs.recipientReference.value,
+        accptblSrcOfFunds: Array.from(inputs.sourceOfFund.values).join(','),
+        creditorName: inputs.merchantName.value,
+        customerMBL: inputs.customerMBL.value,
+        customerMSL: inputs.customerMSL.value,
+        customerUsedMBL: inputs.customerUsedMBL.value,
+        customerUsedMSL: inputs.customerUsedMSL.value,
+        mfaMethod: inputs.mfaMethod.value,
+        xpryDt: expiryDate.value,
+      });
+    },
+    onError: () => {
+      setIsClicked(false);
+    },
   });
 
   const txnNumMut = useMutation({
@@ -104,7 +141,10 @@ export default function Home() {
             refs1: inputs.recipientReference.value,
             accptblSrcOfFunds: Array.from(inputs.sourceOfFund.values).join(','),
             merchantName: inputs.merchantName.value,
-            endToEndIDSignature,
+            endToEndIDSignature: {
+              populated: true,
+              value: endToEndIDSignature,
+            },
           })
         );
         sessionStorage.setItem('channel', inputs.channel.value);
@@ -134,7 +174,7 @@ export default function Home() {
   const endToEndId =
     date + merchantId + '862' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
   const dbtrAgt = merchantId;
-  const endToEndIDSignature = btoa(endToEndId);
+  // const endToEndIDSignature = btoa(endToEndId);
   const redirectURL = `http://54.255.0.143:3000/RPP/MY/Redirect/Consent?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndId}&EndtoEndIdSignature=${endToEndIDSignature}`;
 
   const handleSubmit = () => {
@@ -174,30 +214,8 @@ export default function Home() {
       });
       setInputs((prev) => ({ ...prev, ...errObj }));
     } else {
-      const txnNum = trxId.slice(-8);
-      const txnStr = trxId.slice(0, -8);
-      const tnxNumPlus1 = +txnNum + 1;
-      const newTxnID = txnStr + tnxNumPlus1.toString().padStart(8, '0');
+      signMessageMut.mutate(endToEndId);
 
-      // txnNumMut.mutate(newTxnID);
-      merchantDataMut.mutate({
-        endToEndId,
-        txnId: trxId,
-        msgId: messageId,
-        amount: +inputs.amount.value,
-        payerName: inputs.customerName.value,
-        username: inputs.username.value,
-        redirectUrl: inputs.redirectURL.value,
-        refs1: inputs.recipientReference.value,
-        accptblSrcOfFunds: Array.from(inputs.sourceOfFund.values).join(','),
-        creditorName: inputs.merchantName.value,
-        customerMBL: inputs.customerMBL.value,
-        customerMSL: inputs.customerMSL.value,
-        customerUsedMBL: inputs.customerUsedMBL.value,
-        customerUsedMSL: inputs.customerUsedMSL.value,
-        mfaMethod: inputs.mfaMethod.value,
-        xpryDt: expiryDate.value,
-      });
       setIsClicked(true);
     }
   };

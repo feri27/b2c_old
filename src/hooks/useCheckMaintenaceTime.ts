@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export function useCheckMaintenaceTime() {
+export function useCheckMaintenaceTime(channel: 'B2C' | 'B2B') {
   const mntLogQry = useQuery({
     queryKey: ['maintenance'],
     queryFn: getMntLogs,
@@ -26,7 +26,11 @@ export function useCheckMaintenaceTime() {
           currentDate >= new Date(startDate) &&
           currentDate <= new Date(endDate)
         ) {
-          router.push('/maintenance');
+          if (channel === 'B2C') {
+            router.push('/maintenance');
+          } else {
+            router.push('/b2b/maintenance');
+          }
         }
       }
     }

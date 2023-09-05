@@ -17,7 +17,7 @@ export function useTransactionDetailQuery(
         channel: merchantData.channel,
       }),
     onSuccess: (data) => {
-      if (data && data.data.amount) {
+      if (data.data && data.data.amount) {
         sessionStorage.setItem('transactionDetail', JSON.stringify(data.data));
       }
     },

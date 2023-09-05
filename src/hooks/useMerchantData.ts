@@ -19,7 +19,7 @@ export type MerchantData = {
   customerUsedMSL: string;
   accptblSrcOfFunds: string;
   channel: string;
-  endToEndIDSignature: string;
+  endToEndIDSignature: { populated: boolean; value: string };
 };
 
 export const initialMerchantData: MerchantData = {
@@ -37,7 +37,7 @@ export const initialMerchantData: MerchantData = {
   refs1: '',
   accptblSrcOfFunds: '',
   txnId: '',
-  endToEndIDSignature: '',
+  endToEndIDSignature: { populated: false, value: '' },
   customerMBL: '',
   customerUsedMBL: '',
   customerMSL: '',

@@ -1,16 +1,22 @@
 'use client';
-import { corporateLogonIDAtom, loginBDataAtom, userIDAtom } from '@/atoms';
+import {
+  cancelTypeAtom,
+  corporateLogonIDAtom,
+  loginBDataAtom,
+  userIDAtom,
+} from '@/atoms';
 import Layout from '@/components/b2b/Layout';
 import Modal from '@/components/common/Modal';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
+import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLoginBData } from '@/hooks/useLoginBData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
 import { useMutation } from '@tanstack/react-query';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +30,7 @@ export default function PaymentInitiate() {
   const userID = useAtomValue(userIDAtom);
   const transactionDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
-  const [isActive, setIsActive] = useState<boolean>(true);
+  const setCancelType = useSetAtom(cancelTypeAtom);
   const [isClicked, setIsClicked] = useState(false);
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/payment-initiate',
@@ -35,10 +41,16 @@ export default function PaymentInitiate() {
     cancel('E', transactionDetail);
     sessionStorage.setItem('exp', 'true');
   });
+  useCheckMaintenaceTime('B2B');
 
   const createTxnMut = useMutation({
     mutationFn: createTxn,
     onSuccess: (data) => {
+      if (data.status === 0) {
+        setCancelType('FLD');
+        cancel('FLD', transactionDetail);
+        return;
+      }
       router.push('/b2b/payment-details');
     },
     onError: () => {
@@ -50,41 +62,43 @@ export default function PaymentInitiate() {
     setSelectedAccount(loginBData?.fromAccountList[0]);
   }, [loginBData?.fromAccountList[0]]);
 
-  if (
-    transactionDetail &&
-    loginBData &&
-    transactionDetail.amount > loginBData.trxLimit - loginBData.usedLimit
-  ) {
-    cancel('UL', transactionDetail);
-  }
+  // if (
+  //   transactionDetail &&
+  //   loginBData &&
+  //   transactionDetail.amount > loginBData.trxLimit - loginBData.usedLimit
+  // ) {
+  //   cancel('UL', transactionDetail);
+  // }
 
   const validateForm = () => {
     return selectedAccount === undefined;
   };
 
   const handleSubmit = () => {
-    createTxnMut.mutate({
-      accessToken,
-      channel,
-      corporateLogonID,
-      userID,
-      exchangeID: 'EX00000001',
-      fpxTrxID: transactionDetail?.tnxId ?? '',
-      fpxTrxType: 'B2B1',
-      fromAccHolder: selectedAccount?.fromAccHolder ?? '',
-      fromAccNo: selectedAccount?.fromAccNo ?? '',
-      fromAccType: selectedAccount?.fromAccType ?? '',
-      otherPmtDetails: transactionDetail?.recipientReference ?? '',
-      referenceNo: transactionDetail?.recipientReference ?? '',
-      sellerName: transactionDetail?.creditorName ?? '',
-      sellerOrdNo: transactionDetail?.recipientReference ?? '',
-      totalAmount: transactionDetail?.amount ?? 0.0,
-      trxAmount: transactionDetail?.amount ?? 0.0,
-      trxCharge: 0.0,
-      trxStatus: 'C',
-      trxTimestamp: transactionDetail?.currentDT ?? '',
-    });
-    setIsClicked(true);
+    if (transactionDetail && selectedAccount) {
+      createTxnMut.mutate({
+        accessToken,
+        channel,
+        corporateLogonID,
+        userID,
+        exchangeID: 'EX00000001',
+        fpxTrxID: transactionDetail.tnxId,
+        fpxTrxType: 'B2B1',
+        fromAccHolder: selectedAccount.fromAccHolder,
+        fromAccNo: selectedAccount.fromAccNo,
+        fromAccType: selectedAccount.fromAccType,
+        otherPmtDetails: transactionDetail.recipientReference,
+        referenceNo: transactionDetail.tnxId,
+        sellerName: transactionDetail.creditorName,
+        sellerOrdNo: transactionDetail.recipientReference,
+        totalAmount: transactionDetail.amount,
+        trxAmount: transactionDetail.amount,
+        trxCharge: 0.0,
+        trxStatus: 'C',
+        trxTimestamp: transactionDetail?.currentDT,
+      });
+      setIsClicked(true);
+    }
   };
 
   // if (!isActive) {

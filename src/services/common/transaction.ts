@@ -13,7 +13,8 @@ export type Reason =
   | 'TO'
   | 'FR'
   | 'ALF'
-  | 'MFA';
+  | 'MFA'
+  | 'FLD';
 
 export type GetTransactionDetail = {
   data: {
@@ -41,12 +42,13 @@ export type GetTransactionDetail = {
     cdtrAcctTp: string;
     cdtrAgtBIC: string;
     bizSvc: string;
+    status: string;
   };
 };
 
 export type TransactionDetail = GetTransactionDetail['data'];
 
-type UpdTrxReq = {
+export type UpdTrxReq = {
   dbtrAgt: string;
   endToEndId: string;
   gpsCoord: string;
@@ -56,6 +58,11 @@ type UpdTrxReq = {
   sessionID?: string;
   channel: string;
   reason: Reason;
+  amount: string;
+  cdtrAgtBIC: string;
+  dbtrAcctId: string;
+  payerName: string;
+  dbtrAgtBIC: string;
 };
 
 export async function getTransactionDetail({

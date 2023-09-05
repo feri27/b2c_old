@@ -1,4 +1,4 @@
-import { B2C_API_URL } from '@/utils/config';
+import { B2C_API_URL, PORTAL_API_URL } from '@/utils/config';
 import { ResponseHeader } from './commonTypes';
 import { getSessionID } from '@/utils/helpers';
 
@@ -45,6 +45,20 @@ export type TxnStatus = {
       errorDesc: string;
     };
   };
+};
+
+export type TxnLog = {
+  id: string;
+  createdAt: Date;
+  cRIB: number;
+  cRMB: number;
+  cCIB: number;
+  cCMB: number;
+  nRIB: number;
+  nRMB: number;
+  nCIB: number;
+  nCMB: number;
+  status: number;
 };
 
 export async function authorizeTransaction(
@@ -104,4 +118,10 @@ export async function checkTxnStatus(body: {
         },
   });
   return res.json();
+}
+
+export async function getApprovedTransactioLog() {
+  const res = await fetch(`${PORTAL_API_URL}/transactions/approved`);
+  const data: { txnLog: TxnLog } | { error: string } = await res.json();
+  return data;
 }

@@ -1,4 +1,4 @@
-import { MAINTENACE_API_URL } from '@/utils/config';
+import { PORTAL_API_URL } from '@/utils/config';
 
 export type MntLog = {
   id: string;
@@ -16,7 +16,7 @@ export type MntLog = {
 };
 
 export async function getMntLogs() {
-  const res = await fetch(`${MAINTENACE_API_URL}/maintenance`);
+  const res = await fetch(`${PORTAL_API_URL}/maintenance`);
   const data: { mntLogs: MntLog[] } | { error: string } = await res.json();
   return data;
 }
