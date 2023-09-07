@@ -22,6 +22,11 @@ type TransactionB = {
   trxStatus: string;
   channel: string;
   accessToken: string;
+  dbtrAgt: string;
+  endToEndId: string;
+  productId: string;
+  latlong: string;
+  xpryDt: string;
 };
 
 export async function createTxn(body: TransactionB): Promise<ResponseHeader> {

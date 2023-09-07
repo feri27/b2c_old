@@ -10,6 +10,8 @@ import { UseMutateFunction, useMutation } from '@tanstack/react-query';
 import { verify } from 'crypto';
 import { verifySignature } from '@/services/common/signAndVerifyMessage';
 import { useTransactionDetail } from './useTransactionDetail';
+import { useSetAtom } from 'jotai';
+import { cancelTypeAtom } from '@/atoms';
 
 export function useCheckSignature({
   cancel,
@@ -28,7 +30,7 @@ export function useCheckSignature({
 }) {
   const merchantData = useMerchantData();
   const txnDetail = useTransactionDetail();
-
+  const setCancelType = useSetAtom(cancelTypeAtom);
   const verifySignatureMut = useMutation({
     mutationFn: verifySignature,
     onSuccess: (data) => {
@@ -68,6 +70,7 @@ export function useCheckSignature({
       merchantData.endToEndIDSignature.value === ''
     ) {
       cancel('VF', merchantData);
+      setCancelType('U');
     }
   }, [merchantData.endToEndIDSignature]);
 }

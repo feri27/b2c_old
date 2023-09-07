@@ -19,7 +19,7 @@ export default function ApiLog() {
 
   const { isLoading, data, isPreviousData } = useQuery({
     queryKey: ['apiLogs', page],
-    queryFn: () => retrieveApiLogs(page),
+    queryFn: async () => retrieveApiLogs(page),
     keepPreviousData: true,
     refetchOnWindowFocus: false,
   });
@@ -32,7 +32,7 @@ export default function ApiLog() {
   const debouncedValue = useDebouncedValue(searchInput);
 
   const filteredRequests = data?.data?.filter((val) =>
-    val.api_name.includes(debouncedValue)
+    val.response?.includes(debouncedValue)
   );
 
   // useEffect(() => {
@@ -52,7 +52,7 @@ export default function ApiLog() {
 
   return (
     <div className="p-4 max-w-5xl overflow-hidden mx-auto flex flex-col gap-5">
-      {data && data.data.length > 0 ? (
+      {data && data.data && data.data.length > 0 ? (
         <>
           <div className="flex justify-center w-full">
             <input
@@ -85,7 +85,7 @@ export default function ApiLog() {
               <div className="mb-4">
                 <span className="font-bold">Request Body:</span>{' '}
                 <ReactMarkdown
-                  className="rounded bg-gray-100 p-4"
+                  className="rounded bg-gray-100 p-4 break-words"
                   components={{
                     code: ({ children }) => (
                       <code className="block bg-gray-200 p-2 rounded">
@@ -94,13 +94,15 @@ export default function ApiLog() {
                     ),
                   }}
                 >
-                  {JSON.stringify(savedRequest.request, null, 2)}
+                  {typeof savedRequest.request === 'object'
+                    ? JSON.stringify(savedRequest.request, null, 2)
+                    : savedRequest.request}
                 </ReactMarkdown>
               </div>
               <div className="mb-4">
                 <span className="font-bold">Response Body:</span>{' '}
                 <ReactMarkdown
-                  className="rounded bg-gray-100 p-4"
+                  className="rounded bg-gray-100 p-4 break-words"
                   components={{
                     code: ({ children }) => (
                       <code className="block bg-gray-200 p-2 rounded">
@@ -109,7 +111,9 @@ export default function ApiLog() {
                     ),
                   }}
                 >
-                  {JSON.stringify(savedRequest.response, null, 2)}
+                  {typeof savedRequest.response === 'object'
+                    ? JSON.stringify(savedRequest.response, null, 2)
+                    : savedRequest.response}
                 </ReactMarkdown>
               </div>
             </div>

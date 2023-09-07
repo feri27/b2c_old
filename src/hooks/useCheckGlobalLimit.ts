@@ -6,7 +6,8 @@ import {
 import { TxnLog } from '@/services/transaction';
 import { Dispatch, useEffect } from 'react';
 import { MerchantData } from './useMerchantData';
-import { SetStateAction } from 'jotai';
+import { SetStateAction, useSetAtom } from 'jotai';
+import { cancelTypeAtom } from '@/atoms';
 
 export function useCheckGlobalLimit(
   txnDetail: GetTransactionDetail | undefined,
@@ -25,6 +26,7 @@ export function useCheckGlobalLimit(
   channel: 'B2B' | 'B2C',
   setFetchSettings: Dispatch<SetStateAction<boolean>>
 ) {
+  const setCancelType = useSetAtom(cancelTypeAtom);
   useEffect(() => {
     if (
       txnDetail?.data &&
@@ -51,6 +53,7 @@ export function useCheckGlobalLimit(
             txnDetail.data.amount > approvedTxnLog.txnLog.cCIB)
         ) {
           cancel('GL', txnDetail.data);
+          setCancelType('GL');
         } else {
           setFetchSettings(true);
         }

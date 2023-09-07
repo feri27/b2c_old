@@ -53,10 +53,10 @@ export default function Login() {
     page: '/b2b/loginb',
     navigateTo: '/b2b/payment-fail',
   });
-  const glCancel = useCancelTransaction({
-    page: '/b2b/loginb',
-    navigateTo: '/b2b/maintenance',
-  });
+  // const glCancel = useCancelTransaction({
+  //   page: '/b2b/loginb',
+  //   navigateTo: '/b2b/maintenance',
+  // });
   useSettingQuery('B2B', '/b2b/loginb', fetchSettings);
   const updateTxnMut = useUpdateTxnMutation(false, '', (data) => {
     if (
@@ -65,14 +65,16 @@ export default function Login() {
     ) {
       setFetchTxnDetail(true);
     } else if ('message' in data && data['message'] === 'timeout') {
-      cancel('TO', merchantData);
       setCancelType('TO');
+      cancel('TO', merchantData);
     } else {
+      setCancelType('FLD');
       cancel('FR', merchantData);
     }
   });
 
   useIsSessionActive(() => {
+    setCancelType('EXP');
     cancel('E', merchantData);
     sessionStorage.setItem('exp', 'true');
   });
@@ -100,13 +102,15 @@ export default function Login() {
         'message' in data.loginRes &&
         data.loginRes.message.includes('TIMEOUT')
       ) {
-        glCancel.cancel('TO', merchantData);
+        setCancelType('TO');
+        cancel('TO', merchantData);
       } else if (
         data.notifyRes &&
         'message' in data.notifyRes &&
         data.notifyRes.message.includes('TIMEOUT')
       ) {
-        glCancel.cancel('TO', merchantData);
+        setCancelType('TO');
+        cancel('TO', merchantData);
       } else if (
         data.notifyRes &&
         'data' in data.notifyRes &&
@@ -128,12 +132,14 @@ export default function Login() {
         );
         loginSessionMut.mutate({ page: '/b2b/loginb', userID: userID });
       } else {
-        glCancel.cancel('C', merchantData);
+        setCancelType('U');
+        cancel('C', merchantData);
       }
     },
     onError: () => {
       setIsClicked(false);
-      glCancel.cancel('C', merchantData);
+      setCancelType('U');
+      cancel('C', merchantData);
     },
   });
 
@@ -165,7 +171,7 @@ export default function Login() {
   useCheckGlobalLimit(
     getTxnQry.data,
     approvedTxnLogQry.data,
-    glCancel.cancel,
+    cancel,
     'B2B',
     setFetchSettings
   );
@@ -288,7 +294,10 @@ export default function Login() {
                             <button
                               type="button"
                               value="Cancel"
-                              onClick={() => cancel('U', getTxnQry.data?.data)}
+                              onClick={() => {
+                                setCancelType('U');
+                                cancel('U', getTxnQry.data?.data);
+                              }}
                               className="cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed text-base  rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
                               disabled={isClicked || updTrxMut.isLoading}
                             >
