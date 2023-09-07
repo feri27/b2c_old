@@ -32,7 +32,7 @@ export default function ApiLog() {
   const debouncedValue = useDebouncedValue(searchInput);
 
   const filteredRequests = data?.data?.filter((val) =>
-    val.response?.includes(debouncedValue)
+    val.api_name?.includes(debouncedValue)
   );
 
   // useEffect(() => {
@@ -63,61 +63,73 @@ export default function ApiLog() {
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
-          {filteredRequests?.map((savedRequest, index) => (
-            <div
-              key={index}
-              className="mb-8 border-b border-b-black border-b-solid"
-            >
-              <div className="mb-4 space-x-1">
-                <span className="font-bold">Endpoint:</span>{' '}
-                <span className="text-blue-500">{savedRequest.api_name}</span>
+          {filteredRequests?.map((savedRequest, index) => {
+            let res = (
+              typeof savedRequest.response === 'object'
+                ? JSON.stringify(savedRequest.response)
+                : savedRequest.response
+            ).replaceAll('\\n', '');
+            res = res.replaceAll('\\t', '');
+            res = res.replaceAll('\\', '');
+            let req = (
+              typeof savedRequest.request === 'object'
+                ? JSON.stringify(savedRequest.request)
+                : savedRequest.request
+            ).replaceAll('\\n', '');
+            req = req.replaceAll('\\t', '');
+            req = req.replaceAll('\\', '');
+            return (
+              <div
+                key={index}
+                className="mb-8 border-b border-b-black border-b-solid"
+              >
+                <div className="mb-4 space-x-1">
+                  <span className="font-bold">Endpoint:</span>{' '}
+                  <span className="text-blue-500">{savedRequest.api_name}</span>
+                </div>
+                <div className="mb-4 space-x-1">
+                  <span className="font-bold">Page:</span>{' '}
+                  <span className="text-blue-500">{savedRequest.page}</span>
+                </div>
+                <div className="mb-4 space-x-1">
+                  <span className="font-bold">Log DT:</span>{' '}
+                  <span className="text-blue-500">
+                    {savedRequest.log_dt.toString()}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <span className="font-bold">Request Body:</span>{' '}
+                  <ReactMarkdown
+                    className="rounded bg-gray-100 p-4 break-words"
+                    components={{
+                      code: ({ children }) => (
+                        <code className="block bg-gray-200 p-2 rounded">
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {req}
+                  </ReactMarkdown>
+                </div>
+                <div className="mb-4">
+                  <span className="font-bold">Response Body:</span>{' '}
+                  <ReactMarkdown
+                    className="rounded bg-gray-100 p-4 break-words"
+                    components={{
+                      code: ({ children }) => (
+                        <code className="block bg-gray-200 p-2 rounded">
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {res}
+                  </ReactMarkdown>
+                </div>
               </div>
-              <div className="mb-4 space-x-1">
-                <span className="font-bold">Page:</span>{' '}
-                <span className="text-blue-500">{savedRequest.page}</span>
-              </div>
-              <div className="mb-4 space-x-1">
-                <span className="font-bold">Log DT:</span>{' '}
-                <span className="text-blue-500">
-                  {savedRequest.log_dt.toString()}
-                </span>
-              </div>
-              <div className="mb-4">
-                <span className="font-bold">Request Body:</span>{' '}
-                <ReactMarkdown
-                  className="rounded bg-gray-100 p-4 break-words"
-                  components={{
-                    code: ({ children }) => (
-                      <code className="block bg-gray-200 p-2 rounded">
-                        {children}
-                      </code>
-                    ),
-                  }}
-                >
-                  {typeof savedRequest.request === 'object'
-                    ? JSON.stringify(savedRequest.request, null, 2)
-                    : savedRequest.request}
-                </ReactMarkdown>
-              </div>
-              <div className="mb-4">
-                <span className="font-bold">Response Body:</span>{' '}
-                <ReactMarkdown
-                  className="rounded bg-gray-100 p-4 break-words"
-                  components={{
-                    code: ({ children }) => (
-                      <code className="block bg-gray-200 p-2 rounded">
-                        {children}
-                      </code>
-                    ),
-                  }}
-                >
-                  {typeof savedRequest.response === 'object'
-                    ? JSON.stringify(savedRequest.response, null, 2)
-                    : savedRequest.response}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           <div className="flex justify-center">
             <button
               className="mr-2 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 bg-blue-500 text-white rounded"

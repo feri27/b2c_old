@@ -47,7 +47,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{tnxDetail?.currentDT}</p>
+                    <p>{new Date().toISOString().slice(0, -1)}</p>
                   </div>
                 </div>
               </div>

@@ -12,6 +12,7 @@ export default function PaymentFail() {
   const [accessToken, channel] = useAccessTokenAndChannel();
   const [isClicked, setIsClicked] = useState(false);
   const cancelType = useAtomValue(cancelTypeAtom);
+
   const logouBMut = useLogoutBMutation(
     '/b2b/payment-details',
     'S',
