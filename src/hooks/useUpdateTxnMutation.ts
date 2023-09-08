@@ -1,10 +1,12 @@
 import { updateTransaction } from '@/services/common/transaction';
+import { checkSystemLogout } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 export const useUpdateTxnMutation = (
   navigate: boolean,
   navigateTo: string,
+  channel: string,
   onSuccess?: (data: any) => void
 ) => {
   const router = useRouter();
@@ -13,6 +15,9 @@ export const useUpdateTxnMutation = (
     onSuccess:
       onSuccess ??
       ((data) => {
+        if ('message' in data) {
+          checkSystemLogout(data.message as string, router, 'B2B');
+        }
         if (navigate) {
           router.push(navigateTo);
         }

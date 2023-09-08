@@ -9,12 +9,14 @@ export function useCancelTransaction({
   page,
   navigate = true,
   navigateTo = '/payment-fail',
+  channel,
 }: {
   page: string;
   navigate?: boolean;
   navigateTo?: string;
+  channel: string;
 }) {
-  const updTrxMutation = useUpdateTxnMutation(navigate, navigateTo);
+  const updTrxMutation = useUpdateTxnMutation(navigate, navigateTo, channel);
 
   const cancel = (
     reason: Reason,

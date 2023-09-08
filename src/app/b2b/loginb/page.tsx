@@ -7,7 +7,7 @@ import {
   userIDAtom,
 } from '@/atoms';
 import { loginB } from '@/services/b2b/auth';
-import { encrypt } from '@/utils/helpers';
+import { checkSystemLogout, encrypt } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -52,13 +52,17 @@ export default function Login() {
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/loginb',
     navigateTo: '/b2b/payment-fail',
+    channel: 'B2B',
   });
   // const glCancel = useCancelTransaction({
   //   page: '/b2b/loginb',
   //   navigateTo: '/b2b/maintenance',
   // });
   useSettingQuery('B2B', '/b2b/loginb', fetchSettings);
-  const updateTxnMut = useUpdateTxnMutation(false, '', (data) => {
+  const updateTxnMut = useUpdateTxnMutation(false, '', 'B2B', (data) => {
+    if ('message' in data) {
+      checkSystemLogout(data.message as string, router, 'B2B');
+    }
     if (
       ('statusCode' in data && data['statusCode'] === 'ACTC') ||
       data['statusCode'] === 'ACSP'

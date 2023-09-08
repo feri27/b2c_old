@@ -64,6 +64,8 @@ export default function ApiLog() {
             />
           </div>
           {filteredRequests?.map((savedRequest, index) => {
+            console.log(savedRequest.response);
+
             let res = (
               typeof savedRequest.response === 'object'
                 ? JSON.stringify(savedRequest.response)

@@ -15,7 +15,6 @@ import { usePrivateKey } from '@/hooks/usePrivateKey';
 import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
 import LoginFooter from '@/components/LoginFooter';
-import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useLoginSessionMutation } from '@/hooks/useLoginSessionMutation';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
@@ -30,6 +29,7 @@ export default function SecurePhrase() {
   const [isClicked, setIsClicked] = useState(false);
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/secure-phrase',
+    channel: 'B2C',
   });
   useCheckMaintenaceTime('B2C');
   useIsSessionActive(() => {
@@ -39,7 +39,6 @@ export default function SecurePhrase() {
 
   const privateKeyQry = usePrivateKey();
 
-  useSetuplocalStorage();
   const transactionDetail = useTransactionDetail();
 
   const loginMut = useMutation({

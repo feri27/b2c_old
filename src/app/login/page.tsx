@@ -10,7 +10,6 @@ import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
 import LoginSidebar from '@/components/LoginSidebar';
 import LoginFooter from '@/components/LoginFooter';
-import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useSettingQuery } from '@/hooks/useSettingQuery';
 import { useTransactionDetailQuery } from '@/hooks/useTransactionDetailQuery';
@@ -19,7 +18,7 @@ import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useMerchantData } from '@/hooks/useMerchantData';
-import { getSessionID } from '@/utils/helpers';
+import { checkSystemLogout, getSessionID } from '@/utils/helpers';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
 import { useCheckSignature } from '@/hooks/useCheckSignature';
@@ -43,13 +42,20 @@ export default function Login() {
     '/login',
     fetchTxnDetail
   );
-  const { cancel, updTrxMut } = useCancelTransaction({ page: '/login' });
+  const { cancel, updTrxMut } = useCancelTransaction({
+    page: '/login',
+    channel: 'B2C',
+  });
 
   const glCancel = useCancelTransaction({
     page: '/login',
     navigateTo: '/maintenance',
+    channel: 'B2C',
   });
-  const updateTxnMut = useUpdateTxnMutation(false, '', (data) => {
+  const updateTxnMut = useUpdateTxnMutation(false, '', 'B2C', (data) => {
+    if ('message' in data) {
+      checkSystemLogout(data.message as string, router, 'B2C');
+    }
     if (
       ('statusCode' in data && data['statusCode'] === 'ACTC') ||
       data['statusCode'] === 'ACSP'
@@ -67,8 +73,6 @@ export default function Login() {
     cancel('E', merchantData);
     sessionStorage.setItem('exp', 'true');
   });
-
-  useSetuplocalStorage();
 
   useSettingQuery(channel as 'B2C' | 'B2B', '/login', fetchSettings);
   const approvedTxnLogQry = useGetApprovedTransactionLog();

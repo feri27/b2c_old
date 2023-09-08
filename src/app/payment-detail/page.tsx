@@ -11,7 +11,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { verifyOTP } from '@/services/veritfyOtp';
-import { encrypt, getSessionID } from '@/utils/helpers';
+import { checkSystemLogout, encrypt, getSessionID } from '@/utils/helpers';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useLoginData } from '@/hooks/useLoginData';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
@@ -21,7 +21,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { BsFillInfoCircleFill } from 'react-icons/bs';
 import CountdownText from '@/components/CountdownText';
-import { useSetuplocalStorage } from '@/hooks/useSetupLocalStorage';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
@@ -31,18 +30,21 @@ import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { debit } from '@/services/debit';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
+import { useSetAtom } from 'jotai';
+import { cancelTypeAtom } from '@/atoms';
 
 const abortController = new AbortController();
 
 export default function PaymentDetail() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
-  const [isActive, setIsActive] = useState<boolean>(true);
+  const setCancelType = useSetAtom(cancelTypeAtom);
   const [socket, setSocket] = useState<Socket | undefined>();
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/payment-detail',
+    channel: 'B2C',
   });
-  const updateTxnMut = useUpdateTxnMutation(false, '');
+  const updateTxnMut = useUpdateTxnMutation(false, '', 'B2C');
   useCheckMaintenaceTime('B2C');
   const loginData = useLoginData();
   const transactionDetail = useTransactionDetail();
@@ -59,21 +61,20 @@ export default function PaymentDetail() {
   const [moClicked, setMoClicked] = useState(false);
   const merchantData = useMerchantData();
   useIsSessionActive(() => {
+    setCancelType('EXP');
     cancel('E', transactionDetail);
-    sessionStorage.setItem('exp', 'true');
   });
   const mfa = useGetMFA();
-  useSetuplocalStorage();
 
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
     queryFn: async () => account(loginData?.cif ?? ''),
     enabled: loginData?.cif !== undefined,
-    onSuccess: (data) => {},
   });
 
   useEffect(() => {
     if ((mfa?.method === 'NIL', mfa?.method === 'NR')) {
+      setCancelType('FLD');
       cancel('MFA', transactionDetail);
     }
   }, [mfa?.method]);
@@ -88,6 +89,7 @@ export default function PaymentDetail() {
 
   useEffect(() => {
     if (transactionDetail?.sourceOfFunds !== '') {
+      setCancelType('FLD');
       cancel('ALF', transactionDetail);
     }
   }, [transactionDetail?.sourceOfFunds]);
@@ -95,19 +97,17 @@ export default function PaymentDetail() {
   const authorizeTxnMut = useMutation({
     mutationFn: authorizeTransaction,
     onSuccess: (data) => {
-      const urlres = JSON.parse(localStorage.getItem('urlres')!);
-      localStorage.setItem(
-        'urlres',
-        JSON.stringify([
-          ...urlres,
-          { url: '/authorizetransaction', method: 'POST', response: data },
-        ])
-      );
+      if ('message' in data) {
+        checkSystemLogout(data.message as string, router, 'B2C');
+      }
     },
   });
   const notifyTxnMut = useMutation({
     mutationFn: notifyTransaction,
     onSuccess: (data) => {
+      if ('message' in data) {
+        checkSystemLogout(data.message as string, router, 'B2C');
+      }
       router.push('/payment-success');
     },
     onError: () => {
@@ -118,6 +118,9 @@ export default function PaymentDetail() {
   const debitMut = useMutation({
     mutationFn: debit,
     onSuccess: (data) => {
+      if ('message' in data) {
+        checkSystemLogout(data.message as string, router, 'B2C');
+      }
       if (
         data.PymtConfirmRs.resBody.TxSts === 'ACTC' ||
         data.PymtConfirmRs.resBody.TxSts === 'ACSP'
@@ -143,7 +146,7 @@ export default function PaymentDetail() {
           dbtrAcctId: transactionDetail?.dbtrAcctId ?? '',
           dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
         });
-        if (accountQry.data)
+        if (accountQry.data && 'data' in accountQry.data)
           notifyTxnMut.mutate({
             accessToken: accessToken ?? '',
             fromAccountHolder: accountQry.data.data.accHolderName,
@@ -160,7 +163,7 @@ export default function PaymentDetail() {
       }
     },
     onError: () => {
-      if (accountQry.data)
+      if (accountQry.data && 'data' in accountQry.data)
         notifyTxnMut.mutate({
           accessToken: accessToken ?? '',
           fromAccountHolder: accountQry.data.data.accHolderName,
@@ -180,7 +183,12 @@ export default function PaymentDetail() {
   const checkTxnStatusMut = useMutation({
     mutationFn: checkTxnStatus,
     onSuccess: (data) => {
+      if ('message' in data) {
+        checkSystemLogout(data.message as string, router, 'B2C');
+      }
+
       if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
+        setCancelType('FLD');
         cancel('MFA', transactionDetail);
       }
       const approvalStatus = data.data.body.approvalStatus;
@@ -189,6 +197,7 @@ export default function PaymentDetail() {
         approvalStatus === 'F' ||
         approvalStatus === 'C'
       ) {
+        setCancelType('FLD');
         cancel('ALF', transactionDetail);
       } else if (approvalStatus === 'P') {
         setMASubmit((prev) => ({ ...prev, limit: 3 }));
@@ -221,9 +230,9 @@ export default function PaymentDetail() {
   });
 
   useEffect(() => {
-    return () => {
-      socket?.disconnect();
-    };
+    if (accountQry.data && 'message' in accountQry.data) {
+      checkSystemLogout(accountQry.data.message, router, 'B2C');
+    }
   }, []);
 
   // const accPaymentMut = useMutation({
@@ -252,7 +261,11 @@ export default function PaymentDetail() {
   const verifyOTPMut = useMutation({
     mutationFn: verifyOTP,
     onSuccess: (data) => {
+      if ('message' in data) {
+        checkSystemLogout(data.message as string, router, 'B2C');
+      }
       if (data.status !== 1 || data.errorId) {
+        setCancelType('FLD');
         cancel('MFA', transactionDetail);
       } else {
         if (accountQry.data)
@@ -298,19 +311,21 @@ export default function PaymentDetail() {
     return;
   };
   const handleMORequest = () => {
-    authorizeTxnMut.mutate({
-      accessToken,
-      creditorName: transactionDetail?.creditorName ?? '',
-      fromAccountHolder: accountQry.data?.data.accHolderName!,
-      fromAccountNo: accountQry.data?.data.accNo!,
-      referenceNo: transactionDetail?.recipientReference ?? '',
-      totalAmount: transactionDetail?.amount ?? 0,
-      transactionNo: transactionDetail?.tnxId ?? '',
-      trxAmount: transactionDetail?.amount ?? 0,
-      trxTimestamp: transactionDetail?.currentDT ?? '',
-      channel,
-      method: mfaMethod ?? 'MO',
-    });
+    if (accountQry.data && 'data' in accountQry.data) {
+      authorizeTxnMut.mutate({
+        accessToken,
+        creditorName: transactionDetail?.creditorName ?? '',
+        fromAccountHolder: accountQry.data?.data.accHolderName!,
+        fromAccountNo: accountQry.data?.data.accNo!,
+        referenceNo: transactionDetail?.recipientReference ?? '',
+        totalAmount: transactionDetail?.amount ?? 0,
+        transactionNo: transactionDetail?.tnxId ?? '',
+        trxAmount: transactionDetail?.amount ?? 0,
+        trxTimestamp: transactionDetail?.currentDT ?? '',
+        channel,
+        method: mfaMethod ?? 'MO',
+      });
+    }
     setMoClicked(true);
     return;
   };
@@ -355,6 +370,7 @@ export default function PaymentDetail() {
         }
         setIsClicked(true);
       } else {
+        setCancelType('FLD');
         cancel('MFA', transactionDetail);
         setIsClicked(true);
       }
@@ -375,7 +391,7 @@ export default function PaymentDetail() {
       console.log('here');
 
       setMASubmit((prev) => ({ ...prev, count: prev.count++ }));
-      if (accountQry.data) {
+      if (accountQry.data && 'data' in accountQry.data) {
         authorizeTxnMut.mutate({
           accessToken,
           creditorName: transactionDetail?.creditorName ?? '',
@@ -401,7 +417,7 @@ export default function PaymentDetail() {
       }
       let newSocket = socket;
       if (!newSocket) {
-        newSocket = io('http://http://54.169.180.154:5000');
+        newSocket = io('http://54.169.180.154:5000');
         setSocket(newSocket);
         newSocket.emit('start', { txnID: transactionDetail?.tnxId });
       }
@@ -409,6 +425,7 @@ export default function PaymentDetail() {
       newSocket.on('data', (data) => {
         const status = data['status'];
         if (status !== 1) {
+          setCancelType('TO');
           cancel('TO', transactionDetail);
         } else {
           if (transactionDetail && merchantData) {
@@ -466,6 +483,7 @@ export default function PaymentDetail() {
   useEffect(() => {
     if (transactionDetail && loginData) {
       if (transactionDetail.amount > loginData.mbl.usedLimit) {
+        setCancelType('UL');
         cancel('UL', transactionDetail);
       }
     }
@@ -603,7 +621,10 @@ export default function PaymentDetail() {
             <div className="!mb-[15px] flex-wrap mt-2.5 justify-center gap-5 w-full padx flex">
               <input
                 type="button"
-                onClick={(e) => cancel('U', transactionDetail)}
+                onClick={(e) => {
+                  setCancelType('U');
+                  cancel('U', transactionDetail);
+                }}
                 disabled={isClicked || updTrxMut.isLoading}
                 defaultValue="Cancel"
                 className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none w-full min-[480px]:w-auto !rounded-md   flex justify-center items-center"

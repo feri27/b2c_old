@@ -20,7 +20,9 @@ type AccPaymentRes = {
   trxAmt: number;
 };
 
-export async function account(id: string): Promise<Account> {
+export async function account(
+  id: string
+): Promise<Account | { message: string }> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2C_API_URL}/account/${id}`, {
     headers: sessionID

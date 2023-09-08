@@ -15,15 +15,6 @@ export function useLogoutBMutation(
   const { isLoading, mutate } = useMutation({
     mutationFn: logout,
     onSuccess: (data) => {
-      const urlres = JSON.parse(localStorage.getItem('urlres')!);
-      localStorage.setItem(
-        'urlres',
-        JSON.stringify([
-          ...urlres,
-          { url: '/logout', method: 'POST', response: data },
-        ])
-      );
-
       const sessionID = getSessionID();
 
       updateLoginSessionMut.mutate({

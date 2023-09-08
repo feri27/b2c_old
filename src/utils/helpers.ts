@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context';
 export function generateEightDigitNum() {
   let randomNumber = Math.floor(Math.random() * 100000000);
   let paddedNumber = randomNumber.toString().padStart(8, '0');
@@ -34,4 +35,36 @@ export function sessionExpiryTime(seconds: number) {
 export function getSessionID() {
   const sessionID = sessionStorage.getItem('sessionID');
   return sessionID ?? undefined;
+}
+
+export function checkSystemLogout(
+  message: string,
+  router: AppRouterInstance,
+  channel: string
+) {
+  if (message.includes('force logout')) {
+    if (channel === 'B2B') {
+      removeEverySessionStorageItem(true);
+      router.push('/b2b/loginb');
+    }
+    removeEverySessionStorageItem();
+    router.push('/logout');
+  }
+}
+
+export function removeEverySessionStorageItem(exception?: boolean) {
+  sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('channel');
+  sessionStorage.removeItem('transactionDetail');
+  sessionStorage.removeItem('loginData');
+  sessionStorage.removeItem('loginBData');
+  if (!exception || exception !== true) {
+    sessionStorage.removeItem('merchantData');
+    sessionStorage.setItem('sessionStatus', 'expired');
+  }
+  sessionStorage.removeItem('exp');
+  sessionStorage.removeItem('sessionExpiry');
+  sessionStorage.removeItem('sessionID');
+  sessionStorage.removeItem('mfa');
+  sessionStorage.setItem('loginSessionStatus', 'expired');
 }

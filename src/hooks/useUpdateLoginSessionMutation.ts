@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
 import { redirect, useRouter } from 'next/navigation';
 import { useTransactionDetail } from './useTransactionDetail';
+import { removeEverySessionStorageItem } from '@/utils/helpers';
 
 export function useUpdateLoginSessionMutation() {
   const router = useRouter();
@@ -17,25 +18,15 @@ export function useUpdateLoginSessionMutation() {
       if (
         data.message === 'success' ||
         data.message.includes('session not found') ||
-        data.message.includes('privilege')
+        data.message.includes('privilege') ||
+        data.message.includes('force')
       ) {
         const redirectURL = txnDetail?.redirectURL;
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('channel');
-        sessionStorage.removeItem('transactionDetail');
-        sessionStorage.removeItem('loginData');
-        localStorage.removeItem('loginBData');
-        sessionStorage.removeItem('merchantData');
-        sessionStorage.removeItem('exp');
-
         setUsername('');
         setUserID('');
         setCorporateLogonID('');
-        sessionStorage.removeItem('sessionExpiry');
-        sessionStorage.removeItem('sessionID');
-        sessionStorage.removeItem('mfa');
-        sessionStorage.setItem('sessionStatus', 'expired');
-        sessionStorage.setItem('loginSessionStatus', 'expired');
+        removeEverySessionStorageItem();
+
         window.location.href = redirectURL!;
       }
     },

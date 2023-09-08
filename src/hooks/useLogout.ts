@@ -1,7 +1,7 @@
 import { logout } from '@/services/logout';
 import { useMutation } from '@tanstack/react-query';
 import { useUpdateLoginSessionMutation } from './useUpdateLoginSessionMutation';
-import { getSessionID } from '@/utils/helpers';
+import { getSessionID, removeEverySessionStorageItem } from '@/utils/helpers';
 import { Dispatch } from 'react';
 import { SetStateAction, useSetAtom } from 'jotai';
 import { redirect, useRouter } from 'next/navigation';
@@ -22,30 +22,19 @@ export function useLogout(
     mutationFn: logout,
     onSuccess: (data) => {
       const sessionID = getSessionID();
-      if (sessionID)
+      if (sessionID) {
         updateLoginSessionMut.mutate({
           status: 'expired',
           page,
           sessionID: sessionID!,
           reason,
         });
-      else {
+      } else {
         const redirectURL = txnDetail?.redirectURL;
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('channel');
-        sessionStorage.removeItem('transactionDetail');
-        sessionStorage.removeItem('loginData');
-        localStorage.removeItem('loginBData');
-        sessionStorage.removeItem('merchantData');
-        sessionStorage.removeItem('exp');
         setUsername('');
         setUserID('');
         setCorporateLogonID('');
-        sessionStorage.removeItem('sessionExpiry');
-        sessionStorage.removeItem('xpryDT');
-        sessionStorage.removeItem('mfa');
-        sessionStorage.setItem('sessionStatus', 'expired');
-        sessionStorage.setItem('loginSessionStatus', 'expired');
+        removeEverySessionStorageItem();
         window.location.href = redirectURL!;
       }
     },

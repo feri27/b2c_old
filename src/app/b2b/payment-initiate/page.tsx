@@ -15,6 +15,7 @@ import { useLoginBData } from '@/hooks/useLoginBData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
+import { checkSystemLogout } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -35,6 +36,7 @@ export default function PaymentInitiate() {
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/payment-initiate',
     navigateTo: '/b2b/payment-fail',
+    channel: 'B2B',
   });
 
   useIsSessionActive(() => {
@@ -46,6 +48,9 @@ export default function PaymentInitiate() {
   const createTxnMut = useMutation({
     mutationFn: createTxn,
     onSuccess: (data) => {
+      if ('message' in data) {
+        checkSystemLogout(data.message as string, router, 'B2B');
+      }
       if (data.status === 0) {
         setCancelType('FLD');
         cancel('FLD', transactionDetail);
