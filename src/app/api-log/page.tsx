@@ -4,7 +4,6 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { retrieveApiLogs } from '@/services/common/apiLog';
 import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 
 type SavedRequest = {
   url: string;
@@ -101,33 +100,15 @@ export default function ApiLog() {
                 </div>
                 <div className="mb-4">
                   <span className="font-bold">Request Body:</span>{' '}
-                  <ReactMarkdown
-                    className="rounded bg-gray-100 p-4 break-words"
-                    components={{
-                      code: ({ children }) => (
-                        <code className="block bg-gray-200 p-2 rounded">
-                          {children}
-                        </code>
-                      ),
-                    }}
-                  >
+                  <div className="rounded bg-gray-100 p-4 break-words">
                     {req}
-                  </ReactMarkdown>
+                  </div>
                 </div>
                 <div className="mb-4">
                   <span className="font-bold">Response Body:</span>{' '}
-                  <ReactMarkdown
-                    className="rounded bg-gray-100 p-4 break-words"
-                    components={{
-                      code: ({ children }) => (
-                        <code className="block bg-gray-200 p-2 rounded">
-                          {children}
-                        </code>
-                      ),
-                    }}
-                  >
+                  <div className="rounded bg-gray-100 p-4 break-words">
                     {res}
-                  </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             );

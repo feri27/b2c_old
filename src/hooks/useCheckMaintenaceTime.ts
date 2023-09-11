@@ -18,17 +18,19 @@ export function useCheckMaintenaceTime(channel: 'B2C' | 'B2B') {
         return;
       }
       const currentDate = new Date();
-      const mntLogs = data.mntLogs.filter((log) => log.iRakyatStatus === 'A');
+      const mntLogs = data.mntLogs.filter(
+        (log) => log.iRakyatStatus === 'A' || log.iBizRakyatStatus === 'A'
+      );
       for (const mntLog of mntLogs) {
-        const { startDate, endDate } = mntLog;
+        const { startDate, endDate, iBizRakyatStatus, iRakyatStatus } = mntLog;
 
         if (
           currentDate >= new Date(startDate) &&
           currentDate <= new Date(endDate)
         ) {
-          if (channel === 'B2C') {
+          if (channel === 'B2C' && iRakyatStatus === 'A') {
             router.push('/maintenance');
-          } else {
+          } else if (channel === 'B2B' && iBizRakyatStatus === 'A') {
             router.push('/b2b/maintenance');
           }
         }
