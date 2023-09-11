@@ -1,22 +1,46 @@
-import { TransactionDetail } from '@/services/common/transaction';
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import Layout from './Layout';
+import CountdownText from '../CountdownText';
+import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
+import { useLogoutBMutation } from '@/hooks/useLogoutBMutation';
+import { useAtomValue } from 'jotai';
+import { cancelTypeAtom } from '@/atoms';
 
-export default function PaymentStatus({
-  tnxDetail,
-  status,
-  cb,
-  isLoading,
-}: {
-  tnxDetail: TransactionDetail | null;
-  status: string;
-  cb: () => void;
-  isLoading: boolean;
-}) {
-  const print = () => {
-    window.print();
+export default function PaymentStatus({ success }: { success: boolean }) {
+  const txnDetail = useTransactionDetail();
+  const [accessToken, channel] = useAccessTokenAndChannel();
+  const [isClicked, setIsClicked] = useState(false);
+  const logouBMut = useLogoutBMutation(
+    success ? '/b2b/payment-details' : '/b2b/payment-fail',
+    success ? 'C' : 'S',
+    setIsClicked
+  );
+  const cancelType = useAtomValue(cancelTypeAtom);
+
+  const handleContinue = () => {
+    controller.abort();
+    logouBMut.mutate({ accessToken, channel, page: '/b2b/payment-details' });
+    setIsClicked(true);
   };
 
+  const print = () => {
+    controller.abort();
+    setController(new AbortController());
+    window.print();
+  };
+  const [controller, setController] = useState(new AbortController());
+  const status =
+    cancelType === ''
+      ? ''
+      : cancelType === 'TO'
+      ? 'Unsuccessful - Transaction has encountered timeout error'
+      : cancelType === 'EXP'
+      ? 'Unsuccessful - Transaction has expired'
+      : cancelType === 'FLD'
+      ? 'Unsuccessful - Transaction has been rejected'
+      : 'Unsuccessful - Transaction has been canceled';
   return (
     <>
       <Layout>
@@ -37,7 +61,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex marginx w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4 ">
-                    <p>{status}</p>
+                    <p>{success ? 'Created' : status}</p>
                   </div>
                 </div>
               </div>
@@ -57,7 +81,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{tnxDetail?.recipientReference}</p>
+                    <p>{txnDetail?.recipientReference}</p>
                   </div>
                 </div>
               </div>
@@ -68,7 +92,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{tnxDetail?.creditorName}</p>
+                    <p>{txnDetail?.creditorName}</p>
                   </div>
                 </div>
               </div>
@@ -78,7 +102,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{tnxDetail?.amount}</p>
+                    <p>{txnDetail?.amount}</p>
                   </div>
                 </div>
               </div>
@@ -89,7 +113,7 @@ export default function PaymentStatus({
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{tnxDetail?.endToEndId}</p>
+                    <p>{txnDetail?.endToEndId}</p>
                   </div>
                 </div>
               </div>
@@ -101,20 +125,24 @@ export default function PaymentStatus({
             <div className="!mb-2.5 flex justify-center">
               <button
                 onClick={print}
-                disabled={isLoading}
+                disabled={isClicked}
                 className="disabled:opacity-50 disabled:cursor-not-allowed border border-solid text-center border-[#006fb3] py-[5px] px-[25px] leading-[1.2] w-[150px] m-2.5 text-[0.8rem] !rounded-[20px] bg-white hover:bg-[#006fb3] hover:text-white"
               >
                 Print
               </button>
               {/* <input type="submit" name="doSubmit" className="acc-selc-orange-button" value="Next" id="doSubmit" disabled/>  */}
-              <input
-                type="button"
-                name="continue"
-                className="disabled:opacity-50 disabled:cursor-not-allowed border border-solid text-white cursor-pointer border-[#006fb3] py-[5px] px-[25px] leading-[1.2] w-[150px] m-2.5 text-[0.8rem] !rounded-[20px] bg-[#006fb3]"
-                value="Continue"
-                onClick={cb}
-                disabled={isLoading}
-              />
+              <button
+                className="bg-[#f26f21]  w-full min-[480px]:w-auto disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
+                id="doSubmit"
+                disabled={isClicked}
+                onClick={handleContinue}
+              >
+                <CountdownText
+                  cb={handleContinue}
+                  controller={controller}
+                  count={3}
+                />
+              </button>
             </div>
           </div>
         </div>
@@ -192,7 +220,7 @@ export default function PaymentStatus({
                     Date &amp; Time :
                   </label>
                   <div className="paymentLabelAdd col-xl-8 col-lg-8 col-md-8 col-12">
-                    <p>{tnxDetail?.currentDT}</p>
+                    <p>{txnDetail?.currentDT}</p>
                   </div>
                 </div>
                 <div className="form-group mb-4 flex w-full space-x-1 ">
@@ -200,7 +228,7 @@ export default function PaymentStatus({
                     Reference Number :
                   </label>
                   <div className="paymentLabelAdd col-xl-8 col-lg-8 col-md-8 col-12">
-                    {tnxDetail?.recipientReference}
+                    {txnDetail?.recipientReference}
                   </div>
                 </div>
                 <div className="form-group mb-4 flex w-full space-x-1 ">
@@ -208,7 +236,7 @@ export default function PaymentStatus({
                     Pay To :
                   </label>
                   <div className="paymentLabelAdd col-xl-8 col-lg-8 col-md-8 col-12">
-                    {tnxDetail?.creditorName}
+                    {txnDetail?.creditorName}
                   </div>
                 </div>
                 <div className="form-group mb-4 flex w-full space-x-1 ">
@@ -216,7 +244,7 @@ export default function PaymentStatus({
                     Transaction Amount :
                   </label>
                   <div className="paymentLabelAdd col-xl-8 col-lg-8 col-md-8 col-12">
-                    {tnxDetail?.amount}
+                    {txnDetail?.amount}
                   </div>
                 </div>
                 <div className="form-group mb-4 flex w-full space-x-1">
@@ -224,7 +252,7 @@ export default function PaymentStatus({
                     OBW Message ID :
                   </label>
                   <div className="paymentLabelAdd col-xl-8 col-lg-8 col-md-8 col-12">
-                    {tnxDetail?.endToEndId}
+                    {txnDetail?.endToEndId}
                   </div>
                 </div>
               </div>

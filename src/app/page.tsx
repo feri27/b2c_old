@@ -1,10 +1,7 @@
 'use client';
 import { submitMerchantData } from '@/services/common/merchantDate';
 import { signMessage } from '@/services/common/signAndVerifyMessage';
-import {
-  getTransactionNumber,
-  postTransactionNumber,
-} from '@/services/common/transaction';
+import { getTransactionNumber } from '@/services/common/transaction';
 import { getDate } from '@/utils/helpers';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -89,7 +86,6 @@ export default function Home() {
       const txnStr = trxId.slice(0, -8);
       const tnxNumPlus1 = +txnNum + 1;
       const newTxnID = txnStr + tnxNumPlus1.toString().padStart(8, '0');
-      txnNumMut.mutate(newTxnID);
       merchantDataMut.mutate({
         endToEndId,
         txnId: trxId,
@@ -109,13 +105,6 @@ export default function Home() {
         xpryDt: expiryDate.value,
       });
     },
-    onError: () => {
-      setIsClicked(false);
-    },
-  });
-
-  const txnNumMut = useMutation({
-    mutationFn: postTransactionNumber,
     onError: () => {
       setIsClicked(false);
     },

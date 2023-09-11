@@ -171,6 +171,7 @@ export default function Login() {
       userID.trim().length === 0
     );
   };
+  console.log(approvedTxnLogQry.data);
 
   useCheckGlobalLimit(
     getTxnQry.data,

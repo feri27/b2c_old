@@ -48,9 +48,9 @@ export function useCheckGlobalLimit(
       } else if (channel === 'B2B') {
         if (
           (/Mobi/i.test(navigator.userAgent) &&
-            txnDetail.data.amount > approvedTxnLog.txnLog.cCMB) ||
+            txnDetail.data.amount > approvedTxnLog.txnLog.nCMB) ||
           (!/Mobi/i.test(navigator.userAgent) &&
-            txnDetail.data.amount > approvedTxnLog.txnLog.cCIB)
+            txnDetail.data.amount > approvedTxnLog.txnLog.nCIB)
         ) {
           cancel('GL', txnDetail.data);
           setCancelType('GL');
