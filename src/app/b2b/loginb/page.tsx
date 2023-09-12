@@ -37,7 +37,7 @@ export default function Login() {
   const [_, channel] = useAccessTokenAndChannel();
   const [isClicked, setIsClicked] = useState(false);
   const merchantData = useMerchantData();
-  const privateKeyQry = usePrivateKey();
+  const privateKeyQry = usePrivateKey({ enabled: true });
   const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
   const [fetchSettings, setFetchSettings] = useState(false);
 
@@ -62,18 +62,19 @@ export default function Login() {
   const updateTxnMut = useUpdateTxnMutation(false, '', 'B2B', (data) => {
     if ('message' in data) {
       checkSystemLogout(data.message as string, router, 'B2B');
-    }
-    if (
-      ('statusCode' in data && data['statusCode'] === 'ACTC') ||
-      data['statusCode'] === 'ACSP'
-    ) {
-      setFetchTxnDetail(true);
-    } else if ('message' in data && data['message'] === 'timeout') {
-      setCancelType('TO');
-      cancel('TO', merchantData);
     } else {
-      setCancelType('FLD');
-      cancel('FR', merchantData);
+      if (
+        ('statusCode' in data && data['statusCode'] === 'ACTC') ||
+        data['statusCode'] === 'ACSP'
+      ) {
+        setFetchTxnDetail(true);
+      } else if ('message' in data && data['message'] === 'timeout') {
+        setCancelType('TO');
+        cancel('TO', merchantData);
+      } else {
+        setCancelType('FLD');
+        cancel('FR', merchantData);
+      }
     }
   });
 

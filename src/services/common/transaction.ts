@@ -18,7 +18,7 @@ export type Reason =
 
 export type GetTransactionDetail = {
   data: {
-    msgid: string;
+    msgId: string;
     currentDT: string;
     tnxId: string;
     amount: number;

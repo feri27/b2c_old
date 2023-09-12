@@ -1,7 +1,7 @@
 'use client';
 import AccountSelection from '@/components/AccountSelection';
 import Steps from '@/components/Steps';
-import { account, accountPayment } from '@/services/account';
+import { account } from '@/services/account';
 import {
   authorizeTransaction,
   checkTxnStatus,
@@ -19,11 +19,9 @@ import { usePrivateKey } from '@/hooks/usePrivateKey';
 import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { BsFillInfoCircleFill } from 'react-icons/bs';
 import CountdownText from '@/components/CountdownText';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
-import Modal from '@/components/common/Modal';
 import { useGetMFA } from '@/hooks/useGetMFA';
 import { Socket, io } from 'socket.io-client';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
@@ -40,31 +38,33 @@ export default function PaymentDetail() {
   const [accessToken, channel] = useAccessTokenAndChannel();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const [socket, setSocket] = useState<Socket | undefined>();
-  const { cancel, updTrxMut } = useCancelTransaction({
+  const { cancel: CancelTxn, updTrxMut } = useCancelTransaction({
     page: '/payment-detail',
     channel: 'B2C',
   });
+  const cancel = useCallback(CancelTxn, []);
   const updateTxnMut = useUpdateTxnMutation(false, '', 'B2C');
   useCheckMaintenaceTime('B2C');
   const loginData = useLoginData();
   const transactionDetail = useTransactionDetail();
-  const [timerOff, setTimerOff] = useState<boolean>(false);
+  const [timerOff, setTimerOff] = useState<boolean>(true);
   const [maSubmit, setMASubmit] = useState<{ limit: number; count: number }>({
     limit: 1,
     count: 0,
   });
+  const mfa = useGetMFA();
   const [otp, setOtp] = useState<string>('');
   const [authProceed, setAuthProceed] = useState(false);
-  const privateKeyQry = usePrivateKey();
+  const privateKeyQry = usePrivateKey({ enabled: mfa?.method === 'MO' });
   const [accountType, setAccountType] = useState('SVGS');
   const [isClicked, setIsClicked] = useState(false);
   const [moClicked, setMoClicked] = useState(false);
+  const [reqTACButtonClicked, setReqTACButtonClicked] = useState(false);
   const merchantData = useMerchantData();
   useIsSessionActive(() => {
     setCancelType('EXP');
     cancel('E', transactionDetail);
   });
-  const mfa = useGetMFA();
 
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
@@ -88,7 +88,20 @@ export default function PaymentDetail() {
       : '';
 
   useEffect(() => {
-    if (transactionDetail?.sourceOfFunds !== '') {
+    const srcOfFundsFromMerData = merchantData.accptblSrcOfFunds.split(',');
+    const srcOfFundsFromtxnDetail = transactionDetail?.sourceOfFunds.split(',');
+    let sameItems = false;
+    srcOfFundsFromtxnDetail?.forEach((src) => {
+      if (srcOfFundsFromMerData.includes(src)) {
+        sameItems = true;
+      } else {
+        sameItems = false;
+      }
+    });
+    if (
+      srcOfFundsFromMerData.length !== srcOfFundsFromtxnDetail?.length ||
+      !sameItems
+    ) {
       setCancelType('FLD');
       cancel('ALF', transactionDetail);
     }
@@ -107,8 +120,7 @@ export default function PaymentDetail() {
     onSuccess: (data) => {
       if ('message' in data) {
         checkSystemLogout(data.message as string, router, 'B2C');
-      }
-      router.push('/payment-success');
+      } else router.push('/payment-success');
     },
     onError: () => {
       router.push('/payment-success');
@@ -120,46 +132,47 @@ export default function PaymentDetail() {
     onSuccess: (data) => {
       if ('message' in data) {
         checkSystemLogout(data.message as string, router, 'B2C');
-      }
-      if (
-        data.PymtConfirmRs.resBody.TxSts === 'ACTC' ||
-        data.PymtConfirmRs.resBody.TxSts === 'ACSP'
-      ) {
-        router.push('/payment-success');
       } else {
-        const sessionID = getSessionID();
-        updateTxnMut.mutate({
-          dbtrAgt: merchantData.dbtrAgt,
-          endToEndId: merchantData.endToEndId,
-          gpsCoord: '',
-          merchantId: merchantData.msgId,
-          page: '/payment-detail',
-          reason: 'MFA',
-          sessionID,
-          channel,
-          amount:
-            transactionDetail !== null
-              ? transactionDetail.amount.toString()
-              : '',
-          payerName: transactionDetail?.payerName ?? '',
-          cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
-          dbtrAcctId: transactionDetail?.dbtrAcctId ?? '',
-          dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
-        });
-        if (accountQry.data && 'data' in accountQry.data)
-          notifyTxnMut.mutate({
-            accessToken: accessToken ?? '',
-            fromAccountHolder: accountQry.data.data.accHolderName,
-            fromAccountNo: accountQry.data.data.accNo,
-            referenceNo: transactionDetail?.recipientReference ?? '',
-            totalAmount: transactionDetail?.amount ?? 0,
-            transactionNo: transactionDetail?.tnxId ?? '',
-            trxAmount: transactionDetail?.amount ?? 0,
-            trxTimestamp: transactionDetail?.currentDT ?? '',
-            sellerName: transactionDetail?.creditorName ?? '',
-            trxStatus: 'S',
+        if (
+          data.PymtConfirmRs.resBody.TxSts === 'ACTC' ||
+          data.PymtConfirmRs.resBody.TxSts === 'ACSP'
+        ) {
+          router.push('/payment-success');
+        } else {
+          const sessionID = getSessionID();
+          updateTxnMut.mutate({
+            dbtrAgt: merchantData.dbtrAgt,
+            endToEndId: merchantData.endToEndId,
+            gpsCoord: '',
+            merchantId: merchantData.msgId,
+            page: '/payment-detail',
+            reason: 'MFA',
+            sessionID,
             channel,
+            amount:
+              transactionDetail !== null
+                ? transactionDetail.amount.toString()
+                : '',
+            payerName: transactionDetail?.payerName ?? '',
+            cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
+            dbtrAcctId: transactionDetail?.dbtrAcctId ?? '',
+            dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
           });
+          if (accountQry.data && 'data' in accountQry.data)
+            notifyTxnMut.mutate({
+              accessToken: accessToken ?? '',
+              fromAccountHolder: accountQry.data.data.accHolderName,
+              fromAccountNo: accountQry.data.data.accNo,
+              referenceNo: transactionDetail?.recipientReference ?? '',
+              totalAmount: transactionDetail?.amount ?? 0,
+              transactionNo: transactionDetail?.tnxId ?? '',
+              trxAmount: transactionDetail?.amount ?? 0,
+              trxTimestamp: transactionDetail?.currentDT ?? '',
+              sellerName: transactionDetail?.creditorName ?? '',
+              trxStatus: 'S',
+              channel,
+            });
+        }
       }
     },
     onError: () => {
@@ -185,42 +198,43 @@ export default function PaymentDetail() {
     onSuccess: (data) => {
       if ('message' in data) {
         checkSystemLogout(data.message as string, router, 'B2C');
-      }
-
-      if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
-        setCancelType('FLD');
-        cancel('MFA', transactionDetail);
-      }
-      const approvalStatus = data.data.body.approvalStatus;
-      if (
-        approvalStatus === 'R' ||
-        approvalStatus === 'F' ||
-        approvalStatus === 'C'
-      ) {
-        setCancelType('FLD');
-        cancel('ALF', transactionDetail);
-      } else if (approvalStatus === 'P') {
-        setMASubmit((prev) => ({ ...prev, limit: 3 }));
-      } else if (approvalStatus === 'A') {
-        if (transactionDetail && merchantData) {
-          debitMut.mutate({
-            bizSvc: transactionDetail.bizSvc,
-            cdtrAcctId: transactionDetail.cdtrAcctId,
-            cdtrAcctTp: transactionDetail.cdtrAcctTp,
-            cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
-            cdtrNm: transactionDetail.creditorName,
-            channel: 'B2C',
-            dbtrAcctId: transactionDetail.dbtrAcctId,
-            dbtrAcctTp: transactionDetail.dbtrAcctTp,
-            dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
-            dbtrNm: transactionDetail.payerName,
-            frBIC: transactionDetail.frBIC,
-            instgAgtBIC: merchantData.dbtrAgt,
-            interBkSttlmAmt: String(transactionDetail.amount),
-            recptRef: transactionDetail.recipientReference,
-            toBIC: transactionDetail.toBIC,
-            txId: merchantData.endToEndId,
-          });
+      } else {
+        if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
+          setCancelType('FLD');
+          cancel('MFA', transactionDetail);
+          return;
+        }
+        const approvalStatus = data.data.body.approvalStatus;
+        if (
+          approvalStatus === 'R' ||
+          approvalStatus === 'F' ||
+          approvalStatus === 'C'
+        ) {
+          setCancelType('FLD');
+          cancel('ALF', transactionDetail);
+        } else if (approvalStatus === 'P') {
+          setMASubmit((prev) => ({ ...prev, limit: 3 }));
+        } else if (approvalStatus === 'A') {
+          if (transactionDetail && merchantData) {
+            debitMut.mutate({
+              bizSvc: transactionDetail.bizSvc,
+              cdtrAcctId: transactionDetail.cdtrAcctId,
+              cdtrAcctTp: transactionDetail.cdtrAcctTp,
+              cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
+              cdtrNm: transactionDetail.creditorName,
+              channel: 'B2C',
+              dbtrAcctId: transactionDetail.dbtrAcctId,
+              dbtrAcctTp: transactionDetail.dbtrAcctTp,
+              dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
+              dbtrNm: transactionDetail.payerName,
+              frBIC: transactionDetail.frBIC,
+              instgAgtBIC: merchantData.dbtrAgt,
+              interBkSttlmAmt: String(transactionDetail.amount),
+              recptRef: transactionDetail.recipientReference,
+              toBIC: transactionDetail.toBIC,
+              txId: merchantData.endToEndId,
+            });
+          }
         }
       }
     },
@@ -263,43 +277,46 @@ export default function PaymentDetail() {
     onSuccess: (data) => {
       if ('message' in data) {
         checkSystemLogout(data.message as string, router, 'B2C');
-      }
-      if (data.status !== 1 || data.errorId) {
-        setCancelType('FLD');
-        cancel('MFA', transactionDetail);
       } else {
-        if (accountQry.data)
-          if (transactionDetail && merchantData) {
-            // accPaymentMut.mutate({
-            //   body: {
-            //     actNo: accountQry.data.data.accNo,
-            //     addenda: transactionDetail?.recipientReference ?? '',
-            //     sellerId: transactionDetail?.merchantID ?? '',
-            //     sellerOdNo: transactionDetail?.recipientReference ?? '',
-            //     senderName: transactionDetail?.creditorName ?? '',
-            //     trxAmt: transactionDetail?.amount ?? 0,
-            //   },
-            //   saving: accountType === 'SVGS',
-            // });
-            debitMut.mutate({
-              bizSvc: transactionDetail.bizSvc,
-              cdtrAcctId: transactionDetail.cdtrAcctId,
-              cdtrAcctTp: transactionDetail.cdtrAcctTp,
-              cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
-              cdtrNm: transactionDetail.creditorName,
-              channel: 'B2C',
-              dbtrAcctId: transactionDetail.dbtrAcctId,
-              dbtrAcctTp: transactionDetail.dbtrAcctTp,
-              dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
-              dbtrNm: transactionDetail.payerName,
-              frBIC: transactionDetail.frBIC,
-              instgAgtBIC: merchantData.dbtrAgt,
-              interBkSttlmAmt: String(transactionDetail.amount),
-              recptRef: transactionDetail.recipientReference,
-              toBIC: transactionDetail.toBIC,
-              txId: merchantData.endToEndId,
-            });
-          }
+        if (data.status !== 1 || data.errorId) {
+          console.log(data);
+
+          setCancelType('FLD');
+          cancel('MFA', transactionDetail);
+        } else {
+          if (accountQry.data)
+            if (transactionDetail && merchantData) {
+              // accPaymentMut.mutate({
+              //   body: {
+              //     actNo: accountQry.data.data.accNo,
+              //     addenda: transactionDetail?.recipientReference ?? '',
+              //     sellerId: transactionDetail?.merchantID ?? '',
+              //     sellerOdNo: transactionDetail?.recipientReference ?? '',
+              //     senderName: transactionDetail?.creditorName ?? '',
+              //     trxAmt: transactionDetail?.amount ?? 0,
+              //   },
+              //   saving: accountType === 'SVGS',
+              // });
+              debitMut.mutate({
+                bizSvc: transactionDetail.bizSvc,
+                cdtrAcctId: transactionDetail.cdtrAcctId,
+                cdtrAcctTp: transactionDetail.cdtrAcctTp,
+                cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
+                cdtrNm: transactionDetail.creditorName,
+                channel: 'B2C',
+                dbtrAcctId: transactionDetail.dbtrAcctId,
+                dbtrAcctTp: transactionDetail.dbtrAcctTp,
+                dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
+                dbtrNm: transactionDetail.payerName,
+                frBIC: transactionDetail.frBIC,
+                instgAgtBIC: merchantData.dbtrAgt,
+                interBkSttlmAmt: String(transactionDetail.amount),
+                recptRef: transactionDetail.recipientReference,
+                toBIC: transactionDetail.toBIC,
+                txId: merchantData.endToEndId,
+              });
+            }
+        }
       }
     },
     onError: () => {
@@ -308,9 +325,11 @@ export default function PaymentDetail() {
   });
 
   const handleSMSRequest = () => {
+    setReqTACButtonClicked(true);
     return;
   };
   const handleMORequest = () => {
+    setReqTACButtonClicked(true);
     if (accountQry.data && 'data' in accountQry.data) {
       authorizeTxnMut.mutate({
         accessToken,
@@ -329,7 +348,6 @@ export default function PaymentDetail() {
     setMoClicked(true);
     return;
   };
-
   const proceedHandler = (e: FormEvent) => {
     e.preventDefault();
     if ((mfaMethod === 'SMS' || mfaMethod === 'MO') && !otp) {
@@ -387,10 +405,12 @@ export default function PaymentDetail() {
       });
       setIsClicked(true);
     } else if (mfaMethod === 'MA') {
-      // abortController.abort();
-      console.log('here');
+      setReqTACButtonClicked(true);
+      if (maSubmit.count === 0) {
+        setTimerOff(false);
+      }
 
-      setMASubmit((prev) => ({ ...prev, count: prev.count++ }));
+      setMASubmit((prev) => ({ ...prev, count: prev.count + 1 }));
       if (accountQry.data && 'data' in accountQry.data) {
         authorizeTxnMut.mutate({
           accessToken,
@@ -482,7 +502,10 @@ export default function PaymentDetail() {
 
   useEffect(() => {
     if (transactionDetail && loginData) {
-      if (transactionDetail.amount > loginData.mbl.usedLimit) {
+      if (
+        transactionDetail.amount >
+        loginData.mbl.trxLimit - loginData.mbl.usedLimit
+      ) {
         setCancelType('UL');
         cancel('UL', transactionDetail);
       }
@@ -559,7 +582,7 @@ export default function PaymentDetail() {
                             />
                           ) : (
                             <TACButton
-                              disabled={false}
+                              disabled={reqTACButtonClicked}
                               requestButtonText={requestButtonText}
                               onClick={handleSMSRequest}
                             />
@@ -568,10 +591,12 @@ export default function PaymentDetail() {
                       </div>
                     </div>
                   </div>
-                  <p className="flex w-full justify-center">
-                    iSecure Device OTP has been sent to your iRakyat for
-                    approval.
-                  </p>
+                  {moClicked && (
+                    <p className="flex w-full justify-center">
+                      iSecure Device OTP has been sent to your iRakyat for
+                      approval.
+                    </p>
+                  )}
                 </>
               )}
 
@@ -593,7 +618,7 @@ export default function PaymentDetail() {
 
                 <div className="-mx-[15px] mb-[15px] mt-3 flex flex-col md:flex-row text-sm">
                   <div className=" pl-[2.5em]">
-                    {mfa?.validity && (
+                    {mfa?.validity && reqTACButtonClicked ? (
                       <CountdownText
                         count={10}
                         isNote={true}
@@ -611,7 +636,7 @@ export default function PaymentDetail() {
                           mfaMethod === 'MA' ? setTimerOff : undefined
                         }
                       />
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </>
@@ -622,8 +647,9 @@ export default function PaymentDetail() {
               <input
                 type="button"
                 onClick={(e) => {
-                  setCancelType('U');
-                  cancel('U', transactionDetail);
+                  setTimerOff(true);
+                  // setCancelType('U');
+                  // cancel('U', transactionDetail);
                 }}
                 disabled={isClicked || updTrxMut.isLoading}
                 defaultValue="Cancel"
@@ -640,7 +666,8 @@ export default function PaymentDetail() {
                   disabled={
                     isClicked ||
                     updTrxMut.isLoading ||
-                    maSubmit.count >= maSubmit.limit
+                    maSubmit.count >= maSubmit.limit ||
+                    !timerOff
                   }
                   id="tac"
                 />

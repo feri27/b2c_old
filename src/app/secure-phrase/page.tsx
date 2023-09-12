@@ -1,14 +1,14 @@
 'use client';
-import { securePhraseAtom, usernameAtom } from '@/atoms';
+import { cancelTypeAtom, securePhraseAtom, usernameAtom } from '@/atoms';
 import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
 import { login } from '@/services/login';
 import { useMutation } from '@tanstack/react-query';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { encrypt } from '@/utils/helpers';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
@@ -25,19 +25,20 @@ import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 export default function SecurePhrase() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
-  const [isActive, setIsActive] = useState<boolean>(true);
+  const setCancelType = useSetAtom(cancelTypeAtom);
   const [isClicked, setIsClicked] = useState(false);
-  const { cancel, updTrxMut } = useCancelTransaction({
+  const { cancel: CancelTxn, updTrxMut } = useCancelTransaction({
     page: '/secure-phrase',
     channel: 'B2C',
   });
+  const cancel = useCallback(CancelTxn, []);
   useCheckMaintenaceTime('B2C');
   useIsSessionActive(() => {
+    setCancelType('EXP');
     cancel('E', transactionDetail);
-    sessionStorage.setItem('exp', 'true');
   });
 
-  const privateKeyQry = usePrivateKey();
+  const privateKeyQry = usePrivateKey({ enabled: true });
 
   const transactionDetail = useTransactionDetail();
 
@@ -63,6 +64,7 @@ export default function SecurePhrase() {
           userID: data.loginRes.data.body.cif,
         });
       } else {
+        setCancelType('FLD');
         cancel('FR', transactionDetail);
       }
     },

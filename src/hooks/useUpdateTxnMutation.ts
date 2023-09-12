@@ -17,9 +17,10 @@ export const useUpdateTxnMutation = (
       ((data) => {
         if ('message' in data) {
           checkSystemLogout(data.message as string, router, 'B2B');
-        }
-        if (navigate) {
-          router.push(navigateTo);
+        } else {
+          if (navigate) {
+            router.push(navigateTo);
+          }
         }
       }),
   });

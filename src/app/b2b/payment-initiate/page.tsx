@@ -50,13 +50,14 @@ export default function PaymentInitiate() {
     onSuccess: (data) => {
       if ('message' in data) {
         checkSystemLogout(data.message as string, router, 'B2B');
+      } else {
+        if (data.status === 0) {
+          setCancelType('FLD');
+          cancel('FLD', transactionDetail);
+          return;
+        }
+        router.push('/b2b/payment-details');
       }
-      if (data.status === 0) {
-        setCancelType('FLD');
-        cancel('FLD', transactionDetail);
-        return;
-      }
-      router.push('/b2b/payment-details');
     },
     onError: () => {
       setIsClicked(false);

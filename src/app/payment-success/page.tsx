@@ -111,7 +111,7 @@ export default function PaymentSuccess() {
               </label>
               <div className="flex after:clear-both md:w-2/3">
                 <div className="flex flex-wrap">
-                  <p className="">{transactionDetail?.msgid}</p>
+                  <p className="">{transactionDetail?.msgId}</p>
                 </div>
               </div>
             </div>

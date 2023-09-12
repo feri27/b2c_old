@@ -40,7 +40,7 @@ export default function AccountSelection({
                       {accType === 'CACC' && 'Current Account'}
                       {accType === 'CCRD' && 'Credit Card'}
                       {accType === 'WALL' && 'eWallet'} */}
-                      {accType === '01' && 'Saving Account'}
+                      {accType === '01' && 'CASA'}
                       {accType === '02' && 'Credit Card'}
                       {accType === '03' && 'eWallet'}
                     </option>
@@ -78,7 +78,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className="">{data?.msgid}</p>
+            <p className="">{data?.msgId}</p>
           </div>
         </div>
       </div>

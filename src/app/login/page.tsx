@@ -55,17 +55,18 @@ export default function Login() {
   const updateTxnMut = useUpdateTxnMutation(false, '', 'B2C', (data) => {
     if ('message' in data) {
       checkSystemLogout(data.message as string, router, 'B2C');
-    }
-    if (
-      ('statusCode' in data && data['statusCode'] === 'ACTC') ||
-      data['statusCode'] === 'ACSP'
-    ) {
-      setFetchTxnDetail(true);
-    } else if ('message' in data && data['message'] === 'timeout') {
-      cancel('TO', merchantData);
-      setCancelType('TO');
     } else {
-      cancel('FR', merchantData);
+      if (
+        ('statusCode' in data && data['statusCode'] === 'ACTC') ||
+        data['statusCode'] === 'ACSP'
+      ) {
+        setFetchTxnDetail(true);
+      } else if ('message' in data && data['message'] === 'timeout') {
+        cancel('TO', merchantData);
+        setCancelType('TO');
+      } else {
+        cancel('FR', merchantData);
+      }
     }
   });
 

@@ -39,6 +39,11 @@ export function useIsSessionActive(cb: () => void) {
           ? Math.floor(new Date(`${txnDetail.xpryDt}:00.000Z`).getTime() / 1000)
           : undefined;
       const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+      console.log({
+        xpryDTtimebool:
+          currentTimeInSeconds > sessionExpiry ||
+          (xpryDTtime && currentTimeInSeconds > xpryDTtime),
+      });
       console.log({ xpryDTtime });
 
       if (

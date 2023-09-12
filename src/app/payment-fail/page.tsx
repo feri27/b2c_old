@@ -30,7 +30,7 @@ export default function PaymentFail() {
     logoutMut.mutate({ accessToken, channel, page: '/payment-fail' });
     setIsClicked(true);
   };
-
+  console.log(cancelType);
   const print = () => {
     controller.abort();
     setController(new AbortController());
@@ -117,7 +117,7 @@ export default function PaymentFail() {
             </label>
             <div className="flex after:clear-both md:w-2/3">
               <div className="flex flex-wrap">
-                <p className="">{transactionDetail?.msgid}</p>
+                <p className="">{transactionDetail?.msgId}</p>
               </div>
             </div>
           </div>
@@ -140,7 +140,11 @@ export default function PaymentFail() {
             disabled={isClicked}
             onClick={handleClick}
           >
-            <CountdownText cb={handleClick} controller={controller} count={3} />
+            <CountdownText
+              cb={handleClick}
+              controller={controller}
+              count={100}
+            />
           </button>
         </div>
       </div>
