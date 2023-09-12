@@ -140,11 +140,7 @@ export default function PaymentFail() {
             disabled={isClicked}
             onClick={handleClick}
           >
-            <CountdownText
-              cb={handleClick}
-              controller={controller}
-              count={100}
-            />
+            <CountdownText cb={handleClick} controller={controller} count={3} />
           </button>
         </div>
       </div>
