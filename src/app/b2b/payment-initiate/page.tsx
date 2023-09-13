@@ -10,8 +10,10 @@ import Modal from '@/components/common/Modal';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
+import { useCheckSourceOfFunds } from '@/hooks/useCheckSourceOfFunds';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLoginBData } from '@/hooks/useLoginBData';
+import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
@@ -30,6 +32,7 @@ export default function PaymentInitiate() {
   const corporateLogonID = useAtomValue(corporateLogonIDAtom);
   const userID = useAtomValue(userIDAtom);
   const transactionDetail = useTransactionDetail();
+  const merchantData = useMerchantData();
   const [accessToken, channel] = useAccessTokenAndChannel();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const [isClicked, setIsClicked] = useState(false);
@@ -44,7 +47,12 @@ export default function PaymentInitiate() {
     setCancelType('EXP');
   });
   useCheckMaintenaceTime('B2B');
-
+  useCheckSourceOfFunds({
+    transactionDetail,
+    merchantData,
+    setCancelType,
+    cancel,
+  });
   const createTxnMut = useMutation({
     mutationFn: createTxn,
     onSuccess: (data) => {

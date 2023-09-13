@@ -12,7 +12,7 @@ export default function Layout({
   return (
     <>
       <Header maintenance={maintenance} />
-      <main className="relative min-h-[100px] bg-[url(/images/bg.jpg)]">
+      <main className="relative h-between-b2b bg-[url(/images/bg.jpg)]">
         <div className="w-full h-[45px] opacity-60 bg-white" />
         {children}
       </main>

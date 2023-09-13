@@ -142,7 +142,7 @@ export default function SecurePhrase() {
     <>
       <SeparatorLine bottom={false} />
       <Header backgroundImg={true} />
-      <div className="min-[576]-w-[41.66667%] mb-2 min-[1200px]:w-[37.3333%] flex justify-end ">
+      <div className="min-[576]-w-[41.66667%] mb-2 min-[1200px]:w-[37.3333%] flex justify-end">
         <Steps step={1} />
       </div>
       <div className="flex flex-col min-[1200px]:max-w-[960px] min-[992px]:max-w-[890px] md:max-w-[720px] min-[576px]:max-w-[540px]  md:flex-row  items-stretch padx  mx-auto">

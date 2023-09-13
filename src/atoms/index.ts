@@ -7,7 +7,7 @@ type LoginBData = {
   usedLimit: number;
 };
 
-type CancelType = 'TO' | 'EXP' | 'U' | 'GL' | 'UL' | 'FLD' | '';
+export type CancelType = 'TO' | 'EXP' | 'U' | 'GL' | 'UL' | 'FLD' | '';
 
 export const usernameAtom = atom<string>('');
 export const securePhraseAtom = atom<string>('');

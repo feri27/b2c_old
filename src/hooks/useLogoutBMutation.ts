@@ -4,6 +4,7 @@ import { useUpdateLoginSessionMutation } from './useUpdateLoginSessionMutation';
 import { getSessionID } from '@/utils/helpers';
 import { Dispatch } from 'react';
 import { SetStateAction } from 'jotai';
+import { logoutB } from '@/services/b2b/auth';
 
 export function useLogoutBMutation(
   page: string,
@@ -13,7 +14,7 @@ export function useLogoutBMutation(
   const updateLoginSessionMut = useUpdateLoginSessionMutation();
 
   const { isLoading, mutate } = useMutation({
-    mutationFn: logout,
+    mutationFn: logoutB,
     onSuccess: (data) => {
       const sessionID = getSessionID();
 

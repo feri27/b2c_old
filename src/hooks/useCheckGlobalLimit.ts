@@ -37,9 +37,9 @@ export function useCheckGlobalLimit(
       if (channel === 'B2C') {
         if (
           (/Mobi/i.test(navigator.userAgent) &&
-            txnDetail.data.amount > approvedTxnLog.txnLog.cRMB) ||
+            txnDetail.data.amount > approvedTxnLog.txnLog.nRMB) ||
           (!/Mobi/i.test(navigator.userAgent) &&
-            txnDetail.data.amount > approvedTxnLog.txnLog.cRIB)
+            txnDetail.data.amount > approvedTxnLog.txnLog.nRIB)
         ) {
           cancel('GL', txnDetail.data);
         } else {

@@ -30,6 +30,7 @@ import { useMerchantData } from '@/hooks/useMerchantData';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useSetAtom } from 'jotai';
 import { cancelTypeAtom } from '@/atoms';
+import { useCheckSourceOfFunds } from '@/hooks/useCheckSourceOfFunds';
 
 const abortController = new AbortController();
 
@@ -87,25 +88,12 @@ export default function PaymentDetail() {
       ? 'Request ISecure OTP'
       : '';
 
-  useEffect(() => {
-    const srcOfFundsFromMerData = merchantData.accptblSrcOfFunds.split(',');
-    const srcOfFundsFromtxnDetail = transactionDetail?.sourceOfFunds.split(',');
-    let sameItems = false;
-    srcOfFundsFromtxnDetail?.forEach((src) => {
-      if (srcOfFundsFromMerData.includes(src)) {
-        sameItems = true;
-      } else {
-        sameItems = false;
-      }
-    });
-    if (
-      srcOfFundsFromMerData.length !== srcOfFundsFromtxnDetail?.length ||
-      !sameItems
-    ) {
-      setCancelType('FLD');
-      cancel('ALF', transactionDetail);
-    }
-  }, [transactionDetail?.sourceOfFunds]);
+  useCheckSourceOfFunds({
+    transactionDetail,
+    merchantData,
+    setCancelType,
+    cancel,
+  });
 
   const authorizeTxnMut = useMutation({
     mutationFn: authorizeTransaction,

@@ -134,7 +134,7 @@
 }
 
 .h-between-b2b {
-  min-height: calc(100vh - 36vh);
+  min-height: calc(100vh - 102px - 137.5px);
 }
 
 @media print {
