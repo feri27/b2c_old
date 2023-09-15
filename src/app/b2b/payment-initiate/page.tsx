@@ -90,6 +90,8 @@ export default function PaymentInitiate() {
 
   const handleSubmit = () => {
     if (transactionDetail && selectedAccount) {
+      console.log('hrer');
+
       createTxnMut.mutate({
         accessToken,
         channel,
@@ -115,6 +117,16 @@ export default function PaymentInitiate() {
         xpryDt: transactionDetail.xpryDt,
         productId: transactionDetail.productId,
         latlong: '30.4302,54.3443',
+        bizSvc: transactionDetail.bizSvc,
+        cdtrAcctId: transactionDetail.cdtrAcctId,
+        cdtrAcctTp: transactionDetail.cdtrAcctTp,
+        cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
+        dbtrAcctId: transactionDetail.dbtrAcctId,
+        dbtrAcctTp: transactionDetail.dbtrAcctTp,
+        dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
+        dbtrNm: transactionDetail.payerName,
+        frBIC: transactionDetail.frBIC,
+        toBIC: transactionDetail.toBIC,
       });
       setIsClicked(true);
     }

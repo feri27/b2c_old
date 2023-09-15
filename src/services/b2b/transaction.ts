@@ -27,6 +27,17 @@ type TransactionB = {
   productId: string;
   latlong: string;
   xpryDt: string;
+  //for debit
+  bizSvc: string;
+  cdtrAcctId: string;
+  cdtrAcctTp: string;
+  cdtrAgtBIC: string;
+  dbtrAcctId: string;
+  dbtrAcctTp: string;
+  dbtrAgtBIC: string;
+  dbtrNm: string;
+  frBIC: string;
+  toBIC: string;
 };
 
 export async function createTxn(body: TransactionB): Promise<ResponseHeader> {
