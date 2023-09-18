@@ -16,7 +16,7 @@ export const useUpdateTxnMutation = (
       onSuccess ??
       ((data) => {
         if ('message' in data) {
-          checkSystemLogout(data.message as string, router, 'B2B');
+          checkSystemLogout(data.message as string, router);
         } else {
           if (navigate) {
             router.push(navigateTo);

@@ -102,7 +102,7 @@ export default function Home() {
         customerUsedMBL: inputs.customerUsedMBL.value,
         customerUsedMSL: inputs.customerUsedMSL.value,
         mfaMethod: inputs.mfaMethod.value,
-        xpryDt: expiryDate.value,
+        xpryDt: expiryDate.value.concat(':00'),
       });
     },
     onError: () => {
@@ -150,18 +150,18 @@ export default function Home() {
       setIsClicked(false);
     },
   });
-  const merchantId = 'BKRM0602';
+  const merchantId = 'BKRMMYKL';
   const cc =
     inputs.channel.value === 'B2C'
       ? 'RB'
       : inputs.channel.value === 'B2B'
-      ? 'CB'
+      ? 'BW'
       : '';
   const trxId =
-    date + merchantId + '862' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
+    date + merchantId + '861' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
   const messageId = date + merchantId + '862' + (txnNumQry.data?.txn_num ?? '');
   const endToEndId =
-    date + merchantId + '862' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
+    date + merchantId + '861' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
   const dbtrAgt = merchantId;
   // const endToEndIDSignature = btoa(endToEndId);
   const redirectURL = `http://54.255.0.143:3000/RPP/MY/Redirect/Consent?DbtrAgt=${dbtrAgt}&EndtoEndId=${endToEndId}&EndtoEndIdSignature=${endToEndIDSignature}`;

@@ -8,6 +8,7 @@ export async function verifyOTP(body: {
   accessToken: string;
   channel: string;
   deliveryChannel: string;
+  dbtrAgt: string;
 }): Promise<ResponseHeader> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2C_API_URL}/verifyotp`, {

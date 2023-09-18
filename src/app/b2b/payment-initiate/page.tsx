@@ -12,12 +12,13 @@ import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useCheckSourceOfFunds } from '@/hooks/useCheckSourceOfFunds';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
+import { useLatAndLong } from '@/hooks/useLatAndLong';
 import { useLoginBData } from '@/hooks/useLoginBData';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
-import { checkSystemLogout } from '@/utils/helpers';
+import { checkSystemLogout, mapDbtrAcctTp } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -36,6 +37,7 @@ export default function PaymentInitiate() {
   const [accessToken, channel] = useAccessTokenAndChannel();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const [isClicked, setIsClicked] = useState(false);
+  const latLong = useLatAndLong();
   const { cancel, updTrxMut } = useCancelTransaction({
     page: '/b2b/payment-initiate',
     navigateTo: '/b2b/payment-fail',
@@ -43,8 +45,8 @@ export default function PaymentInitiate() {
   });
 
   useIsSessionActive(() => {
-    cancel('E', transactionDetail);
     setCancelType('EXP');
+    cancel('E', merchantData);
   });
   useCheckMaintenaceTime('B2B');
   useCheckSourceOfFunds({
@@ -57,9 +59,9 @@ export default function PaymentInitiate() {
     mutationFn: createTxn,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2B');
+        checkSystemLogout(data.message as string, router);
       } else {
-        if (data.status === 0) {
+        if (data.data.header.status === 0) {
           setCancelType('FLD');
           cancel('FLD', transactionDetail);
           return;
@@ -90,15 +92,17 @@ export default function PaymentInitiate() {
 
   const handleSubmit = () => {
     if (transactionDetail && selectedAccount) {
-      console.log('hrer');
-
+      sessionStorage.setItem(
+        'selectedAccount',
+        JSON.stringify(selectedAccount)
+      );
       createTxnMut.mutate({
         accessToken,
         channel,
         corporateLogonID,
         userID,
-        exchangeID: 'EX00000001',
-        fpxTrxID: transactionDetail.tnxId,
+        exchangeID: '',
+        fpxTrxID: merchantData.endToEndId,
         fpxTrxType: 'B2B1',
         fromAccHolder: selectedAccount.fromAccHolder,
         fromAccNo: selectedAccount.fromAccNo,
@@ -116,18 +120,19 @@ export default function PaymentInitiate() {
         endToEndId: transactionDetail.endToEndId,
         xpryDt: transactionDetail.xpryDt,
         productId: transactionDetail.productId,
-        latlong: '30.4302,54.3443',
+        latlong: latLong,
         bizSvc: transactionDetail.bizSvc,
         cdtrAcctId: transactionDetail.cdtrAcctId,
         cdtrAcctTp: transactionDetail.cdtrAcctTp,
         cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
-        dbtrAcctId: transactionDetail.dbtrAcctId,
-        dbtrAcctTp: transactionDetail.dbtrAcctTp,
+        dbtrAcctId: selectedAccount.fromAccNo,
+        dbtrAcctTp: mapDbtrAcctTp(selectedAccount.fromAccType),
         dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
         dbtrNm: transactionDetail.payerName,
         frBIC: transactionDetail.frBIC,
         toBIC: transactionDetail.toBIC,
       });
+
       setIsClicked(true);
     }
   };
@@ -180,7 +185,7 @@ export default function PaymentInitiate() {
                         key={account.fromAccName}
                         value={account.fromAccName}
                       >
-                        {account.fromAccName}
+                        {account.fromAccNo}-{account.fromAccName}
                       </option>
                     ))}
                   </select>
@@ -219,7 +224,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    defaultValue={transactionDetail?.creditorName}
+                    value={transactionDetail?.creditorName}
                     readOnly
                   />
                 </div>
@@ -236,7 +241,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    defaultValue={transactionDetail?.endToEndId}
+                    value={transactionDetail?.endToEndId}
                     readOnly
                   />
                 </div>
@@ -252,7 +257,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    defaultValue={transactionDetail?.recipientReference}
+                    value={transactionDetail?.recipientReference}
                     readOnly
                   />
                 </div>
@@ -268,7 +273,23 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    defaultValue={transactionDetail?.amount}
+                    value={transactionDetail?.amount}
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mb-[15px] -mx-[15px] flex flex-col md:flex-row md:items-center">
+              <label className="max-w-full text-sm md:w-[41.7%] mb-[5px] font-bold float-left">
+                Available Amount (MYR) <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-wrap marginx  w-full justify-center">
+                <div className="w-full padx md:w-3/4">
+                  <input
+                    id=""
+                    type="text"
+                    className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
+                    value={selectedAccount?.fromAccAmount}
                     readOnly
                   />
                 </div>

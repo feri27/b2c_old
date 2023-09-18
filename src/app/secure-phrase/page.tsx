@@ -21,10 +21,12 @@ import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import Modal from '@/components/common/Modal';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
+import { useMerchantData } from '@/hooks/useMerchantData';
 
 export default function SecurePhrase() {
   const router = useRouter();
   const [accessToken, channel] = useAccessTokenAndChannel();
+  const merchantData = useMerchantData();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const [isClicked, setIsClicked] = useState(false);
   const { cancel: CancelTxn, updTrxMut } = useCancelTransaction({
@@ -116,6 +118,7 @@ export default function SecurePhrase() {
           accessToken,
           channel,
           txnAmount: +transactionDetail!.amount,
+          dbtrAgt: merchantData.dbtrAgt,
         });
         setIsClicked(true);
       }

@@ -37,6 +37,7 @@ export async function login({
   iv,
   channel,
   txnAmount,
+  dbtrAgt,
 }: {
   username: string;
   password: string;
@@ -44,12 +45,19 @@ export async function login({
   iv: string;
   channel: string;
   txnAmount: number;
+  dbtrAgt: string;
 }): Promise<LoginAndNotifyLoginCombined> {
-  const body = { username, password, accessToken, channel, iv, txnAmount };
-
   const res = await fetch(`${B2C_API_URL}/login`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      username,
+      password,
+      accessToken,
+      channel,
+      iv,
+      txnAmount,
+      dbtrAgt,
+    }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -60,7 +68,7 @@ export async function login({
   } else {
     const notifyRes = await fetch(`${B2C_API_URL}/notifylogin`, {
       method: 'POST',
-      body: JSON.stringify({ accessToken, channel, txnAmount }),
+      body: JSON.stringify({ accessToken, channel, txnAmount, dbtrAgt }),
       headers: {
         'Content-Type': 'application/json',
       },

@@ -29,30 +29,19 @@ export type LoginAndNotifyLoginCombined = {
   notifyRes?: { data: { header: ResponseHeader } } | { message: string };
 };
 
-export async function loginB({
-  corporateLogonID,
-  userID,
-  accessToken,
-  credentialIv,
-  credential,
-}: {
+export async function loginB(body: {
   corporateLogonID: string;
   userID: string;
   accessToken: string;
   credentialIv: string;
   credential: string;
+  dbtrAgt: string;
 }): Promise<LoginAndNotifyLoginCombined> {
-  const body = {
-    corporateLogonID,
-    userID,
-    accessToken,
-    credentialIv,
-    credential,
-  };
+  const { accessToken, ...restBody } = body;
 
   const res = await fetch(`${B2B_API_URL}/loginb`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify(restBody),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -63,7 +52,10 @@ export async function loginB({
   } else {
     const notifyResponse = await fetch(`${B2B_API_URL}/notify-loginb`, {
       method: 'POST',
-      body: JSON.stringify({ accessToken }),
+      body: JSON.stringify({
+        accessToken: loginRes.data.header.accessToken,
+        dbtrAgt: restBody.dbtrAgt,
+      }),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -80,6 +72,7 @@ export async function logoutB(body: {
   accessToken: string;
   channel: string;
   page: string;
+  dbtrAgt: string;
 }) {
   const sessionID = getSessionID();
   const res = await fetch(`${B2B_API_URL}/logoutb`, {

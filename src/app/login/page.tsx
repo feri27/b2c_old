@@ -15,10 +15,7 @@ import { useSettingQuery } from '@/hooks/useSettingQuery';
 import { useTransactionDetailQuery } from '@/hooks/useTransactionDetailQuery';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
-import Modal from '@/components/common/Modal';
-import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useMerchantData } from '@/hooks/useMerchantData';
-import { checkSystemLogout, getSessionID } from '@/utils/helpers';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
 import { useCheckSignature } from '@/hooks/useCheckSignature';
@@ -52,23 +49,6 @@ export default function Login() {
     navigateTo: '/maintenance',
     channel: 'B2C',
   });
-  const updateTxnMut = useUpdateTxnMutation(false, '', 'B2C', (data) => {
-    if ('message' in data) {
-      checkSystemLogout(data.message as string, router, 'B2C');
-    } else {
-      if (
-        ('statusCode' in data && data['statusCode'] === 'ACTC') ||
-        data['statusCode'] === 'ACSP'
-      ) {
-        setFetchTxnDetail(true);
-      } else if ('message' in data && data['message'] === 'timeout') {
-        cancel('TO', merchantData);
-        setCancelType('TO');
-      } else {
-        cancel('FR', merchantData);
-      }
-    }
-  });
 
   useIsSessionActive(() => {
     cancel('E', merchantData);
@@ -80,8 +60,9 @@ export default function Login() {
 
   useCheckSignature({
     cancel,
-    updateTxnMut,
-    channel: channel || 'B2C',
+    cb: () => {
+      setFetchTxnDetail(true);
+    },
   });
 
   useCheckGlobalLimit(
@@ -115,7 +96,11 @@ export default function Login() {
       return;
     } else {
       setVisible('hidden');
-      checkUsernameMut.mutate({ username, channel });
+      checkUsernameMut.mutate({
+        username,
+        channel,
+        dbtrAgt: merchantData.dbtrAgt,
+      });
       setIsClicked(true);
     }
   };

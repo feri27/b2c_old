@@ -6,6 +6,7 @@ import SeparatorLine from '@/components/SeparatorLine';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
+import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useEffect, useState } from 'react';
 
@@ -15,10 +16,16 @@ export default function PaymentSuccess() {
   const [controller, setController] = useState(new AbortController());
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-success', 'C', setIsClicked);
+  const merchantData = useMerchantData();
 
   const handleClick = () => {
     controller.abort();
-    logoutMut.mutate({ accessToken, channel, page: '/payment-success' });
+    logoutMut.mutate({
+      accessToken,
+      channel,
+      page: '/payment-success',
+      dbtrAgt: merchantData.dbtrAgt,
+    });
     setIsClicked(true);
   };
 

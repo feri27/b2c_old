@@ -11,7 +11,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { verifyOTP } from '@/services/veritfyOtp';
-import { checkSystemLogout, encrypt, getSessionID } from '@/utils/helpers';
+import {
+  checkSystemLogout,
+  encrypt,
+  getSessionID,
+  mapDbtrAcctTp,
+  mapSrcOfFund,
+} from '@/utils/helpers';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useLoginData } from '@/hooks/useLoginData';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
@@ -99,7 +105,7 @@ export default function PaymentDetail() {
     mutationFn: authorizeTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C');
+        checkSystemLogout(data.message as string, router);
       }
     },
   });
@@ -107,7 +113,7 @@ export default function PaymentDetail() {
     mutationFn: notifyTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C');
+        checkSystemLogout(data.message as string, router);
       } else router.push('/payment-success');
     },
     onError: () => {
@@ -119,7 +125,7 @@ export default function PaymentDetail() {
     mutationFn: debit,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C');
+        checkSystemLogout(data.message as string, router);
       } else {
         if (
           data.PymtConfirmRs.resBody.TxSts === 'ACTC' ||
@@ -143,7 +149,10 @@ export default function PaymentDetail() {
                 : '',
             payerName: transactionDetail?.payerName ?? '',
             cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
-            dbtrAcctId: transactionDetail?.dbtrAcctId ?? '',
+            dbtrAcctId:
+              accountQry.data && 'data' in accountQry.data
+                ? String(accountQry.data.data.creditCardNo)
+                : '',
             dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
           });
           if (accountQry.data && 'data' in accountQry.data)
@@ -159,6 +168,7 @@ export default function PaymentDetail() {
               sellerName: transactionDetail?.creditorName ?? '',
               trxStatus: 'S',
               channel,
+              dbtrAgt: merchantData.dbtrAgt,
             });
         }
       }
@@ -177,6 +187,7 @@ export default function PaymentDetail() {
           sellerName: transactionDetail?.creditorName ?? '',
           trxStatus: 'S',
           channel,
+          dbtrAgt: merchantData.dbtrAgt,
         });
     },
   });
@@ -185,7 +196,7 @@ export default function PaymentDetail() {
     mutationFn: checkTxnStatus,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C');
+        checkSystemLogout(data.message as string, router);
       } else {
         if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
           setCancelType('FLD');
@@ -203,7 +214,12 @@ export default function PaymentDetail() {
         } else if (approvalStatus === 'P') {
           setMASubmit((prev) => ({ ...prev, limit: 3 }));
         } else if (approvalStatus === 'A') {
-          if (transactionDetail && merchantData) {
+          if (
+            transactionDetail &&
+            merchantData &&
+            accountQry.data &&
+            'data' in accountQry.data
+          ) {
             debitMut.mutate({
               bizSvc: transactionDetail.bizSvc,
               cdtrAcctId: transactionDetail.cdtrAcctId,
@@ -211,8 +227,8 @@ export default function PaymentDetail() {
               cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
               cdtrNm: transactionDetail.creditorName,
               channel: 'B2C',
-              dbtrAcctId: transactionDetail.dbtrAcctId,
-              dbtrAcctTp: transactionDetail.dbtrAcctTp,
+              dbtrAcctId: accountQry.data.data.accNo,
+              dbtrAcctTp: mapSrcOfFund(accountType, accountQry.data.data.accNo),
               dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
               dbtrNm: transactionDetail.payerName,
               frBIC: transactionDetail.frBIC,
@@ -233,7 +249,7 @@ export default function PaymentDetail() {
 
   useEffect(() => {
     if (accountQry.data && 'message' in accountQry.data) {
-      checkSystemLogout(accountQry.data.message, router, 'B2C');
+      checkSystemLogout(accountQry.data.message, router);
     }
   }, []);
 
@@ -264,7 +280,7 @@ export default function PaymentDetail() {
     mutationFn: verifyOTP,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C');
+        checkSystemLogout(data.message as string, router);
       } else {
         if (data.status !== 1 || data.errorId) {
           console.log(data);
@@ -273,7 +289,12 @@ export default function PaymentDetail() {
           cancel('MFA', transactionDetail);
         } else {
           if (accountQry.data)
-            if (transactionDetail && merchantData) {
+            if (
+              transactionDetail &&
+              merchantData &&
+              accountQry.data &&
+              'data' in accountQry.data
+            ) {
               // accPaymentMut.mutate({
               //   body: {
               //     actNo: accountQry.data.data.accNo,
@@ -292,8 +313,11 @@ export default function PaymentDetail() {
                 cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
                 cdtrNm: transactionDetail.creditorName,
                 channel: 'B2C',
-                dbtrAcctId: transactionDetail.dbtrAcctId,
-                dbtrAcctTp: transactionDetail.dbtrAcctTp,
+                dbtrAcctId: accountQry.data.data.accNo,
+                dbtrAcctTp: mapSrcOfFund(
+                  accountType,
+                  accountQry.data.data.accNo
+                ),
                 dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
                 dbtrNm: transactionDetail.payerName,
                 frBIC: transactionDetail.frBIC,
@@ -331,6 +355,7 @@ export default function PaymentDetail() {
         trxTimestamp: transactionDetail?.currentDT ?? '',
         channel,
         method: mfaMethod ?? 'MO',
+        dbtrAgt: merchantData.dbtrAgt,
       });
     }
     setMoClicked(true);
@@ -343,18 +368,12 @@ export default function PaymentDetail() {
     }
     if (mfaMethod === 'SMS') {
       if (otp === '123456') {
-        // accPaymentMut.mutate({
-        //   body: {
-        //     actNo: accountQry.data?.data.accNo!,
-        //     addenda: transactionDetail?.recipientReference ?? '',
-        //     sellerId: transactionDetail?.merchantID ?? '',
-        //     sellerOdNo: transactionDetail?.recipientReference ?? '',
-        //     senderName: transactionDetail?.creditorName ?? '',
-        //     trxAmt: transactionDetail?.amount ?? 0,
-        //   },
-        //   saving: accountType === '01',
-        // });
-        if (transactionDetail && merchantData) {
+        if (
+          transactionDetail &&
+          merchantData &&
+          accountQry.data &&
+          'data' in accountQry.data
+        ) {
           debitMut.mutate({
             bizSvc: transactionDetail.bizSvc,
             cdtrAcctId: transactionDetail.cdtrAcctId,
@@ -362,8 +381,8 @@ export default function PaymentDetail() {
             cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
             cdtrNm: transactionDetail.creditorName,
             channel: 'B2C',
-            dbtrAcctId: transactionDetail.dbtrAcctId,
-            dbtrAcctTp: transactionDetail.dbtrAcctTp,
+            dbtrAcctId: accountQry.data.data.accNo,
+            dbtrAcctTp: mapSrcOfFund(accountType, accountQry.data.data.accNo),
             dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
             dbtrNm: transactionDetail.payerName,
             frBIC: transactionDetail.frBIC,
@@ -390,6 +409,7 @@ export default function PaymentDetail() {
         otp: encryptedTxt.toString('base64'),
         channel,
         deliveryChannel: mfaMethod,
+        dbtrAgt: merchantData.dbtrAgt,
       });
       setIsClicked(true);
     } else if (mfaMethod === 'MA') {
@@ -412,6 +432,7 @@ export default function PaymentDetail() {
           trxTimestamp: transactionDetail?.currentDT ?? '',
           channel,
           method: mfaMethod,
+          dbtrAgt: merchantData.dbtrAgt,
         });
       }
       if (maSubmit.count > 0) {
@@ -421,6 +442,7 @@ export default function PaymentDetail() {
           page: '/payment-detail',
           refNo: transactionDetail?.recipientReference!,
           txnID: transactionDetail?.tnxId!,
+          dbtrAgt: merchantData.dbtrAgt,
         });
       }
       let newSocket = socket;
@@ -436,7 +458,12 @@ export default function PaymentDetail() {
           setCancelType('TO');
           cancel('TO', transactionDetail);
         } else {
-          if (transactionDetail && merchantData) {
+          if (
+            transactionDetail &&
+            merchantData &&
+            accountQry.data &&
+            'data' in accountQry.data
+          ) {
             debitMut.mutate({
               bizSvc: transactionDetail.bizSvc,
               cdtrAcctId: transactionDetail.cdtrAcctId,
@@ -444,8 +471,8 @@ export default function PaymentDetail() {
               cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
               cdtrNm: transactionDetail.creditorName,
               channel: 'B2C',
-              dbtrAcctId: transactionDetail.dbtrAcctId,
-              dbtrAcctTp: transactionDetail.dbtrAcctTp,
+              dbtrAcctId: accountQry.data.data.accNo,
+              dbtrAcctTp: mapSrcOfFund(accountType, accountQry.data.data.accNo),
               dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
               dbtrNm: transactionDetail.payerName,
               frBIC: transactionDetail.frBIC,
@@ -618,6 +645,7 @@ export default function PaymentDetail() {
                             page: '/payment-detail',
                             refNo: transactionDetail?.recipientReference!,
                             txnID: transactionDetail?.tnxId!,
+                            dbtrAgt: merchantData.dbtrAgt,
                           });
                         }}
                         setTimerOff={

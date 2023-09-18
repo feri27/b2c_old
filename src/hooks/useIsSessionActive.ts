@@ -33,18 +33,24 @@ export function useIsSessionActive(cb: () => void) {
       }
     } else if (sessStatus === 'active' || loginSessStatus === 'active') {
       const sessionExpiry = parseInt(sessExp);
+      let expiryDate =
+        txnDetail !== null ? new Date(txnDetail.xpryDt) : undefined;
 
+      console.log(
+        expiryDate !== undefined ? { xpryDTtime: expiryDate } : undefined
+      );
       const xpryDTtime =
-        txnDetail !== null
-          ? Math.floor(new Date(`${txnDetail.xpryDt}:00.000Z`).getTime() / 1000)
+        expiryDate !== undefined
+          ? Math.floor(expiryDate.getTime() / 1000)
           : undefined;
-      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+      const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
       console.log({
-        xpryDTtimebool:
-          currentTimeInSeconds > sessionExpiry ||
-          (xpryDTtime && currentTimeInSeconds > xpryDTtime),
+        sessionexpiry: currentTimeInSeconds - sessionExpiry,
+        expdt:
+          xpryDTtime != undefined
+            ? currentTimeInSeconds - xpryDTtime
+            : undefined,
       });
-      console.log({ xpryDTtime });
 
       if (
         currentTimeInSeconds > sessionExpiry ||

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from './Layout';
 import CountdownText from '../CountdownText';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
@@ -7,11 +7,17 @@ import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogoutBMutation } from '@/hooks/useLogoutBMutation';
 import { useAtomValue } from 'jotai';
 import { cancelTypeAtom } from '@/atoms';
+import { useMerchantData } from '@/hooks/useMerchantData';
+import { FromAccount } from '@/services/b2b/auth';
 
 export default function PaymentStatus({ success }: { success: boolean }) {
   const txnDetail = useTransactionDetail();
   const [accessToken, channel] = useAccessTokenAndChannel();
   const [isClicked, setIsClicked] = useState(false);
+  const merchantData = useMerchantData();
+  const [selectedAccount, setSelectedAccount] = useState<
+    FromAccount | undefined
+  >();
   const logouBMut = useLogoutBMutation(
     success ? '/b2b/payment-details' : '/b2b/payment-fail',
     success ? 'C' : 'S',
@@ -21,7 +27,12 @@ export default function PaymentStatus({ success }: { success: boolean }) {
 
   const handleContinue = () => {
     controller.abort();
-    logouBMut.mutate({ accessToken, channel, page: '/b2b/payment-details' });
+    logouBMut.mutate({
+      accessToken,
+      channel,
+      page: '/b2b/payment-details',
+      dbtrAgt: merchantData.dbtrAgt,
+    });
     setIsClicked(true);
   };
 
@@ -41,6 +52,15 @@ export default function PaymentStatus({ success }: { success: boolean }) {
       : cancelType === 'FLD'
       ? 'Unsuccessful - Transaction has been rejected'
       : 'Unsuccessful - Transaction has been canceled';
+
+  useEffect(() => {
+    const slctdAcc = sessionStorage.getItem('selectedAccount');
+    if (slctdAcc) {
+      const parsedSA = JSON.parse(slctdAcc);
+      setSelectedAccount(parsedSA);
+    }
+  }, []);
+
   return (
     <>
       <Layout>
@@ -62,6 +82,19 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                 <div className="flex marginx w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4 ">
                     <p>{success ? 'Created' : status}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mb-[15px] -mx-[15px] flex flex-col md:flex-row md:items-center">
+                <label className="max-w-full text-sm md:w-[41.7%] mb-[5px] font-bold float-left">
+                  From Account
+                </label>
+                <div className="flex marginx w-full justify-center">
+                  <div className="w-full max-[768px]:padx text-sm md:w-3/4 ">
+                    <p>
+                      {selectedAccount?.fromAccNo} -{' '}
+                      {selectedAccount?.fromAccName}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -132,7 +165,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
               </button>
               {/* <input type="submit" name="doSubmit" className="acc-selc-orange-button" value="Next" id="doSubmit" disabled/>  */}
               <button
-                className="bg-[#f26f21]  w-full min-[480px]:w-auto disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
+                className="disabled:opacity-50 disabled:cursor-not-allowed text-white cursor-pointer  py-[5px] px-[25px] leading-[1.2] w-[full] m-2.5 text-[0.8rem] !rounded-[20px] bg-[#f26f21]"
                 id="doSubmit"
                 disabled={isClicked}
                 onClick={handleContinue}

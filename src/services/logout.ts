@@ -6,6 +6,7 @@ export async function logout(body: {
   accessToken: string;
   channel: string;
   page: string;
+  dbtrAgt: string;
 }): Promise<ResponseHeader> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2C_API_URL}/logout`, {

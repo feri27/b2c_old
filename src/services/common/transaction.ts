@@ -1,4 +1,5 @@
 import { B2C_API_URL, COMMON_API_URL } from '@/utils/config';
+import { getSessionID } from '@/utils/helpers';
 import { channel } from 'diagnostics_channel';
 
 export type Reason =
@@ -35,8 +36,6 @@ export type GetTransactionDetail = {
     xpryDt: string;
     frBIC: string;
     toBIC: string;
-    dbtrAcctId: string;
-    dbtrAcctTp: string;
     dbtrAgtBIC: string;
     cdtrAcctId: string;
     cdtrAcctTp: string;
@@ -60,7 +59,7 @@ export type UpdTrxReq = {
   reason: Reason;
   amount: string;
   cdtrAgtBIC: string;
-  dbtrAcctId: string;
+  dbtrAcctId?: string;
   payerName: string;
   dbtrAgtBIC: string;
 };
@@ -101,12 +100,18 @@ export async function getTransactionNumber(): Promise<{ txn_num: string }> {
 export async function postTransactionNumber(
   txnID: string
 ): Promise<{ message: string }> {
+  const sessionID = getSessionID();
   const res = await fetch(`${COMMON_API_URL}/transaction-number`, {
     method: 'POST',
     body: JSON.stringify({ txnID }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: sessionID
+      ? {
+          'Content-Type': 'application/json',
+          'X-Session-ID': sessionID,
+        }
+      : {
+          'Content-Type': 'application/json',
+        },
   });
   return res.json();
 }

@@ -19,6 +19,7 @@ export type AuthorizeTransactionReq = Transaction & {
   totalAmount: number;
   channel: string;
   method: string;
+  dbtrAgt: string;
 };
 
 export type NotifyTransactionReq = Transaction & {
@@ -28,6 +29,7 @@ export type NotifyTransactionReq = Transaction & {
   totalAmount: number;
   trxStatus: 'S' | 'F';
   channel: string;
+  dbtrAgt: string;
 };
 
 export type TxnStatus = {
@@ -103,6 +105,7 @@ export async function checkTxnStatus(body: {
   page: string;
   txnID: string;
   refNo: string;
+  dbtrAgt: string;
 }): Promise<TxnStatus> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2C_API_URL}/checktxnstatus`, {

@@ -15,21 +15,15 @@ import { cancelTypeAtom } from '@/atoms';
 
 export function useCheckSignature({
   cancel,
-  updateTxnMut,
-  channel,
+  cb,
 }: {
   cancel: (
     reason: Reason,
     txnDetail: TransactionDetail | MerchantData | null | undefined
   ) => void;
-  updateTxnMut: {
-    isLoading: boolean;
-    mutate: UseMutateFunction<any, unknown, UpdTrxReq, unknown>;
-  };
-  channel: string;
+  cb: () => void;
 }) {
   const merchantData = useMerchantData();
-  const txnDetail = useTransactionDetail();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const verifySignatureMut = useMutation({
     mutationFn: verifySignature,
@@ -37,22 +31,7 @@ export function useCheckSignature({
       if (data.message === 'failed') {
         cancel('VF', merchantData);
       } else {
-        const sessionID = getSessionID();
-        updateTxnMut.mutate({
-          dbtrAgt: merchantData.dbtrAgt,
-          endToEndId: merchantData.endToEndId,
-          gpsCoord: '',
-          merchantId: merchantData.msgId,
-          page: '/login',
-          reason: 'VP',
-          sessionID,
-          channel,
-          amount: txnDetail !== null ? txnDetail.amount.toString() : '',
-          payerName: txnDetail?.payerName ?? '',
-          cdtrAgtBIC: txnDetail?.cdtrAgtBIC ?? '',
-          dbtrAcctId: txnDetail?.dbtrAcctId ?? '',
-          dbtrAgtBIC: txnDetail?.dbtrAgtBIC ?? '',
-        });
+        cb();
       }
     },
   });

@@ -37,16 +37,8 @@ export function getSessionID() {
   return sessionID ?? undefined;
 }
 
-export function checkSystemLogout(
-  message: string,
-  router: AppRouterInstance,
-  channel: string
-) {
+export function checkSystemLogout(message: string, router: AppRouterInstance) {
   if (message.includes('force logout')) {
-    if (channel === 'B2B') {
-      removeEverySessionStorageItem(true);
-      router.push('/b2b/loginb');
-    }
     removeEverySessionStorageItem();
     router.push('/logout');
   }
@@ -58,6 +50,7 @@ export function removeEverySessionStorageItem(exception?: boolean) {
   sessionStorage.removeItem('transactionDetail');
   sessionStorage.removeItem('loginData');
   sessionStorage.removeItem('loginBData');
+  sessionStorage.removeItem('selectedAccount');
   if (!exception || exception !== true) {
     sessionStorage.removeItem('merchantData');
     sessionStorage.setItem('sessionStatus', 'expired');
@@ -67,4 +60,26 @@ export function removeEverySessionStorageItem(exception?: boolean) {
   sessionStorage.removeItem('sessionID');
   sessionStorage.removeItem('mfa');
   sessionStorage.setItem('loginSessionStatus', 'expired');
+}
+
+export function mapDbtrAcctTp(type: string) {
+  switch (type) {
+    case 'SA':
+      return 'SVGS';
+    case 'CA':
+      return 'CACC';
+    default:
+      return 'CCRD';
+  }
+}
+
+export function mapSrcOfFund(src: string, accNum: string) {
+  const firstTwoDigits = accNum.slice(0, 2);
+  if (src === '01' && firstTwoDigits === '11') {
+    return 'CACC';
+  } else if (src === '01' && firstTwoDigits === '22') {
+    return 'SVGS';
+  } else {
+    return 'CCRD';
+  }
 }

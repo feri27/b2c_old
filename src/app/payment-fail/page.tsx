@@ -4,6 +4,7 @@ import CountdownText from '@/components/CountdownText';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
+import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
@@ -14,6 +15,7 @@ export default function PaymentFail() {
   const [controller, setController] = useState(new AbortController());
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-fail', 'S', setIsClicked);
+  const merchantData = useMerchantData();
   const cancelType = useAtomValue(cancelTypeAtom);
 
   const description =
@@ -27,7 +29,12 @@ export default function PaymentFail() {
 
   const handleClick = () => {
     controller.abort();
-    logoutMut.mutate({ accessToken, channel, page: '/payment-fail' });
+    logoutMut.mutate({
+      accessToken,
+      channel,
+      page: '/payment-fail',
+      dbtrAgt: merchantData.dbtrAgt,
+    });
     setIsClicked(true);
   };
   console.log(cancelType);

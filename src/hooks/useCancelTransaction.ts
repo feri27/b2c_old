@@ -48,7 +48,6 @@ export function useCancelTransaction({
         amount: txnDetail.amount.toString(),
         payerName: 'payerName' in txnDetail ? txnDetail.payerName : '',
         cdtrAgtBIC: 'cdtrAgtBIC' in txnDetail ? txnDetail.cdtrAgtBIC : '',
-        dbtrAcctId: 'dbtrAcctId' in txnDetail ? txnDetail.dbtrAcctId : '',
         dbtrAgtBIC: 'dbtrAgtBIC' in txnDetail ? txnDetail.dbtrAgtBIC : '',
       });
     }

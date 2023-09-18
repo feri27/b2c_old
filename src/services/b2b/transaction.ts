@@ -40,7 +40,9 @@ type TransactionB = {
   toBIC: string;
 };
 
-export async function createTxn(body: TransactionB): Promise<ResponseHeader> {
+export async function createTxn(
+  body: TransactionB
+): Promise<{ data: { header: ResponseHeader } }> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2B_API_URL}/transaction`, {
     method: 'POST',

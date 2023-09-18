@@ -24,7 +24,6 @@ import Footer from '@/components/b2b/Footer';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useCheckSignature } from '@/hooks/useCheckSignature';
-import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useCheckGlobalLimit } from '@/hooks/useCheckGlobalLimit';
 import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
 
@@ -59,24 +58,6 @@ export default function Login() {
   //   navigateTo: '/b2b/maintenance',
   // });
   useSettingQuery('B2B', '/b2b/loginb', fetchSettings);
-  const updateTxnMut = useUpdateTxnMutation(false, '', 'B2B', (data) => {
-    if ('message' in data) {
-      checkSystemLogout(data.message as string, router, 'B2B');
-    } else {
-      if (
-        ('statusCode' in data && data['statusCode'] === 'ACTC') ||
-        data['statusCode'] === 'ACSP'
-      ) {
-        setFetchTxnDetail(true);
-      } else if ('message' in data && data['message'] === 'timeout') {
-        setCancelType('TO');
-        cancel('TO', merchantData);
-      } else {
-        setCancelType('FLD');
-        cancel('FR', merchantData);
-      }
-    }
-  });
 
   useIsSessionActive(() => {
     setCancelType('EXP');
@@ -86,8 +67,9 @@ export default function Login() {
 
   useCheckSignature({
     cancel,
-    updateTxnMut,
-    channel: channel || 'B2C',
+    cb: () => {
+      setFetchTxnDetail(true);
+    },
   });
 
   const loginSessionMut = useLoginSessionMutation({
@@ -109,6 +91,11 @@ export default function Login() {
       ) {
         setCancelType('TO');
         cancel('TO', merchantData);
+      } else if (
+        'data' in data.loginRes &&
+        data.loginRes.data.header.status !== 1
+      ) {
+        setIsClicked(false);
       } else if (
         data.notifyRes &&
         'message' in data.notifyRes &&
@@ -160,6 +147,7 @@ export default function Login() {
         userID,
         credential: encryptedTxt.toString('base64'),
         credentialIv: iv.toString('base64'),
+        dbtrAgt: merchantData.dbtrAgt,
       });
       setIsClicked(true);
     }
@@ -172,7 +160,6 @@ export default function Login() {
       userID.trim().length === 0
     );
   };
-  console.log(approvedTxnLogQry.data);
 
   useCheckGlobalLimit(
     getTxnQry.data,
@@ -215,7 +202,7 @@ export default function Login() {
     return (
       <>
         <Header />
-        <main>
+        <main className="h-between-b2b">
           <div className="w-full px-3 mx-auto min-[1400px]:max-w-[1320px] min-[1200px]:max-w-[1140px] min-[992px]:max-w-[960px] md:max-w-[720px] min-[576px]:max-w-[540px] min-[1200px]:leading-[1.2]">
             <div className="flex items-stretch max-[768px]:flex-col w-full">
               <div className="mt-6 max-[768px]:min-w-[initial] p-10 w-full min-[992px]:w-[41.7%]">
@@ -302,7 +289,7 @@ export default function Login() {
                               value="Cancel"
                               onClick={() => {
                                 setCancelType('U');
-                                cancel('U', getTxnQry.data?.data);
+                                cancel('U', merchantData);
                               }}
                               className="cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed text-base  rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
                               disabled={isClicked || updTrxMut.isLoading}
