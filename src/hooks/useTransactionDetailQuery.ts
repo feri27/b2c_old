@@ -22,6 +22,8 @@ export function useTransactionDetailQuery(
       }
     },
     enabled: enabled ?? true,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
   return { isLoading, data };
 }

@@ -146,7 +146,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{txnDetail?.endToEndId}</p>
+                    <p>{txnDetail?.msgId}</p>
                   </div>
                 </div>
               </div>
