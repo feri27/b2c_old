@@ -173,7 +173,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                 <CountdownText
                   cb={handleContinue}
                   controller={controller}
-                  count={3}
+                  count={300}
                 />
               </button>
             </div>

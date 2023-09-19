@@ -90,7 +90,7 @@ export default function Login() {
         data.loginRes.message.includes('TIMEOUT')
       ) {
         setCancelType('TO');
-        cancel('TO', merchantData);
+        cancel('TO', getTxnQry.data?.data);
       } else if (
         'data' in data.loginRes &&
         data.loginRes.data.header.status !== 1
@@ -102,7 +102,7 @@ export default function Login() {
         data.notifyRes.message.includes('TIMEOUT')
       ) {
         setCancelType('TO');
-        cancel('TO', merchantData);
+        cancel('TO', getTxnQry.data?.data);
       } else if (
         data.notifyRes &&
         'data' in data.notifyRes &&
@@ -125,13 +125,13 @@ export default function Login() {
         loginSessionMut.mutate({ page: '/b2b/loginb', userID: userID });
       } else {
         setCancelType('U');
-        cancel('C', merchantData);
+        cancel('C', getTxnQry.data?.data);
       }
     },
     onError: () => {
       setIsClicked(false);
       setCancelType('U');
-      cancel('C', merchantData);
+      cancel('C', getTxnQry.data?.data);
     },
   });
 
@@ -289,7 +289,7 @@ export default function Login() {
                               value="Cancel"
                               onClick={() => {
                                 setCancelType('U');
-                                cancel('U', merchantData);
+                                cancel('U', getTxnQry.data?.data);
                               }}
                               className="cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed text-base  rounded-2xl border border-solid border-[#ec6f10] bg-white text-center w-[44%] mr-[5%] text-[#333] inline-block align-middle py-1.5 px-3"
                               disabled={isClicked || updTrxMut.isLoading}

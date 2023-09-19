@@ -46,7 +46,7 @@ export default function PaymentInitiate() {
 
   useIsSessionActive(() => {
     setCancelType('EXP');
-    cancel('E', merchantData);
+    cancel('E', transactionDetail);
   });
   useCheckMaintenaceTime('B2B');
   useCheckSourceOfFunds({
@@ -149,7 +149,14 @@ export default function PaymentInitiate() {
   //     </Layout>
   //   );
   // }
-
+  if (!selectedAccount)
+    return (
+      <Layout>
+        <div className="flex flex-col flex-auto h-between-b2b w-full justify-center items-center">
+          Loading...
+        </div>
+      </Layout>
+    );
   return (
     <Layout>
       <div className="block mx-auto !mt-2 min-[576px]:max-w-[540px] max-md:text-sm md:max-w-[720px] min-[992px]:max-w-[890px] min-[1200px]:max-w-[960px] min-[1400px]:max-w-[1060px] min-[1600px]:max-w-[1220px]">
@@ -171,7 +178,7 @@ export default function PaymentInitiate() {
                 <div className="w-full padx md:w-3/4 ">
                   <select
                     className="select-bg disabled:cursor-not-allowed disabled:opacity-30 select-bg-b2b mb-[10px]"
-                    value={selectedAccount?.fromAccName}
+                    value={selectedAccount!.fromAccName}
                     disabled={isClicked || updTrxMut.isLoading}
                     onChange={(e) => {
                       const acc = loginBData?.fromAccountList.find(
