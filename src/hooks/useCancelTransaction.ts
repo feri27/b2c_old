@@ -30,7 +30,7 @@ export function useCancelTransaction({
         long = pos.coords.longitude;
       });
     }
-    const latLng = `${lat} ${long}`;
+    const latLng = `${lat ?? ''} ${long ?? ''}`;
 
     const sessionID = getSessionID();
     const channel = sessionStorage.getItem('channel');
