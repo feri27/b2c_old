@@ -248,7 +248,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    value={transactionDetail?.endToEndId}
+                    value={transactionDetail?.msgId}
                     readOnly
                   />
                 </div>
