@@ -14,24 +14,14 @@ export function useSettingQuery(
     queryFn: async () => retrieveSetting(page),
     onSuccess(data) {
       if (data && 'data' in data) {
-        if (
-          (channel === 'B2B' && data.data.maintain_b2b === 1) ||
-          (channel === 'B2C' && data.data.maintain_b2c === 1)
-        ) {
-          router.push('/maintenance');
-          return;
-        }
-        const sessExp = sessionStorage.getItem('sessionExpiry');
-        if (!sessExp) {
-          const sessionToBeExpiredIn = sessionExpiryTime(
-            data.data.session_expiry
-          );
-          sessionStorage.setItem(
-            'sessionExpiry',
-            sessionToBeExpiredIn.toString()
-          );
-          sessionStorage.setItem('sessionStatus', 'active');
-        }
+        const sessionToBeExpiredIn = sessionExpiryTime(
+          data.data.session_expiry
+        );
+        sessionStorage.setItem(
+          'sessionExpiry',
+          sessionToBeExpiredIn.toString()
+        );
+        sessionStorage.setItem('sessionStatus', 'active');
       }
     },
     enabled: enabled,
