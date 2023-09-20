@@ -41,6 +41,7 @@ export function useCheckGlobalLimit(
           (!/Mobi/i.test(navigator.userAgent) &&
             txnDetail.data.amount > approvedTxnLog.txnLog.nRIB)
         ) {
+          setCancelType('GL');
           cancel('GL', txnDetail.data);
         } else {
           setFetchSettings(true);
@@ -52,8 +53,8 @@ export function useCheckGlobalLimit(
           (!/Mobi/i.test(navigator.userAgent) &&
             txnDetail.data.amount > approvedTxnLog.txnLog.nCIB)
         ) {
-          cancel('GL', txnDetail.data);
           setCancelType('GL');
+          cancel('GL', txnDetail.data);
         } else {
           setFetchSettings(true);
         }

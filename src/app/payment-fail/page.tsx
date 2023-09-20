@@ -25,7 +25,13 @@ export default function PaymentFail() {
       ? 'Unsuccessful - Transaction has encountered timeout error'
       : cancelType === 'EXP'
       ? 'Unsuccessful - Transaction has expired'
-      : 'Transaction has been canceled';
+      : cancelType === 'FLD'
+      ? 'Unsuccessful - Transaction has been rejected'
+      : cancelType === 'GL'
+      ? 'Unsuccessful - Transaction exceeded limit'
+      : cancelType === 'LgnErr'
+      ? 'Unsuccessful – Invalid User ID, Password and/or Corporate ID'
+      : 'Unsuccessful - Transaction has been canceled';
 
   const handleClick = () => {
     controller.abort();

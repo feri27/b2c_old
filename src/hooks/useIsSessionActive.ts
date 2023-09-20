@@ -35,22 +35,18 @@ export function useIsSessionActive(cb: () => void) {
       const sessionExpiry = parseInt(sessExp);
       let expiryDate =
         txnDetail !== null ? new Date(txnDetail.xpryDt) : undefined;
-
-      console.log(
-        expiryDate !== undefined ? { xpryDTtime: expiryDate } : undefined
-      );
       const xpryDTtime =
         expiryDate !== undefined
           ? Math.floor(expiryDate.getTime() / 1000)
           : undefined;
       const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
-      console.log({
-        sessionexpiry: currentTimeInSeconds - sessionExpiry,
-        expdt:
-          xpryDTtime != undefined
-            ? currentTimeInSeconds - xpryDTtime
-            : undefined,
-      });
+      // console.log({
+      //   sessionexpiry: currentTimeInSeconds - sessionExpiry,
+      //   expdt:
+      //     xpryDTtime != undefined
+      //       ? currentTimeInSeconds - xpryDTtime
+      //       : undefined,
+      // });
 
       if (
         currentTimeInSeconds > sessionExpiry ||

@@ -51,6 +51,10 @@ export default function PaymentStatus({ success }: { success: boolean }) {
       ? 'Unsuccessful - Transaction has expired'
       : cancelType === 'FLD'
       ? 'Unsuccessful - Transaction has been rejected'
+      : cancelType === 'GL'
+      ? 'Unsuccessful - Transaction exceeded limit'
+      : cancelType === 'LgnErr'
+      ? 'Unsuccessful – Invalid User ID, Password and/or Corporate ID'
       : 'Unsuccessful - Transaction has been canceled';
 
   useEffect(() => {

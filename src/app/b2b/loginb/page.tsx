@@ -62,7 +62,6 @@ export default function Login() {
   useIsSessionActive(() => {
     setCancelType('EXP');
     cancel('E', merchantData);
-    sessionStorage.setItem('exp', 'true');
   });
 
   useCheckSignature({
@@ -71,6 +70,19 @@ export default function Login() {
       setFetchTxnDetail(true);
     },
   });
+
+  // if (getTxnQry.data) {
+  //   const expryDt = new Date(getTxnQry.data.data.xpryDt);
+
+  //   const xpryDTtime =
+  //     expryDt !== undefined ? Math.floor(expryDt.getTime() / 1000) : undefined;
+  //   const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
+
+  //   if (xpryDTtime && currentTimeInSeconds > xpryDTtime) {
+  //     setCancelType('EXP');
+  //     cancel('E', merchantData);
+  //   }
+  // }
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
@@ -95,7 +107,8 @@ export default function Login() {
         'data' in data.loginRes &&
         data.loginRes.data.header.status !== 1
       ) {
-        setIsClicked(false);
+        setCancelType('LgnErr');
+        cancel('C', getTxnQry.data?.data);
       } else if (
         data.notifyRes &&
         'message' in data.notifyRes &&
@@ -195,9 +208,9 @@ export default function Login() {
     approvedTxnLogQry.data &&
     'txnLog' in approvedTxnLogQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cCMB) ||
+      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nCMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cCIB))
+        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nCIB))
   ) {
     return (
       <>

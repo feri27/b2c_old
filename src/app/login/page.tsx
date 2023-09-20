@@ -51,8 +51,8 @@ export default function Login() {
   });
 
   useIsSessionActive(() => {
+    setCancelType('EXP');
     cancel('E', merchantData);
-    sessionStorage.setItem('exp', 'true');
   });
 
   useSettingQuery(channel as 'B2C' | 'B2B', '/login', fetchSettings);
@@ -77,6 +77,7 @@ export default function Login() {
     mutationFn: checkUsername,
     onSuccess: (data) => {
       if (data.data.header.errorId || 'message' in data) {
+        setCancelType('LgnErr');
         cancel('FR', merchantData);
       } else {
         setSecurePhrase(data.data.body.securePhrase);
@@ -131,9 +132,9 @@ export default function Login() {
     approvedTxnLogQry.data &&
     'txnLog' in approvedTxnLogQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cRMB) ||
+      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nRMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.cRIB))
+        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nRIB))
   ) {
     return (
       <>

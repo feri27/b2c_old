@@ -1,10 +1,12 @@
 import { logout } from '@/services/logout';
 import { useMutation } from '@tanstack/react-query';
 import { useUpdateLoginSessionMutation } from './useUpdateLoginSessionMutation';
-import { getSessionID } from '@/utils/helpers';
+import { getSessionID, removeEverySessionStorageItem } from '@/utils/helpers';
 import { Dispatch } from 'react';
-import { SetStateAction } from 'jotai';
+import { SetStateAction, useSetAtom } from 'jotai';
 import { logoutB } from '@/services/b2b/auth';
+import { useTransactionDetail } from './useTransactionDetail';
+import { corporateLogonIDAtom, userIDAtom, usernameAtom } from '@/atoms';
 
 export function useLogoutBMutation(
   page: string,
@@ -12,18 +14,29 @@ export function useLogoutBMutation(
   setIsClicked: Dispatch<SetStateAction<boolean>>
 ) {
   const updateLoginSessionMut = useUpdateLoginSessionMutation();
-
+  const setUsername = useSetAtom(usernameAtom);
+  const setUserID = useSetAtom(userIDAtom);
+  const setCorporateLogonID = useSetAtom(corporateLogonIDAtom);
+  const txnDetail = useTransactionDetail();
   const { isLoading, mutate } = useMutation({
     mutationFn: logoutB,
     onSuccess: (data) => {
       const sessionID = getSessionID();
-
-      updateLoginSessionMut.mutate({
-        status: 'expired',
-        page,
-        sessionID: sessionID!,
-        reason,
-      });
+      if (sessionID) {
+        updateLoginSessionMut.mutate({
+          status: 'expired',
+          page,
+          sessionID: sessionID!,
+          reason,
+        });
+      } else {
+        const redirectURL = txnDetail?.redirectURL;
+        setUsername('');
+        setUserID('');
+        setCorporateLogonID('');
+        removeEverySessionStorageItem();
+        window.location.href = redirectURL!;
+      }
     },
     onError: () => {
       setIsClicked(false);
