@@ -79,6 +79,10 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     case 'LgnErr':
       status = 'Unsuccessful – Invalid User ID, Password and/or Corporate ID';
       break;
+    case 'SOF':
+      status =
+        'Unsuccessful  - Transaction is rejected due to invalid source of fund';
+      break;
     default:
       status = 'Unsuccessful - Transaction has been canceled';
   }

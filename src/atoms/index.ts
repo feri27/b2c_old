@@ -15,6 +15,7 @@ export type CancelType =
   | 'UL'
   | 'FLD'
   | 'LgnErr'
+  | 'SOF'
   | '';
 
 export const usernameAtom = atom<string>('');

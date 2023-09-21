@@ -86,8 +86,7 @@ export default function PaymentInitiate() {
         }
       });
       if (availableAccounts.length === 0) {
-        console.log('here');
-
+        setCancelType('SOF');
         cancel('C', transactionDetail);
       } else {
         setSelectedAccount(availableAccounts[0]);

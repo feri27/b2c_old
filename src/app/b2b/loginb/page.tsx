@@ -7,7 +7,7 @@ import {
   userIDAtom,
 } from '@/atoms';
 import { loginB } from '@/services/b2b/auth';
-import { checkSystemLogout, encrypt } from '@/utils/helpers';
+import { encrypt, formatCurrency } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -378,7 +378,9 @@ export default function Login() {
                         <th className="w-[41.7%] p-4 text-right" scope="row">
                           Transaction Amount
                         </th>
-                        <td>{getTxnQry.data.data.amount}</td>
+                        <td>
+                          {formatCurrency(Number(getTxnQry.data.data.amount))}
+                        </td>
                       </tr>
                       <tr>
                         <th
