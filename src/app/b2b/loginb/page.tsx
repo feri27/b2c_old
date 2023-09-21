@@ -39,6 +39,7 @@ export default function Login() {
   const privateKeyQry = usePrivateKey({ enabled: true });
   const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
   const [fetchSettings, setFetchSettings] = useState(false);
+  const [loadPage, setLoadPage] = useState(false);
 
   useCheckMaintenaceTime('B2B');
 
@@ -62,7 +63,7 @@ export default function Login() {
   useIsSessionActive(() => {
     setCancelType('EXP');
     cancel('E', merchantData);
-  });
+  }, true);
 
   useCheckSignature({
     cancel,
@@ -71,18 +72,24 @@ export default function Login() {
     },
   });
 
-  // if (getTxnQry.data) {
-  //   const expryDt = new Date(getTxnQry.data.data.xpryDt);
+  useEffect(() => {
+    if (getTxnQry.data) {
+      const expryDt = new Date(getTxnQry.data.data.xpryDt);
 
-  //   const xpryDTtime =
-  //     expryDt !== undefined ? Math.floor(expryDt.getTime() / 1000) : undefined;
-  //   const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
+      const xpryDTtime =
+        expryDt !== undefined
+          ? Math.floor(expryDt.getTime() / 1000)
+          : undefined;
+      const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
 
-  //   if (xpryDTtime && currentTimeInSeconds > xpryDTtime) {
-  //     setCancelType('EXP');
-  //     cancel('E', merchantData);
-  //   }
-  // }
+      if (xpryDTtime && currentTimeInSeconds > xpryDTtime) {
+        setCancelType('EXP');
+        cancel('E', merchantData);
+      } else {
+        setLoadPage(true);
+      }
+    }
+  }, [getTxnQry.data?.data.amount]);
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
@@ -214,7 +221,8 @@ export default function Login() {
     ((/Mobi/i.test(navigator.userAgent) &&
       getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nCMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nCIB))
+        getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nCIB)) &&
+    loadPage
   ) {
     return (
       <>

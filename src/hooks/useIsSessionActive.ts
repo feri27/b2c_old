@@ -5,7 +5,7 @@ import { useTransactionDetail } from './useTransactionDetail';
 
 type SessionStatus = 'active' | 'expired' | undefined;
 
-export function useIsSessionActive(cb: () => void) {
+export function useIsSessionActive(cb: () => void, login = false) {
   const pathName = usePathname();
   const router = useRouter();
   const txnDetail = useTransactionDetail();
@@ -33,6 +33,8 @@ export function useIsSessionActive(cb: () => void) {
       }
     } else if (sessStatus === 'active' || loginSessStatus === 'active') {
       const sessionExpiry = parseInt(sessExp);
+      console.log(txnDetail?.xpryDt);
+
       let expiryDate =
         txnDetail !== null ? new Date(txnDetail.xpryDt) : undefined;
       const xpryDTtime =
@@ -40,20 +42,26 @@ export function useIsSessionActive(cb: () => void) {
           ? Math.floor(expiryDate.getTime() / 1000)
           : undefined;
       const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
-      // console.log({
-      //   sessionexpiry: currentTimeInSeconds - sessionExpiry,
-      //   expdt:
-      //     xpryDTtime != undefined
-      //       ? currentTimeInSeconds - xpryDTtime
-      //       : undefined,
-      // });
-
-      if (
-        currentTimeInSeconds > sessionExpiry ||
-        (xpryDTtime && currentTimeInSeconds > xpryDTtime)
-      ) {
-        // setIsActive(false);
-        cb();
+      console.log({
+        sessionexpiry: currentTimeInSeconds - sessionExpiry,
+        expdt:
+          xpryDTtime != undefined
+            ? currentTimeInSeconds - xpryDTtime
+            : undefined,
+      });
+      if (login) {
+        if (currentTimeInSeconds > sessionExpiry) {
+          // setIsActive(false);
+          cb();
+        }
+      } else {
+        if (
+          currentTimeInSeconds > sessionExpiry ||
+          (xpryDTtime && currentTimeInSeconds > xpryDTtime)
+        ) {
+          // setIsActive(false);
+          cb();
+        }
       }
     }
   }, [txnDetail]);
