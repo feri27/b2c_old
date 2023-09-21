@@ -29,12 +29,14 @@ export function useLogoutOnBrowserClose(
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
-      logout({
-        accessToken: options.accessToken,
-        page: options.page,
-        channel: 'B2B',
-        dbtrAgt: options.dbtrAgt,
-      });
+      if (options.accessToken) {
+        logout({
+          accessToken: options.accessToken,
+          page: options.page,
+          channel: 'B2B',
+          dbtrAgt: options.dbtrAgt,
+        });
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);

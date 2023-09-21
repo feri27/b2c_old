@@ -13,7 +13,7 @@ import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 
 export default function PaymentStatus({ success }: { success: boolean }) {
   const txnDetail = useTransactionDetail();
-  const [accessToken, channel] = useAccessTokenAndChannel();
+  const [_, channel, notifyAccessToken] = useAccessTokenAndChannel();
   const [isClicked, setIsClicked] = useState(false);
   const merchantData = useMerchantData();
   const [selectedAccount, setSelectedAccount] = useState<
@@ -27,7 +27,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     setIsClicked
   );
   useLogoutOnBrowserClose(logouBMut.mutate, {
-    accessToken,
+    accessToken: notifyAccessToken,
     page,
     dbtrAgt: merchantData.dbtrAgt,
   });
@@ -39,15 +39,17 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     const loginBData = sessionStorage.getItem('loginBData');
     if (!loginBData && txnDetail) {
       window.location.href = txnDetail.redirectURL;
+      setIsClicked(true);
       return;
+    } else if (loginBData) {
+      logouBMut.mutate({
+        accessToken: notifyAccessToken,
+        channel,
+        page,
+        dbtrAgt: merchantData.dbtrAgt,
+      });
+      setIsClicked(true);
     }
-    logouBMut.mutate({
-      accessToken,
-      channel,
-      page,
-      dbtrAgt: merchantData.dbtrAgt,
-    });
-    setIsClicked(true);
   };
 
   const print = () => {
