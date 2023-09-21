@@ -7,11 +7,13 @@ export default function AccountSelection({
   clicked,
   accType,
   setAccType,
+  accountTypeList,
 }: {
   data?: TransactionDetail | null;
   clicked: boolean;
   accType: string;
   setAccType: Dispatch<SetStateAction<string>>;
+  accountTypeList: Array<'CA' | 'SA' | 'CC'> | undefined;
 }) {
   return (
     <>
@@ -34,15 +36,11 @@ export default function AccountSelection({
                   onChange={(e) => setAccType(e.target.value)}
                   className="select-bg disabled:cursor-not-allowed bg-[#e9ecef] disabled:opacity-30 !h-[34px] !py-1.5 !px-3 !text-sm"
                 >
-                  {data?.sourceOfFunds.split(',').map((accType) => (
+                  {accountTypeList?.map((accType) => (
                     <option key={accType} value={accType}>
-                      {/* {accType === 'SVGS' && 'Saving Account'}
-                      {accType === 'CACC' && 'Current Account'}
-                      {accType === 'CCRD' && 'Credit Card'}
-                      {accType === 'WALL' && 'eWallet'} */}
-                      {accType === '01' && 'CASA'}
-                      {accType === '02' && 'Credit Card'}
-                      {accType === '03' && 'eWallet'}
+                      {accType === 'CA' && 'Current Account'}
+                      {accType === 'SA' && 'Saving Account'}
+                      {accType === 'CC' && 'Credit Card'}
                     </option>
                   ))}
                 </select>

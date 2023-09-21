@@ -9,6 +9,7 @@ import { useAtomValue } from 'jotai';
 import { cancelTypeAtom } from '@/atoms';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { FromAccount } from '@/services/b2b/auth';
+import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 
 export default function PaymentStatus({ success }: { success: boolean }) {
   const txnDetail = useTransactionDetail();
@@ -18,19 +19,32 @@ export default function PaymentStatus({ success }: { success: boolean }) {
   const [selectedAccount, setSelectedAccount] = useState<
     FromAccount | undefined
   >();
+  const [controller, setController] = useState(new AbortController());
+  const page = success ? '/b2b/payment-details' : '/b2b/payment-fail';
   const logouBMut = useLogoutBMutation(
     success ? '/b2b/payment-details' : '/b2b/payment-fail',
     success ? 'C' : 'S',
     setIsClicked
   );
+  useLogoutOnBrowserClose(logouBMut.mutate, {
+    accessToken,
+    page,
+    dbtrAgt: merchantData.dbtrAgt,
+  });
+
   const cancelType = useAtomValue(cancelTypeAtom);
 
   const handleContinue = () => {
     controller.abort();
+    const loginBData = sessionStorage.getItem('loginBData');
+    if (!loginBData && txnDetail) {
+      window.location.href = txnDetail.redirectURL;
+      return;
+    }
     logouBMut.mutate({
       accessToken,
       channel,
-      page: '/b2b/payment-details',
+      page,
       dbtrAgt: merchantData.dbtrAgt,
     });
     setIsClicked(true);
@@ -41,21 +55,29 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     setController(new AbortController());
     window.print();
   };
-  const [controller, setController] = useState(new AbortController());
-  const status =
-    cancelType === ''
-      ? ''
-      : cancelType === 'TO'
-      ? 'Unsuccessful - Transaction has encountered timeout error'
-      : cancelType === 'EXP'
-      ? 'Unsuccessful - Transaction has expired'
-      : cancelType === 'FLD'
-      ? 'Unsuccessful - Transaction has been rejected'
-      : cancelType === 'GL'
-      ? 'Unsuccessful - Transaction exceeded limit'
-      : cancelType === 'LgnErr'
-      ? 'Unsuccessful – Invalid User ID, Password and/or Corporate ID'
-      : 'Unsuccessful - Transaction has been canceled';
+
+  let status = '';
+  switch (cancelType) {
+    case '':
+      status = '';
+    case 'TO':
+      status = 'Unsuccessful - Transaction has encountered timeout error';
+      break;
+    case 'EXP':
+      status = 'Unsuccessful - Transaction has expired';
+      break;
+    case 'FLD':
+      status = 'Unsuccessful - Transaction has been rejected';
+      break;
+    case 'GL':
+      status = 'Unsuccessful - Transaction exceeded limit';
+      break;
+    case 'LgnErr':
+      status = 'Unsuccessful – Invalid User ID, Password and/or Corporate ID';
+      break;
+    default:
+      status = 'Unsuccessful - Transaction has been canceled';
+  }
 
   useEffect(() => {
     const slctdAcc = sessionStorage.getItem('selectedAccount');
@@ -97,7 +119,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4 ">
                     <p>
                       {selectedAccount?.fromAccNo} -{' '}
-                      {selectedAccount?.fromAccName}
+                      {selectedAccount?.fromAccHolder}
                     </p>
                   </div>
                 </div>

@@ -135,6 +135,10 @@ export default function Login() {
           'accessToken',
           data.loginRes.data.header.accessToken
         );
+        sessionStorage.setItem(
+          'notifyBAccessToken',
+          data.notifyRes.data.header.accessToken
+        );
         loginSessionMut.mutate({ page: '/b2b/loginb', userID: userID });
       } else {
         setCancelType('U');
@@ -208,9 +212,9 @@ export default function Login() {
     approvedTxnLogQry.data &&
     'txnLog' in approvedTxnLogQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nCMB) ||
+      getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nCMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nCIB))
+        getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nCIB))
   ) {
     return (
       <>

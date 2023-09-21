@@ -144,6 +144,8 @@ export default function Home() {
           setInputs(defaultInputs);
           router.push('/login');
         }
+      } else {
+        setIsClicked(false);
       }
     },
     onError: () => {

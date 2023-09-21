@@ -132,9 +132,9 @@ export default function Login() {
     approvedTxnLogQry.data &&
     'txnLog' in approvedTxnLogQry.data &&
     ((/Mobi/i.test(navigator.userAgent) &&
-      getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nRMB) ||
+      getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nRMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount < approvedTxnLogQry.data.txnLog.nRIB))
+        getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nRIB))
   ) {
     return (
       <>

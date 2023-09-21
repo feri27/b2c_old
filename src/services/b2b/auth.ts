@@ -73,7 +73,7 @@ export async function logoutB(body: {
   channel: string;
   page: string;
   dbtrAgt: string;
-}) {
+}): Promise<ResponseHeader> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2B_API_URL}/logoutb`, {
     method: 'POST',

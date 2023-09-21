@@ -10,7 +10,6 @@ import Modal from '@/components/common/Modal';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
-import { useCheckSourceOfFunds } from '@/hooks/useCheckSourceOfFunds';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLatAndLong } from '@/hooks/useLatAndLong';
 import { useLoginBData } from '@/hooks/useLoginBData';
@@ -49,12 +48,7 @@ export default function PaymentInitiate() {
     cancel('E', transactionDetail);
   });
   useCheckMaintenaceTime('B2B');
-  useCheckSourceOfFunds({
-    transactionDetail,
-    merchantData,
-    setCancelType,
-    cancel,
-  });
+
   const createTxnMut = useMutation({
     mutationFn: createTxn,
     onSuccess: (data) => {
@@ -75,16 +69,36 @@ export default function PaymentInitiate() {
   });
 
   useEffect(() => {
-    setSelectedAccount(loginBData?.fromAccountList[0]);
-  }, [loginBData?.fromAccountList[0]]);
+    const srcOfFunds = transactionDetail?.sourceOfFunds.split(',');
+    const accounts = loginBData?.fromAccountList;
+    let availableAccounts: Array<FromAccount> = [];
+    if (accounts && srcOfFunds) {
+      accounts.forEach((account) => {
+        const type = account.fromAccType;
+        const typeToNumStr =
+          type === 'CA' || type === 'SA' ? '01' : type === 'CC' ? '02' : '03';
+        if (srcOfFunds.includes(typeToNumStr)) {
+          availableAccounts.push(account);
+        }
+      });
+      if (availableAccounts.length === 0) {
+        console.log('here');
 
-  // if (
-  //   transactionDetail &&
-  //   loginBData &&
-  //   transactionDetail.amount > loginBData.trxLimit - loginBData.usedLimit
-  // ) {
-  //   cancel('UL', transactionDetail);
-  // }
+        cancel('C', transactionDetail);
+      } else {
+        setSelectedAccount(availableAccounts[0]);
+      }
+    }
+  }, [loginBData?.fromAccountList[0].fromAccHolder]);
+
+  useEffect(() => {
+    if (selectedAccount) {
+      sessionStorage.setItem(
+        'selectedAccount',
+        JSON.stringify(selectedAccount)
+      );
+    }
+  }, [selectedAccount?.fromAccHolder]);
 
   const validateForm = () => {
     return selectedAccount === undefined;
@@ -92,12 +106,9 @@ export default function PaymentInitiate() {
 
   const handleSubmit = () => {
     if (transactionDetail && selectedAccount) {
-      sessionStorage.setItem(
-        'selectedAccount',
-        JSON.stringify(selectedAccount)
-      );
+      const notifyBAccessToken = sessionStorage.getItem('notifyBAccessToken');
       createTxnMut.mutate({
-        accessToken,
+        accessToken: notifyBAccessToken ?? '',
         channel,
         corporateLogonID,
         userID,
@@ -192,7 +203,7 @@ export default function PaymentInitiate() {
                         key={account.fromAccName}
                         value={account.fromAccName}
                       >
-                        {account.fromAccNo}-{account.fromAccName}
+                        {account.fromAccNo}-{account.fromAccHolder}
                       </option>
                     ))}
                   </select>

@@ -1,7 +1,7 @@
 'use client';
 import AccountSelection from '@/components/AccountSelection';
 import Steps from '@/components/Steps';
-import { account } from '@/services/account';
+import { Account, account } from '@/services/account';
 import {
   authorizeTransaction,
   checkTxnStatus,
@@ -36,7 +36,6 @@ import { useMerchantData } from '@/hooks/useMerchantData';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useSetAtom } from 'jotai';
 import { cancelTypeAtom } from '@/atoms';
-import { useCheckSourceOfFunds } from '@/hooks/useCheckSourceOfFunds';
 
 const abortController = new AbortController();
 
@@ -63,7 +62,10 @@ export default function PaymentDetail() {
   const [otp, setOtp] = useState<string>('');
   const [authProceed, setAuthProceed] = useState(false);
   const privateKeyQry = usePrivateKey({ enabled: mfa?.method === 'MO' });
-  const [accountType, setAccountType] = useState('SVGS');
+  const [accountType, setAccountType] = useState('');
+  const [accountTypeList, setAccountTypeList] = useState<
+    Array<'CA' | 'SA' | 'CC'> | undefined
+  >();
   const [isClicked, setIsClicked] = useState(false);
   const [moClicked, setMoClicked] = useState(false);
   const [reqTACButtonClicked, setReqTACButtonClicked] = useState(false);
@@ -80,6 +82,36 @@ export default function PaymentDetail() {
   });
 
   useEffect(() => {
+    const srcOfFunds = transactionDetail?.sourceOfFunds.split(',');
+    let accountData: Account | undefined = undefined;
+    if (accountQry.data && 'data' in accountQry.data) {
+      accountData = accountQry.data;
+    }
+    let availableAccounts: Array<'CA' | 'SA' | 'CC'> = [];
+    if (accountData && srcOfFunds) {
+      srcOfFunds.forEach((src) => {
+        const firstTwoDigits = accountData?.data.accNo.slice(0, 2);
+        const type =
+          firstTwoDigits === '11' && src === '01'
+            ? 'CA'
+            : firstTwoDigits === '22' && src === '01'
+            ? 'SA'
+            : firstTwoDigits !== '11' && firstTwoDigits !== '22' && src === '02'
+            ? 'CC'
+            : '';
+        if (type) {
+          availableAccounts.push(type);
+        }
+      });
+      if (availableAccounts.length === 0) {
+        cancel('C', transactionDetail);
+      } else {
+        setAccountTypeList(availableAccounts);
+      }
+    }
+  }, [accountQry.data]);
+
+  useEffect(() => {
     if ((mfa?.method === 'NIL', mfa?.method === 'NR')) {
       setCancelType('FLD');
       cancel('MFA', transactionDetail);
@@ -93,13 +125,6 @@ export default function PaymentDetail() {
       : mfaMethod === 'MO'
       ? 'Request ISecure OTP'
       : '';
-
-  useCheckSourceOfFunds({
-    transactionDetail,
-    merchantData,
-    setCancelType,
-    cancel,
-  });
 
   const authorizeTxnMut = useMutation({
     mutationFn: authorizeTransaction,
@@ -567,6 +592,7 @@ export default function PaymentDetail() {
                 accType={accountType}
                 setAccType={setAccountType}
                 data={transactionDetail}
+                accountTypeList={accountTypeList}
               />
               {mfaMethod === 'MA' ? null : (
                 <>
