@@ -83,3 +83,11 @@ export function mapSrcOfFund(src: string, accNum: string) {
     return 'CCRD';
   }
 }
+
+export function formatCurrency(num?: number) {
+  if (!num) return num;
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

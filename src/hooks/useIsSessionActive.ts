@@ -64,5 +64,5 @@ export function useIsSessionActive(cb: () => void, login = false) {
         }
       }
     }
-  }, [txnDetail]);
+  }, [txnDetail?.xpryDt]);
 }

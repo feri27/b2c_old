@@ -10,6 +10,7 @@ import { cancelTypeAtom } from '@/atoms';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { FromAccount } from '@/services/b2b/auth';
 import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
+import { formatCurrency } from '@/utils/helpers';
 
 export default function PaymentStatus({ success }: { success: boolean }) {
   const txnDetail = useTransactionDetail();
@@ -163,7 +164,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{txnDetail?.amount}</p>
+                    <p>{formatCurrency(txnDetail?.amount)}</p>
                   </div>
                 </div>
               </div>

@@ -17,7 +17,11 @@ import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
-import { checkSystemLogout, mapDbtrAcctTp } from '@/utils/helpers';
+import {
+  checkSystemLogout,
+  formatCurrency,
+  mapDbtrAcctTp,
+} from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -220,12 +224,8 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    value={selectedAccount?.fromAccAmount.toLocaleString(
-                      'en-US',
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
+                    value={formatCurrency(
+                      Number(selectedAccount?.fromAccAmount)
                     )}
                     readOnly
                   />
@@ -291,23 +291,7 @@ export default function PaymentInitiate() {
                     id=""
                     type="text"
                     className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    value={transactionDetail?.amount}
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="mb-[15px] -mx-[15px] flex flex-col md:flex-row md:items-center">
-              <label className="max-w-full text-sm md:w-[41.7%] mb-[5px] font-bold float-left">
-                Available Amount (MYR) <span className="text-red-500">*</span>
-              </label>
-              <div className="flex flex-wrap marginx  w-full justify-center">
-                <div className="w-full padx md:w-3/4">
-                  <input
-                    id=""
-                    type="text"
-                    className="block mb-[10px] w-full outline-none bg-clip-padding appearance-none rounded !h-[30px] !py-1.5 !px-3 !leading-[1.2] bg-[#e9ecef]"
-                    value={selectedAccount?.fromAccAmount}
+                    value={formatCurrency(transactionDetail?.amount)}
                     readOnly
                   />
                 </div>
