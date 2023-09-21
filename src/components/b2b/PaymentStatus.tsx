@@ -28,7 +28,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     setIsClicked
   );
   useLogoutOnBrowserClose(logouBMut.mutate, {
-    accessToken: notifyAccessToken,
+    accessToken: isClicked ? '' : notifyAccessToken,
     page,
     dbtrAgt: merchantData.dbtrAgt,
     logoutCalled: isClicked,
