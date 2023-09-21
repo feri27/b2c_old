@@ -30,7 +30,7 @@ export async function updateLoginSession({
 }: {
   status: 'active' | 'expired';
   page: string;
-  sessionID: String;
+  sessionID: string;
   reason: 'C' | 'S';
 }): Promise<{ message: string }> {
   const res = await fetch(`${COMMON_API_URL}/login-session/${sessionID}`, {
@@ -38,6 +38,7 @@ export async function updateLoginSession({
     body: JSON.stringify({ status, page, reason }),
     headers: {
       'Content-Type': 'application/json',
+      'X-Session-ID': sessionID,
     },
   });
   return res.json();

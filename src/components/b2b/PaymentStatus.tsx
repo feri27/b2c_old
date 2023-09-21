@@ -31,6 +31,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     accessToken: notifyAccessToken,
     page,
     dbtrAgt: merchantData.dbtrAgt,
+    logoutCalled: isClicked,
   });
 
   const cancelType = useAtomValue(cancelTypeAtom);

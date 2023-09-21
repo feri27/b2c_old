@@ -24,12 +24,17 @@ type MutateFn = (
 ) => void;
 export function useLogoutOnBrowserClose(
   logout: MutateFn,
-  options: { page: string; accessToken: string; dbtrAgt: string }
+  options: {
+    page: string;
+    accessToken: string;
+    dbtrAgt: string;
+    logoutCalled: boolean;
+  }
 ) {
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
-      if (options.accessToken) {
+      if (options.accessToken && !options.logoutCalled) {
         logout({
           accessToken: options.accessToken,
           page: options.page,
