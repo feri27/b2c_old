@@ -125,12 +125,33 @@ export default function PaymentDetail() {
       : mfaMethod === 'MO'
       ? 'Request ISecure OTP'
       : '';
-
+  const updateTxnPayload = {
+    endToEndId: transactionDetail!.endToEndId,
+    dbtrAgt: transactionDetail!.dbtrAgt,
+    gpsCoord: '-',
+    merchantId: transactionDetail!.merchantID,
+    page: '/payment-detail',
+    reason: 'FLD',
+    sessionID: undefined,
+    channel: channel!,
+    amount: transactionDetail!.amount.toString(),
+    payerName: transactionDetail!.payerName,
+    cdtrAgtBIC: transactionDetail!.cdtrAgtBIC,
+    dbtrAgtBIC: transactionDetail!.dbtrAgtBIC,
+    dbtrAcctId:
+      accountQry.data && 'data' in accountQry.data
+        ? String(accountQry.data.data.creditCardNo)
+        : '',
+  } as const;
   const authorizeTxnMut = useMutation({
     mutationFn: authorizeTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router);
+        checkSystemLogout(data.message as string, router, () => {
+          if (transactionDetail) {
+            updateTxnMut.mutate(updateTxnPayload);
+          }
+        });
       }
     },
   });
@@ -138,7 +159,11 @@ export default function PaymentDetail() {
     mutationFn: notifyTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router);
+        checkSystemLogout(data.message as string, router, () => {
+          if (transactionDetail) {
+            updateTxnMut.mutate(updateTxnPayload);
+          }
+        });
       } else router.push('/payment-success');
     },
     onError: () => {
@@ -150,7 +175,11 @@ export default function PaymentDetail() {
     mutationFn: debit,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router);
+        checkSystemLogout(data.message as string, router, () => {
+          if (transactionDetail) {
+            updateTxnMut.mutate(updateTxnPayload);
+          }
+        });
       } else {
         if (
           data.PymtConfirmRs.resBody.TxSts === 'ACTC' ||
@@ -221,7 +250,11 @@ export default function PaymentDetail() {
     mutationFn: checkTxnStatus,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router);
+        checkSystemLogout(data.message as string, router, () => {
+          if (transactionDetail) {
+            updateTxnMut.mutate(updateTxnPayload);
+          }
+        });
       } else {
         if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
           setCancelType('FLD');
@@ -274,7 +307,11 @@ export default function PaymentDetail() {
 
   useEffect(() => {
     if (accountQry.data && 'message' in accountQry.data) {
-      checkSystemLogout(accountQry.data.message, router);
+      checkSystemLogout(accountQry.data.message, router, () => {
+        if (transactionDetail) {
+          updateTxnMut.mutate(updateTxnPayload);
+        }
+      });
     }
   }, []);
 
@@ -305,7 +342,11 @@ export default function PaymentDetail() {
     mutationFn: verifyOTP,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router);
+        checkSystemLogout(data.message as string, router, () => {
+          if (transactionDetail) {
+            updateTxnMut.mutate(updateTxnPayload);
+          }
+        });
       } else {
         if (data.status !== 1 || data.errorId) {
           console.log(data);

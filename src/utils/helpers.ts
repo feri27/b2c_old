@@ -37,8 +37,13 @@ export function getSessionID() {
   return sessionID ?? undefined;
 }
 
-export function checkSystemLogout(message: string, router: AppRouterInstance) {
+export function checkSystemLogout(
+  message: string,
+  router: AppRouterInstance,
+  cb: () => void
+) {
   if (message.includes('force logout')) {
+    cb();
     removeEverySessionStorageItem();
     router.push('/logout');
   }
@@ -51,7 +56,7 @@ export function removeEverySessionStorageItem(exception?: boolean) {
   sessionStorage.removeItem('loginData');
   sessionStorage.removeItem('loginBData');
   sessionStorage.removeItem('selectedAccount');
-  if (!exception || exception !== true) {
+  if (!exception) {
     sessionStorage.removeItem('merchantData');
     sessionStorage.setItem('sessionStatus', 'expired');
   }

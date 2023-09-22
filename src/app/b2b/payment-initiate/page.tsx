@@ -15,6 +15,7 @@ import { useLatAndLong } from '@/hooks/useLatAndLong';
 import { useLoginBData } from '@/hooks/useLoginBData';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
 import {
@@ -46,7 +47,7 @@ export default function PaymentInitiate() {
     navigateTo: '/b2b/payment-fail',
     channel: 'B2B',
   });
-
+  const updateTxn = useUpdateTxnMutation(false, '', 'B2B');
   useIsSessionActive(() => {
     setCancelType('EXP');
     cancel('E', transactionDetail);
@@ -57,7 +58,24 @@ export default function PaymentInitiate() {
     mutationFn: createTxn,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router);
+        checkSystemLogout(data.message as string, router, () => {
+          if (transactionDetail) {
+            updateTxn.mutate({
+              endToEndId: transactionDetail.endToEndId,
+              dbtrAgt: transactionDetail.dbtrAgt,
+              gpsCoord: '-',
+              merchantId: transactionDetail.merchantID,
+              page: '/b2b/payment-initiate',
+              reason: 'FLD',
+              sessionID: undefined,
+              channel: channel!,
+              amount: transactionDetail.amount.toString(),
+              payerName: transactionDetail.payerName,
+              cdtrAgtBIC: transactionDetail.cdtrAgtBIC,
+              dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
+            });
+          }
+        });
       } else {
         if (data.data.header.status === 0) {
           setCancelType('FLD');
