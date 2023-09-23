@@ -2,8 +2,10 @@ import Image from 'next/image';
 
 export default function Header({
   maintenance = false,
+  logout = false,
 }: {
   maintenance?: boolean;
+  logout?: boolean;
 }) {
   return (
     <header>
@@ -18,17 +20,27 @@ export default function Header({
               />
             </div>
             <div className="padx w-1/2 m-auto">
-              <img
-                src="/images/fpxlogo.png"
-                alt="Bank Rakyat Logo"
-                className="p-1 !pl-[10%] rounded !float-right max-w-full h-[50px]"
-              />
+              {logout ? (
+                <Image
+                  alt="OBW_Logo"
+                  src="/images/Online_BankingWallets.png"
+                  className="p-1 !pl-[10%] rounded !float-right max-w-full"
+                  width={200}
+                  height={250}
+                />
+              ) : (
+                <img
+                  src="/images/fpxlogo.png"
+                  alt="Bank Rakyat Logo"
+                  className="p-1 !pl-[10%] rounded !float-right max-w-full h-[50px]"
+                />
+              )}
             </div>
           </div>
         </div>
       </nav>
-      <div className="h-12 md:h-10 bg-[#005aaa]">
-        {maintenance && (
+      <div className="h-12 bg-[#005aaa]">
+        {(maintenance || logout) && (
           <ul className="flex justify-center md:text-sm text-[13px] text-white space-x-4 items-center h-full flex-wrap">
             <li>
               <b>Prayer Time (Kuala Lumpur, MY)</b>

@@ -152,7 +152,7 @@ export default function PaymentDetail() {
     mutationFn: authorizeTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, () => {
+        checkSystemLogout(data.message as string, router, 'B2C', () => {
           if (transactionDetail) {
             updateTxnMut.mutate(updateTxnPayload);
           }
@@ -164,7 +164,7 @@ export default function PaymentDetail() {
     mutationFn: notifyTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, () => {
+        checkSystemLogout(data.message as string, router, 'B2C', () => {
           if (transactionDetail) {
             updateTxnMut.mutate(updateTxnPayload);
           }
@@ -180,7 +180,7 @@ export default function PaymentDetail() {
     mutationFn: debit,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, () => {
+        checkSystemLogout(data.message as string, router, 'B2C', () => {
           if (transactionDetail) {
             updateTxnMut.mutate(updateTxnPayload);
           }
@@ -255,7 +255,7 @@ export default function PaymentDetail() {
     mutationFn: checkTxnStatus,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, () => {
+        checkSystemLogout(data.message as string, router, 'B2C', () => {
           if (transactionDetail) {
             updateTxnMut.mutate(updateTxnPayload);
           }
@@ -312,7 +312,7 @@ export default function PaymentDetail() {
 
   useEffect(() => {
     if (accountQry.data && 'message' in accountQry.data) {
-      checkSystemLogout(accountQry.data.message, router, () => {
+      checkSystemLogout(accountQry.data.message, router, 'B2C', () => {
         if (transactionDetail) {
           updateTxnMut.mutate(updateTxnPayload);
         }
@@ -347,7 +347,7 @@ export default function PaymentDetail() {
     mutationFn: verifyOTP,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, () => {
+        checkSystemLogout(data.message as string, router, 'B2C', () => {
           if (transactionDetail) {
             updateTxnMut.mutate(updateTxnPayload);
           }
@@ -629,7 +629,7 @@ export default function PaymentDetail() {
     <>
       <Header />
       <SeparatorLine />
-      <div className="xl:max-w-[1140px] w-full sm:max-w-[540px] md:max-w-[720px] lg:[960px] mx-auto padx md:px-0">
+      <div className="xl:max-w-[1140px] w-full sm:max-w-[540px] md:max-w-[720px] lg:[960px] mx-auto padx md:px-0 h-between">
         <Steps title="Payment Details" step={2} />
         <form
           method="post"

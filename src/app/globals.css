@@ -129,12 +129,24 @@
   float: right !important;
 }
 
+.font-verdana {
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
 .h-between {
-  min-height: calc(100vh - 46vh);
+  min-height: calc(100vh - 150px - 160px);
+}
+
+.h-between-ml {
+  min-height: calc(100vh - 170px - 180px);
 }
 
 .h-between-b2b {
   min-height: calc(100vh - 102px - 137.5px);
+}
+
+.h-between-b2b-ml {
+  min-height: calc(100vh - 128.14px - 205px);
 }
 
 @media print {

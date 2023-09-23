@@ -58,7 +58,7 @@ export default function PaymentInitiate() {
     mutationFn: createTxn,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, () => {
+        checkSystemLogout(data.message as string, router, 'B2B', () => {
           if (transactionDetail) {
             updateTxn.mutate({
               endToEndId: transactionDetail.endToEndId,

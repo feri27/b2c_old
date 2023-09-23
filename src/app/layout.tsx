@@ -1,8 +1,5 @@
-import Header from '@/components/Header';
 import './globals.css';
 import localFont from 'next/font/local';
-import Footer from '@/components/Footer';
-import SeparatorLine from '@/components/SeparatorLine';
 import Provider from '@/utils/provider';
 
 const font = localFont({

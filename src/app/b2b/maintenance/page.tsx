@@ -1,7 +1,4 @@
-import Footer from '@/components/b2b/Footer';
-import Header from '@/components/b2b/Header';
 import Layout from '@/components/b2b/Layout';
-import React from 'react';
 
 export default function Maintenance() {
   return (

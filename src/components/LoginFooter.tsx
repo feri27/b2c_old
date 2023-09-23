@@ -6,11 +6,11 @@ export default function LoginFooter() {
       className={`before:box-border bg-[#dbdbdb] mt-[50px] after:box-border block text-sm`}
     >
       <div className="min-h-[38px] pt-2.5 px-3.5 pb-[25px]" role="contentinfo">
-        <div className="padx75 mx-auto min-[1200px]:max-w-[1140px] min-[992px]:max-w-[960px] md:max-w-[720px] min-[576px]:max-w-[540px]">
+        <div className=" min-[576px]:max-w-[540px] md:max-w-[720px] min-[992px]:max-w-[890px] min-[1200px]:max-w-[960px] min-[1400px]:max-w-[1060px] min-[1600px]:max-w-[1220px] mx-auto">
           <div className="flex justify-between flex-wrap items-center">
             <div className="">
               <ul className="flex flex-wrap md:justify-between justify-center mb-1.5 space-x-4">
-                <li className="flex items-center my-1.5 list-none border-r border-black border-solid px-[15px] text-[#337ab7]">
+                <li className="flex items-center my-1.5 list-none border-r border-black border-solid pr-[15px] text-[#337ab7]">
                   <a
                     href="https://www2.irakyat.com.my/personal/welcome/welcome.do?disclaimer="
                     target="_top"
@@ -18,7 +18,7 @@ export default function LoginFooter() {
                     Disclaimer
                   </a>
                 </li>
-                <li className="flex items-center my-1.5 list-none border-r border-black border-solid px-[15px] text-[#337ab7]">
+                <li className="flex items-center my-1.5 list-none border-r border-black border-solid pr-[15px] text-[#337ab7]">
                   <a
                     href="https://www2.irakyat.com.my/personal/welcome/welcome.do?clientCharter="
                     target="_top"
@@ -26,7 +26,7 @@ export default function LoginFooter() {
                     Client Charter
                   </a>
                 </li>
-                <li className="flex items-center my-1.5 list-none border-r border-black border-solid px-[15px] text-[#337ab7]">
+                <li className="flex items-center my-1.5 list-none border-r border-black border-solid pr-[15px] text-[#337ab7]">
                   <a
                     href="https://www2.irakyat.com.my/personal/welcome/welcome.do?privacySecurity="
                     target="_top"
@@ -34,7 +34,7 @@ export default function LoginFooter() {
                     Privacy Policy
                   </a>
                 </li>
-                <li className="flex items-center my-1.5 list-none border-r border-black border-solid px-[15px] text-[#337ab7]">
+                <li className="flex items-center my-1.5 list-none border-r border-black border-solid pr-[15px] text-[#337ab7]">
                   <a
                     href="https://www2.irakyat.com.my/personal/welcome/welcome.do?termsConditions="
                     target="_top"
@@ -42,7 +42,7 @@ export default function LoginFooter() {
                     Terms &amp; Conditions
                   </a>
                 </li>
-                <li className="flex items-center my-1.5 list-none px-[15px] text-[#337ab7]">
+                <li className="flex items-center my-1.5 list-none pr-[15px] text-[#337ab7]">
                   <a
                     href="https://www2.irakyat.com.my/personal/welcome/welcome.do?personalDataProtectionAct="
                     target="_top"
@@ -52,7 +52,7 @@ export default function LoginFooter() {
                 </li>
               </ul>
 
-              <div className="text-center md:text-start my-2 pl-[15px]">
+              <div className="text-center md:text-start my-2">
                 Copyright 2023 © Bank Rakyat. All rights reserved.
                 <br />
                 Best viewed with the latest versions of Google Chrome, Mozilla

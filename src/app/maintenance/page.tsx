@@ -7,7 +7,7 @@ export default function Maintenance() {
     <>
       <Header />
       <SeparatorLine />
-      <div className="min-[1200px]:max-w-[1140px] min-[992px]:max-w-[960px] md:max-w-[720px] min-[576px]:max-w-[540px] mx-auto w-full padx75 text-[#212529] text-sm pb-[0.2px]">
+      <div className="min-[1200px]:max-w-[1140px] h-between-ml min-[992px]:max-w-[960px] md:max-w-[720px] min-[576px]:max-w-[540px] mx-auto w-full padx75 text-[#212529] text-sm pb-[0.2px]">
         <div className="!mb-2">
           <div className="bg-white border border-solid border-[#ddd] !my-14 rounded shadow-[0_1px_1px_rgba(0,0,0,.05)]">
             <div className="py-[15px] px-[30px] ">

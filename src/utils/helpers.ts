@@ -40,12 +40,17 @@ export function getSessionID() {
 export function checkSystemLogout(
   message: string,
   router: AppRouterInstance,
+  channel: 'B2C' | 'B2B',
   cb: () => void
 ) {
   if (message.includes('force logout')) {
     cb();
     removeEverySessionStorageItem();
-    router.push('/logout');
+    if (channel === 'B2C') {
+      router.push('/logout');
+    } else {
+      router.push('/b2b/logout');
+    }
   }
 }
 
