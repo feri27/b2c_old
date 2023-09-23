@@ -15,7 +15,6 @@ import {
   checkSystemLogout,
   encrypt,
   getSessionID,
-  mapDbtrAcctTp,
   mapSrcOfFund,
 } from '@/utils/helpers';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
@@ -41,7 +40,7 @@ const abortController = new AbortController();
 
 export default function PaymentDetail() {
   const router = useRouter();
-  const [accessToken, channel] = useAccessTokenAndChannel();
+  const [_, channel, notifyAccessToken] = useAccessTokenAndChannel();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const [socket, setSocket] = useState<Socket | undefined>();
   const { cancel: CancelTxn, updTrxMut } = useCancelTransaction({
@@ -70,6 +69,7 @@ export default function PaymentDetail() {
   const [moClicked, setMoClicked] = useState(false);
   const [reqTACButtonClicked, setReqTACButtonClicked] = useState(false);
   const merchantData = useMerchantData();
+
   useIsSessionActive(() => {
     setCancelType('EXP');
     cancel('E', transactionDetail);
@@ -77,8 +77,10 @@ export default function PaymentDetail() {
 
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
-    queryFn: async () => account(loginData?.cif ?? ''),
+    queryFn: () => account(loginData?.cif ?? ''),
     enabled: loginData?.cif !== undefined,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
   useEffect(() => {
@@ -104,7 +106,8 @@ export default function PaymentDetail() {
         }
       });
       if (availableAccounts.length === 0) {
-        cancel('C', transactionDetail);
+        setCancelType('FLD');
+        cancel('FLD', transactionDetail);
       } else {
         setAccountTypeList(availableAccounts);
       }
@@ -125,19 +128,20 @@ export default function PaymentDetail() {
       : mfaMethod === 'MO'
       ? 'Request ISecure OTP'
       : '';
+
   const updateTxnPayload = {
-    endToEndId: transactionDetail!.endToEndId,
-    dbtrAgt: transactionDetail!.dbtrAgt,
+    endToEndId: transactionDetail?.endToEndId ?? '',
+    dbtrAgt: transactionDetail?.dbtrAgt ?? '',
     gpsCoord: '-',
-    merchantId: transactionDetail!.merchantID,
+    merchantId: transactionDetail?.merchantID ?? '',
     page: '/payment-detail',
     reason: 'FLD',
     sessionID: undefined,
-    channel: channel!,
-    amount: transactionDetail!.amount.toString(),
-    payerName: transactionDetail!.payerName,
-    cdtrAgtBIC: transactionDetail!.cdtrAgtBIC,
-    dbtrAgtBIC: transactionDetail!.dbtrAgtBIC,
+    channel: channel,
+    amount: transactionDetail?.amount.toString() ?? '',
+    payerName: transactionDetail?.payerName ?? '',
+    cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
+    dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
     dbtrAcctId:
       accountQry.data && 'data' in accountQry.data
         ? String(accountQry.data.data.creditCardNo)
@@ -211,7 +215,7 @@ export default function PaymentDetail() {
           });
           if (accountQry.data && 'data' in accountQry.data)
             notifyTxnMut.mutate({
-              accessToken: accessToken ?? '',
+              accessToken: notifyAccessToken,
               fromAccountHolder: accountQry.data.data.accHolderName,
               fromAccountNo: accountQry.data.data.accNo,
               referenceNo: transactionDetail?.recipientReference ?? '',
@@ -230,7 +234,7 @@ export default function PaymentDetail() {
     onError: () => {
       if (accountQry.data && 'data' in accountQry.data)
         notifyTxnMut.mutate({
-          accessToken: accessToken ?? '',
+          accessToken: notifyAccessToken,
           fromAccountHolder: accountQry.data.data.accHolderName,
           fromAccountNo: accountQry.data.data.accNo,
           referenceNo: transactionDetail?.recipientReference ?? '',
@@ -348,9 +352,7 @@ export default function PaymentDetail() {
           }
         });
       } else {
-        if (data.status !== 1 || data.errorId) {
-          console.log(data);
-
+        if (data.data.header.status !== 1 || data.data.header.errorId) {
           setCancelType('FLD');
           cancel('MFA', transactionDetail);
         } else {
@@ -410,7 +412,7 @@ export default function PaymentDetail() {
     setReqTACButtonClicked(true);
     if (accountQry.data && 'data' in accountQry.data) {
       authorizeTxnMut.mutate({
-        accessToken,
+        accessToken: notifyAccessToken,
         creditorName: transactionDetail?.creditorName ?? '',
         fromAccountHolder: accountQry.data?.data.accHolderName!,
         fromAccountNo: accountQry.data?.data.accNo!,
@@ -470,7 +472,7 @@ export default function PaymentDetail() {
       const secret = privateKeyQry.data?.private_key ?? '';
       const { encryptedTxt, iv } = encrypt(otp, secret);
       verifyOTPMut.mutate({
-        accessToken,
+        accessToken: notifyAccessToken,
         iv: iv.toString('base64'),
         otp: encryptedTxt.toString('base64'),
         channel,
@@ -487,7 +489,7 @@ export default function PaymentDetail() {
       setMASubmit((prev) => ({ ...prev, count: prev.count + 1 }));
       if (accountQry.data && 'data' in accountQry.data) {
         authorizeTxnMut.mutate({
-          accessToken,
+          accessToken: notifyAccessToken,
           creditorName: transactionDetail?.creditorName ?? '',
           fromAccountHolder: accountQry.data.data.accHolderName,
           fromAccountNo: accountQry.data.data.accNo,
@@ -503,7 +505,7 @@ export default function PaymentDetail() {
       }
       if (maSubmit.count > 0) {
         checkTxnStatusMut.mutate({
-          accessToken,
+          accessToken: notifyAccessToken,
           channel,
           page: '/payment-detail',
           refNo: transactionDetail?.recipientReference!,
@@ -513,7 +515,7 @@ export default function PaymentDetail() {
       }
       let newSocket = socket;
       if (!newSocket) {
-        newSocket = io('http://54.169.180.154:5000');
+        newSocket = io('http://localhost:5000');
         setSocket(newSocket);
         newSocket.emit('start', { txnID: transactionDetail?.tnxId });
       }
@@ -521,8 +523,8 @@ export default function PaymentDetail() {
       newSocket.on('data', (data) => {
         const status = data['status'];
         if (status !== 1) {
-          setCancelType('TO');
-          cancel('TO', transactionDetail);
+          setCancelType('FLD');
+          cancel('FLD', transactionDetail);
         } else {
           if (
             transactionDetail &&
@@ -608,6 +610,19 @@ export default function PaymentDetail() {
   //     </>
   //   );
   // }
+
+  if (!transactionDetail || !accountQry.data || !accountTypeList) {
+    return (
+      <>
+        <Header />
+        <SeparatorLine />
+        <div className="flex flex-col flex-auto h-between w-full justify-center items-center">
+          Loading...
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -702,12 +717,12 @@ export default function PaymentDetail() {
                   <div className=" pl-[2.5em]">
                     {mfa?.validity && reqTACButtonClicked ? (
                       <CountdownText
-                        count={10}
+                        count={120}
                         isNote={true}
                         controller={abortController}
                         cb={() => {
                           checkTxnStatusMut.mutate({
-                            accessToken,
+                            accessToken: notifyAccessToken,
                             channel,
                             page: '/payment-detail',
                             refNo: transactionDetail?.recipientReference!,
@@ -731,8 +746,8 @@ export default function PaymentDetail() {
                 type="button"
                 onClick={(e) => {
                   setTimerOff(true);
-                  // setCancelType('U');
-                  // cancel('U', transactionDetail);
+                  setCancelType('U');
+                  cancel('U', transactionDetail);
                 }}
                 disabled={isClicked || updTrxMut.isLoading}
                 defaultValue="Cancel"

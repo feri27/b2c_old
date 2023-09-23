@@ -6,8 +6,9 @@ import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
+import { formatCurrency } from '@/utils/helpers';
 import { useAtomValue } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function PaymentFail() {
   const transactionDetail = useTransactionDetail();
@@ -120,7 +121,9 @@ export default function PaymentFail() {
             </label>
             <div className="flex after:clear-both md:w-2/3">
               <div className="flex flex-wrap">
-                <p className="">MYR {transactionDetail?.amount}</p>
+                <p className="">
+                  MYR {formatCurrency(Number(transactionDetail?.amount))}
+                </p>
               </div>
             </div>
           </div>
@@ -148,12 +151,16 @@ export default function PaymentFail() {
 
           {/* <!-- <input type="submit" name="doSubmit" className="acc-selc-orange-button" value="Proceed" id="doSubmit" disabled=""> --> */}
           <button
-            className="bg-[#f26f21]  w-full min-[480px]:w-auto disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
+            className="bg-[#f26f21] w-full min-[480px]:w-auto disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none !rounded-md  flex justify-center items-center"
             id="doSubmit"
             disabled={isClicked}
             onClick={handleClick}
           >
-            <CountdownText cb={handleClick} controller={controller} count={3} />
+            <CountdownText
+              cb={handleClick}
+              controller={controller}
+              count={300}
+            />
           </button>
         </div>
       </div>

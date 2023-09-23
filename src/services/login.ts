@@ -68,7 +68,12 @@ export async function login({
   } else {
     const notifyRes = await fetch(`${B2C_API_URL}/notifylogin`, {
       method: 'POST',
-      body: JSON.stringify({ accessToken, channel, txnAmount, dbtrAgt }),
+      body: JSON.stringify({
+        accessToken,
+        channel,
+        txnAmount,
+        dbtrAgt,
+      }),
       headers: {
         'Content-Type': 'application/json',
       },

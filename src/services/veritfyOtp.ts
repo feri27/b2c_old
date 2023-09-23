@@ -9,7 +9,7 @@ export async function verifyOTP(body: {
   channel: string;
   deliveryChannel: string;
   dbtrAgt: string;
-}): Promise<ResponseHeader> {
+}): Promise<{ data: { header: ResponseHeader } }> {
   const sessionID = getSessionID();
   const res = await fetch(`${B2C_API_URL}/verifyotp`, {
     method: 'POST',

@@ -1,7 +1,6 @@
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import SeparatorLine from '@/components/SeparatorLine';
-import React from 'react';
 
 export default function Maintenance() {
   return (

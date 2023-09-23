@@ -20,6 +20,7 @@ import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
 import { useCheckSignature } from '@/hooks/useCheckSignature';
 import { useCheckGlobalLimit } from '@/hooks/useCheckGlobalLimit';
+import { useCheckTxnDetailXpry } from '@/hooks/useCheckTxnDetailXpry';
 
 export default function Login() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function Login() {
   const [isClicked, setIsClicked] = useState(false);
   const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
   const [fetchSettings, setFetchSettings] = useState(false);
+  const [loadPage, setLoadPage] = useState(false);
 
   useCheckMaintenaceTime('B2C');
   const getTxnQry = useTransactionDetailQuery(
@@ -52,7 +54,18 @@ export default function Login() {
 
   useIsSessionActive(() => {
     setCancelType('EXP');
-    cancel('E', merchantData);
+    cancel('E', getTxnQry.data?.data);
+  }, true);
+
+  useCheckTxnDetailXpry({
+    data: getTxnQry.data,
+    cb1: () => {
+      setCancelType('EXP');
+      cancel('E', getTxnQry.data?.data);
+    },
+    cb2: () => {
+      setLoadPage(true);
+    },
   });
 
   useSettingQuery(channel as 'B2C' | 'B2B', '/login', fetchSettings);
@@ -78,7 +91,7 @@ export default function Login() {
     onSuccess: (data) => {
       if (data.data.header.errorId || 'message' in data) {
         setCancelType('LgnErr');
-        cancel('FR', merchantData);
+        cancel('FR', getTxnQry.data?.data);
       } else {
         setSecurePhrase(data.data.body.securePhrase);
         sessionStorage.setItem('accessToken', data.data.header.accessToken);
@@ -86,7 +99,8 @@ export default function Login() {
       }
     },
     onError: (error) => {
-      cancel('FR', merchantData);
+      setCancelType('U');
+      cancel('FR', getTxnQry.data?.data);
       setIsClicked(false);
     },
   });
@@ -134,7 +148,8 @@ export default function Login() {
     ((/Mobi/i.test(navigator.userAgent) &&
       getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nRMB) ||
       (!/Mobi/i.test(navigator.userAgent) &&
-        getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nRIB))
+        getTxnQry.data.data.amount <= approvedTxnLogQry.data.txnLog.nRIB)) &&
+    loadPage
   ) {
     return (
       <>
@@ -198,7 +213,10 @@ export default function Login() {
                 <button
                   className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
                   value="Cancel"
-                  onClick={() => cancel('U', getTxnQry?.data?.data)}
+                  onClick={() => {
+                    setCancelType('U');
+                    cancel('U', getTxnQry?.data?.data);
+                  }}
                   disabled={isClicked || updTrxMut.isLoading}
                 >
                   Cancel

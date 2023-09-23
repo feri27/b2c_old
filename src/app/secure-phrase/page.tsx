@@ -4,7 +4,7 @@ import LoginSidebar from '@/components/LoginSidebar';
 import Steps from '@/components/Steps';
 import { login } from '@/services/login';
 import { useMutation } from '@tanstack/react-query';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,7 +18,6 @@ import LoginFooter from '@/components/LoginFooter';
 import { useLoginSessionMutation } from '@/hooks/useLoginSessionMutation';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useCancelTransaction } from '@/hooks/useCancelTransaction';
-import Modal from '@/components/common/Modal';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useMerchantData } from '@/hooks/useMerchantData';
@@ -47,8 +46,6 @@ export default function SecurePhrase() {
   const loginMut = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      console.log(data);
-
       if (data.notifyRes?.data.header.status === 1) {
         sessionStorage.setItem(
           'mfa',
@@ -60,6 +57,10 @@ export default function SecurePhrase() {
         sessionStorage.setItem(
           'loginData',
           JSON.stringify(data.loginRes.data.body)
+        );
+        sessionStorage.setItem(
+          'notifyBAccessToken',
+          data.loginRes.data.header.accessToken
         );
         loginSessionMut.mutate({
           page: '/login',
@@ -109,7 +110,6 @@ export default function SecurePhrase() {
       setErrorVisible('hidden');
       if (privateKeyQry.data) {
         const secret = privateKeyQry.data.private_key;
-
         const { encryptedTxt, iv } = encrypt(password, secret);
         loginMut.mutate({
           username,
@@ -140,6 +140,19 @@ export default function SecurePhrase() {
   //     </>
   //   );
   // }
+
+  if (!transactionDetail || !merchantData) {
+    return (
+      <>
+        <SeparatorLine bottom={false} />
+        <Header backgroundImg={true} />
+        <div className="flex flex-col flex-auto h-between w-full justify-center items-center">
+          Loading...
+        </div>
+        <LoginFooter />
+      </>
+    );
+  }
 
   return (
     <>
@@ -253,7 +266,10 @@ export default function SecurePhrase() {
                 data-toggle="modal"
                 data-target="#myModal"
                 defaultValue="Cancel"
-                onClick={() => cancel('U', transactionDetail)}
+                onClick={() => {
+                  setCancelType('U');
+                  cancel('U', transactionDetail);
+                }}
                 disabled={isClicked || updTrxMut.isLoading}
               />
               <input
@@ -289,7 +305,10 @@ export default function SecurePhrase() {
           </div>
           <button
             className="text-[#337ab7] text-sm disabled:cursor-not-allowed"
-            onClick={() => cancel('U', transactionDetail)}
+            onClick={() => {
+              setCancelType('U');
+              cancel('U', transactionDetail);
+            }}
             disabled={isClicked || updTrxMut.isLoading}
           >
             Cancel Transaction

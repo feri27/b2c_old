@@ -153,12 +153,7 @@ export default function Home() {
     },
   });
   const merchantId = 'BKRMMYKL';
-  const cc =
-    inputs.channel.value === 'B2C'
-      ? 'RB'
-      : inputs.channel.value === 'B2B'
-      ? 'BW'
-      : '';
+  const cc = 'BW';
   const trxId =
     date + merchantId + '861' + 'O' + cc + (txnNumQry.data?.txn_num ?? '');
   const messageId = date + merchantId + '862' + (txnNumQry.data?.txn_num ?? '');
@@ -629,7 +624,7 @@ export default function Home() {
                       onChange={(e) =>
                         setExpiryDate({ value: e.target.value, error: null })
                       }
-                      className="table-input outline-none ml-1"
+                      className="table-input outline-none "
                       name="datetime"
                     />
                     <ErrorText text={expiryDate.error} />

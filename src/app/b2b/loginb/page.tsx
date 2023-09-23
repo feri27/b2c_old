@@ -26,6 +26,7 @@ import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useCheckSignature } from '@/hooks/useCheckSignature';
 import { useCheckGlobalLimit } from '@/hooks/useCheckGlobalLimit';
 import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionLog';
+import { useCheckTxnDetailXpry } from '@/hooks/useCheckTxnDetailXpry';
 
 export default function Login() {
   const router = useRouter();
@@ -72,24 +73,16 @@ export default function Login() {
     },
   });
 
-  useEffect(() => {
-    if (getTxnQry.data) {
-      const expryDt = new Date(getTxnQry.data.data.xpryDt);
-
-      const xpryDTtime =
-        expryDt !== undefined
-          ? Math.floor(expryDt.getTime() / 1000)
-          : undefined;
-      const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
-
-      if (xpryDTtime && currentTimeInSeconds > xpryDTtime) {
-        setCancelType('EXP');
-        cancel('E', merchantData);
-      } else {
-        setLoadPage(true);
-      }
-    }
-  }, [getTxnQry.data?.data.amount]);
+  useCheckTxnDetailXpry({
+    data: getTxnQry.data,
+    cb1: () => {
+      setCancelType('EXP');
+      cancel('E', merchantData);
+    },
+    cb2: () => {
+      setLoadPage(true);
+    },
+  });
 
   const loginSessionMut = useLoginSessionMutation({
     onSuccess: (data) => {
@@ -148,8 +141,8 @@ export default function Login() {
         );
         loginSessionMut.mutate({ page: '/b2b/loginb', userID: userID });
       } else {
-        setCancelType('U');
-        cancel('C', getTxnQry.data?.data);
+        setCancelType('FLD');
+        cancel('FLD', getTxnQry.data?.data);
       }
     },
     onError: () => {

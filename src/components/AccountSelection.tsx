@@ -1,4 +1,5 @@
 import { TransactionDetail } from '@/services/common/transaction';
+import { formatCurrency } from '@/utils/helpers';
 import { SetStateAction } from 'jotai';
 import { Dispatch } from 'react';
 
@@ -96,7 +97,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className="">MYR {data?.amount}</p>
+            <p className="">MYR {formatCurrency(Number(data?.amount))}</p>
           </div>
         </div>
       </div>

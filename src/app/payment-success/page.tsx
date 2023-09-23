@@ -8,7 +8,8 @@ import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-import { useEffect, useState } from 'react';
+import { formatCurrency } from '@/utils/helpers';
+import { useState } from 'react';
 
 export default function PaymentSuccess() {
   const transactionDetail = useTransactionDetail();
@@ -108,7 +109,9 @@ export default function PaymentSuccess() {
               </label>
               <div className="flex after:clear-both md:w-2/3">
                 <div className="flex flex-wrap">
-                  <p className="">MYR {transactionDetail?.amount}</p>
+                  <p className="">
+                    MYR {formatCurrency(Number(transactionDetail?.amount))}
+                  </p>
                 </div>
               </div>
             </div>
@@ -144,7 +147,7 @@ export default function PaymentSuccess() {
               <CountdownText
                 cb={handleClick}
                 controller={controller}
-                count={3}
+                count={300}
               />
             </button>
           </div>
