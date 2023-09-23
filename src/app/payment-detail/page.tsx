@@ -35,6 +35,7 @@ import { useMerchantData } from '@/hooks/useMerchantData';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useSetAtom } from 'jotai';
 import { cancelTypeAtom } from '@/atoms';
+import { BACKEND_DOMAIN } from '@/utils/config';
 
 const abortController = new AbortController();
 
@@ -115,7 +116,7 @@ export default function PaymentDetail() {
   }, [accountQry.data]);
 
   useEffect(() => {
-    if ((mfa?.method === 'NIL', mfa?.method === 'NR')) {
+    if (mfa?.method === 'NIL' || mfa?.method === 'NR') {
       setCancelType('FLD');
       cancel('MFA', transactionDetail);
     }
@@ -515,7 +516,7 @@ export default function PaymentDetail() {
       }
       let newSocket = socket;
       if (!newSocket) {
-        newSocket = io('http://localhost:5000');
+        newSocket = io(`${BACKEND_DOMAIN}:5000`);
         setSocket(newSocket);
         newSocket.emit('start', { txnID: transactionDetail?.tnxId });
       }
