@@ -70,6 +70,7 @@ export default function Home() {
   const [isClicked, setIsClicked] = useState(false);
   const [endToEndIDSignature, setEndToEndIDSignature] = useState('');
   const date = getDate();
+  console.log({ exp: expiryDate.value, dt: new Date(expiryDate.value) });
 
   const txnNumQry = useQuery({
     queryKey: ['txn_num'],
@@ -102,7 +103,7 @@ export default function Home() {
         customerUsedMBL: inputs.customerUsedMBL.value,
         customerUsedMSL: inputs.customerUsedMSL.value,
         mfaMethod: inputs.mfaMethod.value,
-        xpryDt: expiryDate.value.concat(':00'),
+        xpryDt: new Date(expiryDate.value).toISOString(),
       });
     },
     onError: () => {
