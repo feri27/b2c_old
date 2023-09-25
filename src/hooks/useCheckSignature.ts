@@ -29,6 +29,7 @@ export function useCheckSignature({
     mutationFn: verifySignature,
     onSuccess: (data) => {
       if (data.message === 'failed') {
+        setCancelType('VF');
         cancel('VF', merchantData);
       } else {
         cb();
@@ -48,8 +49,8 @@ export function useCheckSignature({
       merchantData.endToEndIdSignature.populated &&
       merchantData.endToEndIdSignature.value === ''
     ) {
+      setCancelType('VF');
       cancel('VF', merchantData);
-      setCancelType('U');
     }
   }, [merchantData.endToEndIdSignature]);
 }

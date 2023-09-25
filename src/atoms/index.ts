@@ -18,6 +18,7 @@ export type CancelType =
   | 'SOF'
   | 'MFA_NR'
   | 'MFA_NIL'
+  | 'VF'
   | '';
 
 export const usernameAtom = atom<string>('');

@@ -122,7 +122,7 @@ export default function PaymentFail() {
             <div className="flex after:clear-both md:w-2/3">
               <div className="flex flex-wrap">
                 <p className="">
-                  MYR {formatCurrency(Number(transactionDetail?.amount))}
+                  MYR {formatCurrency(Number(transactionDetail?.amount ?? 0))}
                 </p>
               </div>
             </div>

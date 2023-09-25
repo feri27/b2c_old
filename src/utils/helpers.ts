@@ -97,7 +97,7 @@ export function mapSrcOfFund(src: string, accNum: string) {
 }
 
 export function formatCurrency(num?: number) {
-  if (!num) return num;
+  if ((num && isNaN(num)) || !num) return '';
   return num.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -135,6 +135,9 @@ export function getStatusMessage(cancelType: CancelType) {
     case 'MFA_NR':
       status =
         'Unsuccessful - Kindly activate iSecure in iRakyat Mobile Banking to authorize this transaction';
+      break;
+    case 'VF':
+      status = 'Unsuccessful - Signature verification failed';
       break;
     default:
       status = 'Unsuccessful - Transaction has been canceled';
