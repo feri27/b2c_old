@@ -16,6 +16,8 @@ export type CancelType =
   | 'FLD'
   | 'LgnErr'
   | 'SOF'
+  | 'MFA_NR'
+  | 'MFA_NIL'
   | '';
 
 export const usernameAtom = atom<string>('');

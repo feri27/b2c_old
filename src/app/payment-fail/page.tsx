@@ -3,48 +3,48 @@ import { cancelTypeAtom } from '@/atoms';
 import CountdownText from '@/components/CountdownText';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
+import { useLoginData } from '@/hooks/useLoginData';
 import { useLogout } from '@/hooks/useLogout';
+import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-import { formatCurrency } from '@/utils/helpers';
+import { formatCurrency, getStatusMessage } from '@/utils/helpers';
 import { useAtomValue } from 'jotai';
 import { useState } from 'react';
 
 export default function PaymentFail() {
   const transactionDetail = useTransactionDetail();
-  const [accessToken, channel] = useAccessTokenAndChannel();
+  const [_, channel, notifyAccessToken] = useAccessTokenAndChannel();
   const [controller, setController] = useState(new AbortController());
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-fail', 'S', setIsClicked);
+  const loginData = useLoginData();
   const merchantData = useMerchantData();
   const cancelType = useAtomValue(cancelTypeAtom);
+  useLogoutOnBrowserClose(logoutMut.mutate, {
+    accessToken: isClicked ? '' : notifyAccessToken,
+    logoutCalled: isClicked || !loginData,
+    page: '/payment-fail',
+    dbtrAgt: transactionDetail?.dbtrAgt ?? 'BKRMMYKL',
+  });
 
-  const description =
-    cancelType === ''
-      ? ''
-      : cancelType === 'TO'
-      ? 'Unsuccessful - Transaction has encountered timeout error'
-      : cancelType === 'EXP'
-      ? 'Unsuccessful - Transaction has expired'
-      : cancelType === 'FLD'
-      ? 'Unsuccessful - Transaction has been rejected'
-      : cancelType === 'GL'
-      ? 'Unsuccessful - Transaction exceeded limit'
-      : cancelType === 'LgnErr'
-      ? 'Unsuccessful – Invalid User ID, Password and/or Corporate ID'
-      : 'Unsuccessful - Transaction has been canceled';
+  const description = getStatusMessage(cancelType);
 
   const handleClick = () => {
     controller.abort();
+    if (!loginData && transactionDetail) {
+      setIsClicked(true);
+      window.location.href = transactionDetail.redirectURL;
+      return;
+    }
     logoutMut.mutate({
-      accessToken,
+      accessToken: notifyAccessToken,
       channel,
       page: '/payment-fail',
       dbtrAgt: merchantData.dbtrAgt,
     });
     setIsClicked(true);
   };
-  console.log(cancelType);
   const print = () => {
     controller.abort();
     setController(new AbortController());
@@ -111,7 +111,7 @@ export default function PaymentFail() {
             </label>
             <div className="flex after:clear-both md:w-2/3">
               <div className="flex flex-wrap">
-                <p className="">{transactionDetail?.merchantID}</p>
+                <p className="">{transactionDetail?.creditorName}</p>
               </div>
             </div>
           </div>

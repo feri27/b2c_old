@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export function useCheckMaintenaceTime(channel: 'B2C' | 'B2B') {
+export function useCheckMaintenaceTime(
+  channel: 'B2C' | 'B2B',
+  cb?: () => void
+) {
   const mntLogQry = useQuery({
     queryKey: ['maintenance'],
     queryFn: getMntLogs,
@@ -35,6 +38,7 @@ export function useCheckMaintenaceTime(channel: 'B2C' | 'B2B') {
           }
         }
       }
+      cb?.();
     }
   }, [mntLogQry.data]);
 }

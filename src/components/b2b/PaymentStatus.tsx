@@ -10,7 +10,7 @@ import { cancelTypeAtom } from '@/atoms';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { FromAccount } from '@/services/b2b/auth';
 import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
-import { formatCurrency } from '@/utils/helpers';
+import { formatCurrency, getStatusMessage } from '@/utils/helpers';
 
 export default function PaymentStatus({ success }: { success: boolean }) {
   const txnDetail = useTransactionDetail();
@@ -60,32 +60,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     window.print();
   };
 
-  let status = '';
-  switch (cancelType) {
-    case '':
-      status = '';
-    case 'TO':
-      status = 'Unsuccessful - Transaction has encountered timeout error';
-      break;
-    case 'EXP':
-      status = 'Unsuccessful - Transaction has expired';
-      break;
-    case 'FLD':
-      status = 'Unsuccessful - Transaction has been rejected';
-      break;
-    case 'GL':
-      status = 'Unsuccessful - Transaction exceeded limit';
-      break;
-    case 'LgnErr':
-      status = 'Unsuccessful – Invalid User ID, Password and/or Corporate ID';
-      break;
-    case 'SOF':
-      status =
-        'Unsuccessful  - Transaction is rejected due to invalid source of fund';
-      break;
-    default:
-      status = 'Unsuccessful - Transaction has been canceled';
-  }
+  const status = getStatusMessage(cancelType);
 
   useEffect(() => {
     const slctdAcc = sessionStorage.getItem('selectedAccount');

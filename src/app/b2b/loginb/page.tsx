@@ -7,7 +7,7 @@ import {
   userIDAtom,
 } from '@/atoms';
 import { loginB } from '@/services/b2b/auth';
-import { encrypt, formatCurrency } from '@/utils/helpers';
+import { checkSessionExpiry, encrypt, formatCurrency } from '@/utils/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -39,15 +39,19 @@ export default function Login() {
   const merchantData = useMerchantData();
   const privateKeyQry = usePrivateKey({ enabled: true });
   const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
+  const [fetchTxnDetailCheckMaintenance, setFetchTxnDetailCheckMaintenance] =
+    useState(false);
   const [fetchSettings, setFetchSettings] = useState(false);
   const [loadPage, setLoadPage] = useState(false);
 
-  useCheckMaintenaceTime('B2B');
+  useCheckMaintenaceTime('B2B', () => {
+    setFetchTxnDetailCheckMaintenance(true);
+  });
 
   const getTxnQry = useTransactionDetailQuery(
     merchantData,
     '/login',
-    fetchTxnDetail
+    fetchTxnDetail && fetchTxnDetailCheckMaintenance
   );
   const approvedTxnLogQry = useGetApprovedTransactionLog();
   const { cancel, updTrxMut } = useCancelTransaction({
@@ -61,10 +65,14 @@ export default function Login() {
   // });
   useSettingQuery('B2B', '/b2b/loginb', fetchSettings);
 
-  useIsSessionActive(() => {
-    setCancelType('EXP');
-    cancel('E', merchantData);
-  }, true);
+  useIsSessionActive(
+    () => {
+      setCancelType('EXP');
+      cancel('E', merchantData);
+    },
+    true,
+    'B2B'
+  );
 
   useCheckSignature({
     cancel,
@@ -154,6 +162,17 @@ export default function Login() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', getTxnQry.data?.data);
+      },
+      getTxnQry.data?.data
+    );
+    if (expired) {
+      return;
+    }
     const accessToken = sessionStorage.getItem('accessToken') ?? '';
     if (privateKeyQry.data) {
       const privateKey = privateKeyQry.data.private_key;
@@ -185,6 +204,10 @@ export default function Login() {
     'B2B',
     setFetchSettings
   );
+
+  useEffect(() => {
+    sessionStorage.setItem('sessionStatus', 'active');
+  }, []);
 
   // if (!isActive) {
   //   return (
@@ -306,6 +329,17 @@ export default function Login() {
                               type="button"
                               value="Cancel"
                               onClick={() => {
+                                const expired = checkSessionExpiry(
+                                  false,
+                                  () => {
+                                    setCancelType('EXP');
+                                    cancel('E', getTxnQry.data?.data);
+                                  },
+                                  getTxnQry.data?.data
+                                );
+                                if (expired) {
+                                  return;
+                                }
                                 setCancelType('U');
                                 cancel('U', getTxnQry.data?.data);
                               }}

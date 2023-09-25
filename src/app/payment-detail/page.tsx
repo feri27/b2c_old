@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { verifyOTP } from '@/services/veritfyOtp';
 import {
+  checkSessionExpiry,
   checkSystemLogout,
   encrypt,
   getSessionID,
@@ -31,11 +32,12 @@ import { useGetMFA } from '@/hooks/useGetMFA';
 import { Socket, io } from 'socket.io-client';
 import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { debit } from '@/services/debit';
-import { useMerchantData } from '@/hooks/useMerchantData';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { useSetAtom } from 'jotai';
 import { cancelTypeAtom } from '@/atoms';
 import { BACKEND_DOMAIN } from '@/utils/config';
+import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
+import { useLogout } from '@/hooks/useLogout';
 
 const abortController = new AbortController();
 
@@ -69,12 +71,24 @@ export default function PaymentDetail() {
   const [isClicked, setIsClicked] = useState(false);
   const [moClicked, setMoClicked] = useState(false);
   const [reqTACButtonClicked, setReqTACButtonClicked] = useState(false);
-  const merchantData = useMerchantData();
+  // const merchantData = useMerchantData();
+  const logoutMut = useLogout('/payment-detail', 'S', setIsClicked);
 
-  useIsSessionActive(() => {
-    setCancelType('EXP');
-    cancel('E', transactionDetail);
+  useLogoutOnBrowserClose(logoutMut.mutate, {
+    accessToken: isClicked ? '' : notifyAccessToken,
+    logoutCalled: isClicked,
+    page: '/payment-detail',
+    dbtrAgt: transactionDetail?.dbtrAgt ?? 'BKRMMYKL',
   });
+
+  useIsSessionActive(
+    () => {
+      setCancelType('EXP');
+      cancel('E', transactionDetail);
+    },
+    false,
+    'B2C'
+  );
 
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
@@ -116,8 +130,11 @@ export default function PaymentDetail() {
   }, [accountQry.data]);
 
   useEffect(() => {
-    if (mfa?.method === 'NIL' || mfa?.method === 'NR') {
-      setCancelType('FLD');
+    if (mfa?.method === 'NIL') {
+      setCancelType('MFA_NIL');
+      cancel('MFA', transactionDetail);
+    } else if (mfa?.method === 'NR') {
+      setCancelType('MFA_NR');
       cancel('MFA', transactionDetail);
     }
   }, [mfa?.method]);
@@ -193,60 +210,62 @@ export default function PaymentDetail() {
           router.push('/payment-success');
         } else {
           const sessionID = getSessionID();
-          updateTxnMut.mutate({
-            dbtrAgt: merchantData.dbtrAgt,
-            endToEndId: merchantData.endToEndId,
-            gpsCoord: '',
-            merchantId: merchantData.msgId,
-            page: '/payment-detail',
-            reason: 'MFA',
-            sessionID,
-            channel,
-            amount:
-              transactionDetail !== null
-                ? transactionDetail.amount.toString()
-                : '',
-            payerName: transactionDetail?.payerName ?? '',
-            cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
-            dbtrAcctId:
-              accountQry.data && 'data' in accountQry.data
-                ? String(accountQry.data.data.creditCardNo)
-                : '',
-            dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
-          });
-          if (accountQry.data && 'data' in accountQry.data)
+          if (transactionDetail) {
+            updateTxnMut.mutate({
+              dbtrAgt: transactionDetail.dbtrAgt,
+              endToEndId: transactionDetail.endToEndId,
+              gpsCoord: '',
+              merchantId: transactionDetail.msgId,
+              page: '/payment-detail',
+              reason: 'MFA',
+              sessionID,
+              channel,
+              amount:
+                transactionDetail !== null
+                  ? transactionDetail.amount.toString()
+                  : '',
+              payerName: transactionDetail?.payerName ?? '',
+              cdtrAgtBIC: transactionDetail?.cdtrAgtBIC ?? '',
+              dbtrAcctId:
+                accountQry.data && 'data' in accountQry.data
+                  ? String(accountQry.data.data.creditCardNo)
+                  : '',
+              dbtrAgtBIC: transactionDetail?.dbtrAgtBIC ?? '',
+            });
+          }
+          if (accountQry.data && 'data' in accountQry.data && transactionDetail)
             notifyTxnMut.mutate({
               accessToken: notifyAccessToken,
               fromAccountHolder: accountQry.data.data.accHolderName,
               fromAccountNo: accountQry.data.data.accNo,
-              referenceNo: transactionDetail?.recipientReference ?? '',
-              totalAmount: transactionDetail?.amount ?? 0,
-              transactionNo: transactionDetail?.tnxId ?? '',
-              trxAmount: transactionDetail?.amount ?? 0,
-              trxTimestamp: transactionDetail?.currentDT ?? '',
-              sellerName: transactionDetail?.creditorName ?? '',
+              referenceNo: transactionDetail.recipientReference,
+              totalAmount: transactionDetail.amount,
+              transactionNo: transactionDetail.tnxId,
+              trxAmount: transactionDetail.amount,
+              trxTimestamp: transactionDetail.currentDT,
+              sellerName: transactionDetail.creditorName,
               trxStatus: 'S',
               channel,
-              dbtrAgt: merchantData.dbtrAgt,
+              dbtrAgt: transactionDetail.dbtrAgt,
             });
         }
       }
     },
     onError: () => {
-      if (accountQry.data && 'data' in accountQry.data)
+      if (accountQry.data && 'data' in accountQry.data && transactionDetail)
         notifyTxnMut.mutate({
           accessToken: notifyAccessToken,
           fromAccountHolder: accountQry.data.data.accHolderName,
           fromAccountNo: accountQry.data.data.accNo,
-          referenceNo: transactionDetail?.recipientReference ?? '',
-          totalAmount: transactionDetail?.amount ?? 0,
-          transactionNo: transactionDetail?.tnxId ?? '',
-          trxAmount: transactionDetail?.amount ?? 0,
-          trxTimestamp: transactionDetail?.currentDT ?? '',
-          sellerName: transactionDetail?.creditorName ?? '',
+          referenceNo: transactionDetail.recipientReference,
+          totalAmount: transactionDetail.amount,
+          transactionNo: transactionDetail.tnxId,
+          trxAmount: transactionDetail.amount,
+          trxTimestamp: transactionDetail.currentDT,
+          sellerName: transactionDetail.creditorName,
           trxStatus: 'S',
           channel,
-          dbtrAgt: merchantData.dbtrAgt,
+          dbtrAgt: transactionDetail.dbtrAgt,
         });
     },
   });
@@ -279,7 +298,6 @@ export default function PaymentDetail() {
         } else if (approvalStatus === 'A') {
           if (
             transactionDetail &&
-            merchantData &&
             accountQry.data &&
             'data' in accountQry.data
           ) {
@@ -295,11 +313,11 @@ export default function PaymentDetail() {
               dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
               dbtrNm: transactionDetail.payerName,
               frBIC: transactionDetail.frBIC,
-              instgAgtBIC: merchantData.dbtrAgt,
+              instgAgtBIC: transactionDetail.dbtrAgt,
               interBkSttlmAmt: String(transactionDetail.amount),
               recptRef: transactionDetail.recipientReference,
               toBIC: transactionDetail.toBIC,
-              txId: merchantData.endToEndId,
+              txId: transactionDetail.endToEndId,
             });
           }
         }
@@ -360,7 +378,6 @@ export default function PaymentDetail() {
           if (accountQry.data)
             if (
               transactionDetail &&
-              merchantData &&
               accountQry.data &&
               'data' in accountQry.data
             ) {
@@ -390,11 +407,11 @@ export default function PaymentDetail() {
                 dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
                 dbtrNm: transactionDetail.payerName,
                 frBIC: transactionDetail.frBIC,
-                instgAgtBIC: merchantData.dbtrAgt,
+                instgAgtBIC: transactionDetail.dbtrAgt,
                 interBkSttlmAmt: String(transactionDetail.amount),
                 recptRef: transactionDetail.recipientReference,
                 toBIC: transactionDetail.toBIC,
-                txId: merchantData.endToEndId,
+                txId: transactionDetail.endToEndId,
               });
             }
         }
@@ -406,12 +423,34 @@ export default function PaymentDetail() {
   });
 
   const handleSMSRequest = () => {
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', transactionDetail);
+      },
+      transactionDetail
+    );
+    if (expired) {
+      return;
+    }
     setReqTACButtonClicked(true);
     return;
   };
   const handleMORequest = () => {
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', transactionDetail);
+      },
+      transactionDetail
+    );
+    if (expired) {
+      return;
+    }
     setReqTACButtonClicked(true);
-    if (accountQry.data && 'data' in accountQry.data) {
+    if (accountQry.data && 'data' in accountQry.data && transactionDetail) {
       authorizeTxnMut.mutate({
         accessToken: notifyAccessToken,
         creditorName: transactionDetail?.creditorName ?? '',
@@ -424,7 +463,7 @@ export default function PaymentDetail() {
         trxTimestamp: transactionDetail?.currentDT ?? '',
         channel,
         method: mfaMethod ?? 'MO',
-        dbtrAgt: merchantData.dbtrAgt,
+        dbtrAgt: transactionDetail.dbtrAgt,
       });
     }
     setMoClicked(true);
@@ -432,17 +471,23 @@ export default function PaymentDetail() {
   };
   const proceedHandler = (e: FormEvent) => {
     e.preventDefault();
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', transactionDetail);
+      },
+      transactionDetail
+    );
+    if (expired) {
+      return;
+    }
     if ((mfaMethod === 'SMS' || mfaMethod === 'MO') && !otp) {
       return;
     }
     if (mfaMethod === 'SMS') {
       if (otp === '123456') {
-        if (
-          transactionDetail &&
-          merchantData &&
-          accountQry.data &&
-          'data' in accountQry.data
-        ) {
+        if (transactionDetail && accountQry.data && 'data' in accountQry.data) {
           debitMut.mutate({
             bizSvc: transactionDetail.bizSvc,
             cdtrAcctId: transactionDetail.cdtrAcctId,
@@ -455,11 +500,11 @@ export default function PaymentDetail() {
             dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
             dbtrNm: transactionDetail.payerName,
             frBIC: transactionDetail.frBIC,
-            instgAgtBIC: merchantData.dbtrAgt,
+            instgAgtBIC: transactionDetail.dbtrAgt,
             interBkSttlmAmt: String(transactionDetail.amount),
             recptRef: transactionDetail.recipientReference,
             toBIC: transactionDetail.toBIC,
-            txId: merchantData.endToEndId,
+            txId: transactionDetail.endToEndId,
           });
         }
         setIsClicked(true);
@@ -472,14 +517,16 @@ export default function PaymentDetail() {
       abortController.abort();
       const secret = privateKeyQry.data?.private_key ?? '';
       const { encryptedTxt, iv } = encrypt(otp, secret);
-      verifyOTPMut.mutate({
-        accessToken: notifyAccessToken,
-        iv: iv.toString('base64'),
-        otp: encryptedTxt.toString('base64'),
-        channel,
-        deliveryChannel: mfaMethod,
-        dbtrAgt: merchantData.dbtrAgt,
-      });
+      if (transactionDetail) {
+        verifyOTPMut.mutate({
+          accessToken: notifyAccessToken,
+          iv: iv.toString('base64'),
+          otp: encryptedTxt.toString('base64'),
+          channel,
+          deliveryChannel: mfaMethod,
+          dbtrAgt: transactionDetail.dbtrAgt,
+        });
+      }
       setIsClicked(true);
     } else if (mfaMethod === 'MA') {
       setReqTACButtonClicked(true);
@@ -488,7 +535,7 @@ export default function PaymentDetail() {
       }
 
       setMASubmit((prev) => ({ ...prev, count: prev.count + 1 }));
-      if (accountQry.data && 'data' in accountQry.data) {
+      if (accountQry.data && 'data' in accountQry.data && transactionDetail) {
         authorizeTxnMut.mutate({
           accessToken: notifyAccessToken,
           creditorName: transactionDetail?.creditorName ?? '',
@@ -501,17 +548,17 @@ export default function PaymentDetail() {
           trxTimestamp: transactionDetail?.currentDT ?? '',
           channel,
           method: mfaMethod,
-          dbtrAgt: merchantData.dbtrAgt,
+          dbtrAgt: transactionDetail.dbtrAgt,
         });
       }
-      if (maSubmit.count > 0) {
+      if (maSubmit.count > 0 && transactionDetail) {
         checkTxnStatusMut.mutate({
           accessToken: notifyAccessToken,
           channel,
           page: '/payment-detail',
           refNo: transactionDetail?.recipientReference!,
           txnID: transactionDetail?.tnxId!,
-          dbtrAgt: merchantData.dbtrAgt,
+          dbtrAgt: transactionDetail.dbtrAgt,
         });
       }
       let newSocket = socket;
@@ -529,7 +576,6 @@ export default function PaymentDetail() {
         } else {
           if (
             transactionDetail &&
-            merchantData &&
             accountQry.data &&
             'data' in accountQry.data
           ) {
@@ -545,11 +591,11 @@ export default function PaymentDetail() {
               dbtrAgtBIC: transactionDetail.dbtrAgtBIC,
               dbtrNm: transactionDetail.payerName,
               frBIC: transactionDetail.frBIC,
-              instgAgtBIC: merchantData.dbtrAgt,
+              instgAgtBIC: transactionDetail.dbtrAgt,
               interBkSttlmAmt: String(transactionDetail.amount),
               recptRef: transactionDetail.recipientReference,
               toBIC: transactionDetail.toBIC,
-              txId: merchantData.endToEndId,
+              txId: transactionDetail.endToEndId,
             });
           }
         }
@@ -612,7 +658,12 @@ export default function PaymentDetail() {
   //   );
   // }
 
-  if (!transactionDetail || !accountQry.data || !accountTypeList) {
+  if (
+    !transactionDetail ||
+    !accountQry.data ||
+    !accountTypeList ||
+    !mfa?.method
+  ) {
     return (
       <>
         <Header />
@@ -722,13 +773,24 @@ export default function PaymentDetail() {
                         isNote={true}
                         controller={abortController}
                         cb={() => {
+                          const expired = checkSessionExpiry(
+                            false,
+                            () => {
+                              setCancelType('EXP');
+                              cancel('E', transactionDetail);
+                            },
+                            transactionDetail
+                          );
+                          if (expired) {
+                            return;
+                          }
                           checkTxnStatusMut.mutate({
                             accessToken: notifyAccessToken,
                             channel,
                             page: '/payment-detail',
                             refNo: transactionDetail?.recipientReference!,
                             txnID: transactionDetail?.tnxId!,
-                            dbtrAgt: merchantData.dbtrAgt,
+                            dbtrAgt: transactionDetail.dbtrAgt,
                           });
                         }}
                         setTimerOff={
@@ -747,6 +809,17 @@ export default function PaymentDetail() {
                 type="button"
                 onClick={(e) => {
                   setTimerOff(true);
+                  const expired = checkSessionExpiry(
+                    false,
+                    () => {
+                      setCancelType('EXP');
+                      cancel('E', transactionDetail);
+                    },
+                    transactionDetail
+                  );
+                  if (expired) {
+                    return;
+                  }
                   setCancelType('U');
                   cancel('U', transactionDetail);
                 }}

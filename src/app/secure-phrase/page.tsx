@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState } from 'react';
-import { encrypt } from '@/utils/helpers';
+import { checkSessionExpiry, encrypt } from '@/utils/helpers';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { usePrivateKey } from '@/hooks/usePrivateKey';
 import SeparatorLine from '@/components/SeparatorLine';
@@ -34,10 +34,14 @@ export default function SecurePhrase() {
   });
   const cancel = useCallback(CancelTxn, []);
   useCheckMaintenaceTime('B2C');
-  useIsSessionActive(() => {
-    setCancelType('EXP');
-    cancel('E', transactionDetail);
-  });
+  useIsSessionActive(
+    () => {
+      setCancelType('EXP');
+      cancel('E', transactionDetail);
+    },
+    false,
+    'B2C'
+  );
 
   const privateKeyQry = usePrivateKey({ enabled: true });
 
@@ -99,10 +103,32 @@ export default function SecurePhrase() {
   const [securePhrase] = useAtom(securePhraseAtom);
 
   const handleCheck = () => {
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', transactionDetail);
+      },
+      transactionDetail
+    );
+    if (expired) {
+      return;
+    }
     setNextStepVisible('inline');
   };
 
   const handleSubmit = () => {
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', transactionDetail);
+      },
+      transactionDetail
+    );
+    if (expired) {
+      return;
+    }
     if (!password.trim()) {
       setErrorVisible('inline');
       return;
@@ -267,6 +293,17 @@ export default function SecurePhrase() {
                 data-target="#myModal"
                 defaultValue="Cancel"
                 onClick={() => {
+                  const expired = checkSessionExpiry(
+                    false,
+                    () => {
+                      setCancelType('EXP');
+                      cancel('E', transactionDetail);
+                    },
+                    transactionDetail
+                  );
+                  if (expired) {
+                    return;
+                  }
                   setCancelType('U');
                   cancel('U', transactionDetail);
                 }}
@@ -306,6 +343,17 @@ export default function SecurePhrase() {
           <button
             className="text-[#337ab7] text-sm disabled:cursor-not-allowed"
             onClick={() => {
+              const expired = checkSessionExpiry(
+                false,
+                () => {
+                  setCancelType('EXP');
+                  cancel('E', transactionDetail);
+                },
+                transactionDetail
+              );
+              if (expired) {
+                return;
+              }
               setCancelType('U');
               cancel('U', transactionDetail);
             }}

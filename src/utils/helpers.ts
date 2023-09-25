@@ -1,3 +1,5 @@
+import { CancelType } from '@/atoms';
+import { TransactionDetail } from '@/services/common/transaction';
 import crypto from 'crypto';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context';
 export function generateEightDigitNum() {
@@ -100,4 +102,86 @@ export function formatCurrency(num?: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+export function getStatusMessage(cancelType: CancelType) {
+  let status = '';
+  switch (cancelType) {
+    case '':
+      status = '';
+    case 'TO':
+      status = 'Unsuccessful - Transaction has encountered timeout error';
+      break;
+    case 'EXP':
+      status = 'Unsuccessful - Transaction has expired';
+      break;
+    case 'FLD':
+      status = 'Unsuccessful - Transaction has been rejected';
+      break;
+    case 'GL':
+      status = 'Unsuccessful - Transaction exceeded limit';
+      break;
+    case 'LgnErr':
+      status = 'Unsuccessful – Invalid User ID, Password and/or Corporate ID';
+      break;
+    case 'SOF':
+      status =
+        'Unsuccessful  - Transaction is rejected due to invalid source of fund';
+      break;
+    case 'MFA_NIL':
+      status =
+        'Unsuccessful - iSecure is not available at this moment. Please try again later';
+      break;
+    case 'MFA_NR':
+      status =
+        'Unsuccessful - Kindly activate iSecure in iRakyat Mobile Banking to authorize this transaction';
+      break;
+    default:
+      status = 'Unsuccessful - Transaction has been canceled';
+  }
+  return status;
+}
+
+export function getCurrentDateAndExpiryDates(
+  txnDetail: TransactionDetail | undefined | null
+) {
+  const sessExp = sessionStorage.getItem('sessionExpiry');
+  const sessionExpiry = parseInt(sessExp ?? '0');
+  let expiryDate =
+    txnDetail !== null && txnDetail !== undefined
+      ? new Date(txnDetail.xpryDt)
+      : undefined;
+  const xpryDTtime =
+    expiryDate !== undefined
+      ? Math.floor(expiryDate.getTime() / 1000)
+      : undefined;
+  const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
+  return { sessionExpiry, xpryDTtime, currentTimeInSeconds };
+}
+
+export function checkSessionExpiry(
+  runOnLogin: boolean,
+  cb: () => void,
+  txnDetail: TransactionDetail | undefined | null
+) {
+  const { sessionExpiry, xpryDTtime, currentTimeInSeconds } =
+    getCurrentDateAndExpiryDates(txnDetail);
+  if (runOnLogin) {
+    if (currentTimeInSeconds > sessionExpiry) {
+      // setIsActive(false);
+      cb();
+    }
+  } else {
+    if (
+      currentTimeInSeconds > sessionExpiry ||
+      (xpryDTtime && currentTimeInSeconds > xpryDTtime)
+    ) {
+      // setIsActive(false);
+      cb();
+    }
+  }
+  return runOnLogin
+    ? currentTimeInSeconds > sessionExpiry
+    : currentTimeInSeconds > sessionExpiry ||
+        (xpryDTtime ? currentTimeInSeconds > xpryDTtime : false);
 }

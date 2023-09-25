@@ -5,7 +5,7 @@ import { checkUsername } from '@/services/checkUsername';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import SeparatorLine from '@/components/SeparatorLine';
 import Header from '@/components/Header';
 import LoginSidebar from '@/components/LoginSidebar';
@@ -21,6 +21,7 @@ import { useGetApprovedTransactionLog } from '@/hooks/useGetApprovedTransactionL
 import { useCheckSignature } from '@/hooks/useCheckSignature';
 import { useCheckGlobalLimit } from '@/hooks/useCheckGlobalLimit';
 import { useCheckTxnDetailXpry } from '@/hooks/useCheckTxnDetailXpry';
+import { checkSessionExpiry } from '@/utils/helpers';
 
 export default function Login() {
   const router = useRouter();
@@ -32,30 +33,34 @@ export default function Login() {
   const merchantData = useMerchantData();
   const [isClicked, setIsClicked] = useState(false);
   const [fetchTxnDetail, setFetchTxnDetail] = useState(false);
+  const [fetchTxnDetailCheckMaintenance, setFetchTxnDetailCheckMaintenance] =
+    useState(false);
   const [fetchSettings, setFetchSettings] = useState(false);
   const [loadPage, setLoadPage] = useState(false);
 
-  useCheckMaintenaceTime('B2C');
+  useCheckMaintenaceTime('B2C', () => {
+    setFetchTxnDetailCheckMaintenance(true);
+  });
+
   const getTxnQry = useTransactionDetailQuery(
     merchantData,
     '/login',
-    fetchTxnDetail
+    fetchTxnDetail && fetchTxnDetailCheckMaintenance
   );
-  const { cancel, updTrxMut } = useCancelTransaction({
+  const { cancel: CancelFn, updTrxMut } = useCancelTransaction({
     page: '/login',
     channel: 'B2C',
   });
+  const cancel = useCallback(CancelFn, []);
 
-  const glCancel = useCancelTransaction({
-    page: '/login',
-    navigateTo: '/maintenance',
-    channel: 'B2C',
-  });
-
-  useIsSessionActive(() => {
-    setCancelType('EXP');
-    cancel('E', getTxnQry.data?.data);
-  }, true);
+  useIsSessionActive(
+    () => {
+      setCancelType('EXP');
+      cancel('E', getTxnQry.data?.data);
+    },
+    true,
+    'B2C'
+  );
 
   useCheckTxnDetailXpry({
     data: getTxnQry.data,
@@ -81,7 +86,7 @@ export default function Login() {
   useCheckGlobalLimit(
     getTxnQry.data,
     approvedTxnLogQry.data,
-    glCancel.cancel,
+    cancel,
     'B2C',
     setFetchSettings
   );
@@ -106,6 +111,17 @@ export default function Login() {
   });
 
   const handleSumbit = () => {
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', getTxnQry.data?.data);
+      },
+      getTxnQry.data?.data
+    );
+    if (expired) {
+      return;
+    }
     if (!username.trim()) {
       setVisible('inline');
       return;
@@ -120,25 +136,10 @@ export default function Login() {
     }
   };
 
-  // if (!isActive) {
-  //   return (
-  //     <>
-  //       <SeparatorLine bottom={false} />
-  //       <Header backgroundImg={true} />
-  //       <div className="h-between"></div>
-  //       <Modal
-  //         text="Your session has expired"
-  //         isLoading={updTrxMut.isLoading}
-  //         cb={() => {
-  //           if (getTxnQry.data?.data) {
-  //             cancel('E', getTxnQry.data.data);
-  //           }
-  //         }}
-  //       />
-  //       <LoginFooter />
-  //     </>
-  //   );
-  // }
+  useEffect(() => {
+    sessionStorage.setItem('sessionStatus', 'active');
+  }, []);
+
   if (
     getTxnQry.data?.data &&
     (getTxnQry.data.data.status === 'ACTC' ||
@@ -215,6 +216,17 @@ export default function Login() {
                     className="bg-[#e9730d] disabled:opacity-50 text-white items-center py-0.5 px-[15px] border-none text-xl cursor-pointer flex justify-center w-full "
                     value="Cancel"
                     onClick={() => {
+                      const expired = checkSessionExpiry(
+                        false,
+                        () => {
+                          setCancelType('EXP');
+                          cancel('E', getTxnQry.data?.data);
+                        },
+                        getTxnQry.data?.data
+                      );
+                      if (expired) {
+                        return;
+                      }
                       setCancelType('U');
                       cancel('U', getTxnQry?.data?.data);
                     }}

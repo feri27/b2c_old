@@ -19,6 +19,7 @@ import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
 import { FromAccount } from '@/services/b2b/auth';
 import { createTxn } from '@/services/b2b/transaction';
 import {
+  checkSessionExpiry,
   checkSystemLogout,
   formatCurrency,
   mapDbtrAcctTp,
@@ -48,10 +49,14 @@ export default function PaymentInitiate() {
     channel: 'B2B',
   });
   const updateTxn = useUpdateTxnMutation(false, '', 'B2B');
-  useIsSessionActive(() => {
-    setCancelType('EXP');
-    cancel('E', transactionDetail);
-  });
+  useIsSessionActive(
+    () => {
+      setCancelType('EXP');
+      cancel('E', transactionDetail);
+    },
+    false,
+    'B2B'
+  );
   useCheckMaintenaceTime('B2B');
 
   const createTxnMut = useMutation({
@@ -126,6 +131,17 @@ export default function PaymentInitiate() {
   };
 
   const handleSubmit = () => {
+    const expired = checkSessionExpiry(
+      false,
+      () => {
+        setCancelType('EXP');
+        cancel('E', transactionDetail);
+      },
+      transactionDetail
+    );
+    if (expired) {
+      return;
+    }
     if (transactionDetail && selectedAccount) {
       const notifyBAccessToken = sessionStorage.getItem('notifyBAccessToken');
       createTxnMut.mutate({
@@ -323,6 +339,17 @@ export default function PaymentInitiate() {
             <button
               // href="ibiz_paymentDetails-Fail.html"
               onClick={() => {
+                const expired = checkSessionExpiry(
+                  false,
+                  () => {
+                    setCancelType('EXP');
+                    cancel('E', transactionDetail);
+                  },
+                  transactionDetail
+                );
+                if (expired) {
+                  return;
+                }
                 cancel('U', transactionDetail);
                 setCancelType('U');
               }}

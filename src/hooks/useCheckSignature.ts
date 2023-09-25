@@ -37,19 +37,19 @@ export function useCheckSignature({
   });
   useEffect(() => {
     if (
-      merchantData.endToEndIDSignature.populated &&
-      merchantData.endToEndIDSignature.value !== ''
+      merchantData.endToEndIdSignature.populated &&
+      merchantData.endToEndIdSignature.value !== ''
     ) {
       verifySignatureMut.mutate({
-        signature: merchantData.endToEndIDSignature.value,
+        signature: merchantData.endToEndIdSignature.value,
         message: merchantData.endToEndId,
       });
     } else if (
-      merchantData.endToEndIDSignature.populated &&
-      merchantData.endToEndIDSignature.value === ''
+      merchantData.endToEndIdSignature.populated &&
+      merchantData.endToEndIdSignature.value === ''
     ) {
       cancel('VF', merchantData);
       setCancelType('U');
     }
-  }, [merchantData.endToEndIDSignature]);
+  }, [merchantData.endToEndIdSignature]);
 }

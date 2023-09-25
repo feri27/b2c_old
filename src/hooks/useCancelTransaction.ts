@@ -45,7 +45,7 @@ export function useCancelTransaction({
         reason,
         sessionID,
         channel: channel!,
-        amount: txnDetail.amount.toString(),
+        amount: 'amount' in txnDetail ? txnDetail.amount.toString() : '',
         payerName: 'payerName' in txnDetail ? txnDetail.payerName : '',
         cdtrAgtBIC: 'cdtrAgtBIC' in txnDetail ? txnDetail.cdtrAgtBIC : '',
         dbtrAgtBIC: 'dbtrAgtBIC' in txnDetail ? txnDetail.dbtrAgtBIC : '',

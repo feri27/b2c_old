@@ -6,6 +6,7 @@ import SeparatorLine from '@/components/SeparatorLine';
 import Steps from '@/components/Steps';
 import { useAccessTokenAndChannel } from '@/hooks/useAccessTokenAndChannel';
 import { useLogout } from '@/hooks/useLogout';
+import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { formatCurrency } from '@/utils/helpers';
@@ -13,16 +14,22 @@ import { useState } from 'react';
 
 export default function PaymentSuccess() {
   const transactionDetail = useTransactionDetail();
-  const [accessToken, channel] = useAccessTokenAndChannel();
+  const [_, channel, notifyAccessToken] = useAccessTokenAndChannel();
   const [controller, setController] = useState(new AbortController());
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-success', 'C', setIsClicked);
   const merchantData = useMerchantData();
 
+  useLogoutOnBrowserClose(logoutMut.mutate, {
+    accessToken: isClicked ? '' : notifyAccessToken,
+    logoutCalled: isClicked,
+    page: '/payment-success',
+    dbtrAgt: transactionDetail?.dbtrAgt ?? 'BKRMMYKL',
+  });
   const handleClick = () => {
     controller.abort();
     logoutMut.mutate({
-      accessToken,
+      accessToken: notifyAccessToken,
       channel,
       page: '/payment-success',
       dbtrAgt: merchantData.dbtrAgt,
@@ -99,7 +106,7 @@ export default function PaymentSuccess() {
               </label>
               <div className="flex after:clear-both md:w-2/3">
                 <div className="flex flex-wrap">
-                  <p className="">{transactionDetail?.merchantID}</p>
+                  <p className="">{transactionDetail?.creditorName}</p>
                 </div>
               </div>
             </div>

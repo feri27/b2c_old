@@ -20,6 +20,8 @@ export async function verifySignature({
   message: string;
   signature: string;
 }): Promise<{ message: 'success' | 'failed' }> {
+  console.log({ signature });
+
   const res = await fetch(`${COMMON_API_URL}/verify-signature`, {
     method: 'POST',
     body: JSON.stringify({ message, signature }),
