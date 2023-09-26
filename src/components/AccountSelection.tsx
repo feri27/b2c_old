@@ -14,7 +14,14 @@ export default function AccountSelection({
   clicked: boolean;
   accType: string;
   setAccType: Dispatch<SetStateAction<string>>;
-  accountTypeList: Array<'CA' | 'SA' | 'CC'> | undefined;
+  accountTypeList:
+    | Array<{
+        accNo: string;
+        accHolder: string;
+        amount: string;
+        accType: 'CA' | 'SA' | 'CC';
+      }>
+    | undefined;
 }) {
   return (
     <>
@@ -37,11 +44,9 @@ export default function AccountSelection({
                   onChange={(e) => setAccType(e.target.value)}
                   className="select-bg disabled:cursor-not-allowed bg-[#e9ecef] disabled:opacity-30 !h-[34px] !py-1.5 !px-3 !text-sm"
                 >
-                  {accountTypeList?.map((accType) => (
-                    <option key={accType} value={accType}>
-                      {accType === 'CA' && 'Current Account'}
-                      {accType === 'SA' && 'Saving Account'}
-                      {accType === 'CC' && 'Credit Card'}
+                  {accountTypeList?.map((acc) => (
+                    <option key={acc.accType} value={acc.accType}>
+                      {acc.accType} {acc.accNo} {acc.amount}
                     </option>
                   ))}
                 </select>

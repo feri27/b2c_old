@@ -66,7 +66,13 @@ export default function PaymentDetail() {
   const privateKeyQry = usePrivateKey({ enabled: mfa?.method === 'MO' });
   const [accountType, setAccountType] = useState('');
   const [accountTypeList, setAccountTypeList] = useState<
-    Array<'CA' | 'SA' | 'CC'> | undefined
+    | Array<{
+        accNo: string;
+        accHolder: string;
+        amount: string;
+        accType: 'CA' | 'SA' | 'CC';
+      }>
+    | undefined
   >();
   const [isClicked, setIsClicked] = useState(false);
   const [moClicked, setMoClicked] = useState(false);
@@ -104,7 +110,7 @@ export default function PaymentDetail() {
     if (accountQry.data && 'data' in accountQry.data) {
       accountData = accountQry.data;
     }
-    let availableAccounts: Array<'CA' | 'SA' | 'CC'> = [];
+    let availableAccounts: typeof accountTypeList = [];
     if (accountData && srcOfFunds) {
       srcOfFunds.forEach((src) => {
         const firstTwoDigits = accountData?.data.accNo.slice(0, 2);
@@ -116,12 +122,17 @@ export default function PaymentDetail() {
             : firstTwoDigits !== '11' && firstTwoDigits !== '22' && src === '02'
             ? 'CC'
             : '';
-        if (type) {
-          availableAccounts.push(type);
+        if (type && accountData?.data) {
+          availableAccounts?.push({
+            accNo: accountData.data.accNo,
+            accHolder: accountData.data.accHolderName,
+            amount: accountData.data.availableBalance,
+            accType: type,
+          });
         }
       });
       if (availableAccounts.length === 0) {
-        setCancelType('FLD');
+        setCancelType('SOF');
         cancel('FLD', transactionDetail);
       } else {
         setAccountTypeList(availableAccounts);
@@ -662,7 +673,8 @@ export default function PaymentDetail() {
     !transactionDetail ||
     !accountQry.data ||
     !accountTypeList ||
-    !mfa?.method
+    !mfa?.method ||
+    !loginData
   ) {
     return (
       <>

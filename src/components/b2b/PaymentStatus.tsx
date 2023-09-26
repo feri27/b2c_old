@@ -144,7 +144,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{formatCurrency(txnDetail?.amount)}</p>
+                    <p>MYR {formatCurrency(txnDetail?.amount)}</p>
                   </div>
                 </div>
               </div>

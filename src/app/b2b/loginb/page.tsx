@@ -406,6 +406,7 @@ export default function Login() {
                           Transaction Amount
                         </th>
                         <td>
+                          MYR{' '}
                           {formatCurrency(Number(getTxnQry.data.data.amount))}
                         </td>
                       </tr>
