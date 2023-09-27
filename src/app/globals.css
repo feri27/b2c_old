@@ -149,6 +149,12 @@
   min-height: calc(100vh - 128.14px - 205px);
 }
 
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 @media print {
   .hide-when-print {
     display: none !important;

@@ -32,6 +32,8 @@ export function useLogoutOnBrowserClose(
   }
 ) {
   useEffect(() => {
+    console.log('called');
+
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       if (options.accessToken && !options.logoutCalled) {

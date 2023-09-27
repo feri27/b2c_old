@@ -58,6 +58,7 @@ export function checkSystemLogout(
 
 export function removeEverySessionStorageItem(exception?: boolean) {
   sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('notifyAccessToken');
   sessionStorage.removeItem('channel');
   sessionStorage.removeItem('transactionDetail');
   sessionStorage.removeItem('loginData');
@@ -119,6 +120,7 @@ export function getStatusMessage(cancelType: CancelType) {
       status = 'Unsuccessful - Transaction has been rejected';
       break;
     case 'GL':
+    case 'UL':
       status = 'Unsuccessful - Transaction exceeded limit';
       break;
     case 'LgnErr':
@@ -187,4 +189,16 @@ export function checkSessionExpiry(
     ? currentTimeInSeconds > sessionExpiry
     : currentTimeInSeconds > sessionExpiry ||
         (xpryDTtime ? currentTimeInSeconds > xpryDTtime : false);
+}
+export function getLocalDateWithISOFormat() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = ('0' + (date.getMonth() + 1)).slice(-2); // Months are 0-11 in JavaScript
+  const day = ('0' + date.getDate()).slice(-2);
+  const hours = ('0' + date.getHours()).slice(-2);
+  const minutes = ('0' + date.getMinutes()).slice(-2);
+  const seconds = ('0' + date.getSeconds()).slice(-2);
+  const milliseconds = ('00' + date.getMilliseconds()).slice(-3);
+  const localDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`;
+  return localDate;
 }

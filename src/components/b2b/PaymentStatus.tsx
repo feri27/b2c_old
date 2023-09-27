@@ -10,7 +10,11 @@ import { cancelTypeAtom } from '@/atoms';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { FromAccount } from '@/services/b2b/auth';
 import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
-import { formatCurrency, getStatusMessage } from '@/utils/helpers';
+import {
+  formatCurrency,
+  getLocalDateWithISOFormat,
+  getStatusMessage,
+} from '@/utils/helpers';
 
 export default function PaymentStatus({ success }: { success: boolean }) {
   const txnDetail = useTransactionDetail();
@@ -27,6 +31,8 @@ export default function PaymentStatus({ success }: { success: boolean }) {
     success ? 'C' : 'S',
     setIsClicked
   );
+  const [currentDate, __] = useState(getLocalDateWithISOFormat());
+
   useLogoutOnBrowserClose(logouBMut.mutate, {
     accessToken: isClicked ? '' : notifyAccessToken,
     page,
@@ -113,7 +119,7 @@ export default function PaymentStatus({ success }: { success: boolean }) {
                 </label>
                 <div className="flex flex-wrap marginx  w-full justify-center">
                   <div className="w-full max-[768px]:padx text-sm md:w-3/4">
-                    <p>{new Date().toISOString().slice(0, -1)}</p>
+                    <p>{currentDate}</p>
                   </div>
                 </div>
               </div>

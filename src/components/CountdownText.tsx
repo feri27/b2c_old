@@ -7,12 +7,16 @@ export default function CountdownText({
   cb,
   controller,
   setTimerOff,
+  mfaMethod,
+  buttonClickCount,
 }: {
   count: number;
   isNote?: boolean;
   cb?: () => void;
   controller?: AbortController;
   setTimerOff?: Dispatch<SetStateAction<boolean>>;
+  mfaMethod?: 'SMS' | 'MO' | 'MA';
+  buttonClickCount?: number;
 }) {
   const [countdown, setCountdown] = useState(count);
 
@@ -24,9 +28,16 @@ export default function CountdownText({
   }, [countdown]);
 
   useEffect(() => {
+    setCountdown(count);
+  }, [buttonClickCount]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prevCountdown) => {
-        if (prevCountdown === 0 || controller?.signal.aborted) {
+        if (
+          countdown === 0 &&
+          (prevCountdown === 0 || controller?.signal.aborted)
+        ) {
           clearInterval(timer);
           return prevCountdown;
         }
@@ -37,12 +48,24 @@ export default function CountdownText({
     return () => {
       clearInterval(timer);
     };
-  }, [controller]);
-  return isNote ? (
+  }, [controller, countdown]);
+  return isNote && mfaMethod === 'SMS' ? (
+    <p>
+      check your registered mobile device for 6-Digit SMS OTP and input it
+      within {countdown} {countdown === 0 ? 'second' : 'seconds'}
+    </p>
+  ) : isNote && mfaMethod === 'MO' ? (
     <p>
       {' '}
-      Please check your iSecure registered device and approve it within{' '}
+      iSecure Device OTP have been sent to iRakyat for the approval. Transaction
+      will expire in
       {countdown} {countdown === 0 ? 'second' : 'seconds'}.
+    </p>
+  ) : isNote && mfaMethod === 'MA' ? (
+    <p>
+      You will receive an iSecure notification on your iRakyat mobile app to
+      approve or reject this transaction. Transaction will expire in {countdown}{' '}
+      {countdown === 0 ? 'second' : 'seconds'}.
     </p>
   ) : (
     <p>Continue with Transaction ({countdown}s)</p>

@@ -1,11 +1,12 @@
-import Footer from '@/components/Footer';
+'use client';
 import Header from '@/components/Header';
 import LoginFooter from '@/components/LoginFooter';
 import SeparatorLine from '@/components/SeparatorLine';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function Logout() {
-  const date = new Date();
+  const [date, _] = useState(new Date());
   function getDate() {
     const day = date.getDate().toString().padStart(2, '0');
     const monthIndex = date.getMonth();
@@ -28,7 +29,6 @@ export default function Logout() {
     return `${day}-${month}-${year}`;
   }
   function getCurrentTime() {
-    const date = new Date();
     const hours = date.getHours();
     const minutes = date.getMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';

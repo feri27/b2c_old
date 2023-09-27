@@ -13,6 +13,8 @@ import { useCheckMaintenaceTime } from '@/hooks/useCheckMaintenaceTime';
 import { useIsSessionActive } from '@/hooks/useIsSessionActive';
 import { useLatAndLong } from '@/hooks/useLatAndLong';
 import { useLoginBData } from '@/hooks/useLoginBData';
+import { useLogoutBMutation } from '@/hooks/useLogoutBMutation';
+import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
 import { useUpdateTxnMutation } from '@/hooks/useUpdateTxnMutation';
@@ -38,8 +40,8 @@ export default function PaymentInitiate() {
   const corporateLogonID = useAtomValue(corporateLogonIDAtom);
   const userID = useAtomValue(userIDAtom);
   const transactionDetail = useTransactionDetail();
-  const merchantData = useMerchantData();
-  const [accessToken, channel] = useAccessTokenAndChannel();
+  // const merchantData = useMerchantData();
+  const [_, channel, notifyAccessToken] = useAccessTokenAndChannel();
   const setCancelType = useSetAtom(cancelTypeAtom);
   const [isClicked, setIsClicked] = useState(false);
   const latLong = useLatAndLong();
@@ -48,7 +50,20 @@ export default function PaymentInitiate() {
     navigateTo: '/b2b/payment-fail',
     channel: 'B2B',
   });
+  const logouBMut = useLogoutBMutation(
+    '/b2b/payment-initiate',
+    'S',
+    setIsClicked
+  );
   const updateTxn = useUpdateTxnMutation(false, '', 'B2B');
+
+  useLogoutOnBrowserClose(logouBMut.mutate, {
+    accessToken: isClicked ? '' : notifyAccessToken,
+    page: '/b2b/payment-initiate',
+    dbtrAgt: transactionDetail?.dbtrAgt ?? 'BKRMMYKL',
+    logoutCalled: isClicked,
+  });
+
   useIsSessionActive(
     () => {
       setCancelType('EXP');
@@ -150,7 +165,7 @@ export default function PaymentInitiate() {
         corporateLogonID,
         userID,
         exchangeID: '',
-        fpxTrxID: merchantData.endToEndId,
+        fpxTrxID: transactionDetail.endToEndId,
         fpxTrxType: 'B2B1',
         fromAccHolder: selectedAccount.fromAccHolder,
         fromAccNo: selectedAccount.fromAccNo,

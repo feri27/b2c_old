@@ -9,6 +9,7 @@ export default function AccountSelection({
   accType,
   setAccType,
   accountTypeList,
+  currentDate,
 }: {
   data?: TransactionDetail | null;
   clicked: boolean;
@@ -17,11 +18,12 @@ export default function AccountSelection({
   accountTypeList:
     | Array<{
         accNo: string;
-        accHolder: string;
+        accName: string;
         amount: string;
         accType: 'CA' | 'SA' | 'CC';
       }>
     | undefined;
+  currentDate: string;
 }) {
   return (
     <>
@@ -46,7 +48,7 @@ export default function AccountSelection({
                 >
                   {accountTypeList?.map((acc) => (
                     <option key={acc.accType} value={acc.accType}>
-                      {acc.accType} {acc.accNo} {acc.amount}
+                      {acc.accName} {acc.accNo} MYR {acc.amount}
                     </option>
                   ))}
                 </select>
@@ -62,7 +64,7 @@ export default function AccountSelection({
         </label>
         <div className="flex after:clear-both md:w-2/3">
           <div className="flex flex-wrap">
-            <p className="">{data?.currentDT}</p>
+            <p className="">{currentDate}</p>
           </div>
         </div>
       </div>

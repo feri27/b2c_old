@@ -8,7 +8,11 @@ import { useLogout } from '@/hooks/useLogout';
 import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-import { formatCurrency, getStatusMessage } from '@/utils/helpers';
+import {
+  formatCurrency,
+  getLocalDateWithISOFormat,
+  getStatusMessage,
+} from '@/utils/helpers';
 import { useAtomValue } from 'jotai';
 import { useState } from 'react';
 
@@ -21,6 +25,8 @@ export default function PaymentFail() {
   const loginData = useLoginData();
   const merchantData = useMerchantData();
   const cancelType = useAtomValue(cancelTypeAtom);
+  const [currentDate, __] = useState(getLocalDateWithISOFormat());
+
   useLogoutOnBrowserClose(logoutMut.mutate, {
     accessToken: isClicked ? '' : notifyAccessToken,
     logoutCalled: isClicked || !loginData,
@@ -91,7 +97,7 @@ export default function PaymentFail() {
             </label>
             <div className="flex after:clear-both md:w-2/3">
               <div className="flex flex-wrap">
-                <p className="">{transactionDetail?.currentDT}</p>
+                <p className="">{currentDate}</p>
               </div>
             </div>
           </div>

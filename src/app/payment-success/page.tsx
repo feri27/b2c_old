@@ -9,7 +9,7 @@ import { useLogout } from '@/hooks/useLogout';
 import { useLogoutOnBrowserClose } from '@/hooks/useLogoutOnBrowserClose';
 import { useMerchantData } from '@/hooks/useMerchantData';
 import { useTransactionDetail } from '@/hooks/useTransactionDetail';
-import { formatCurrency } from '@/utils/helpers';
+import { formatCurrency, getLocalDateWithISOFormat } from '@/utils/helpers';
 import { useState } from 'react';
 
 export default function PaymentSuccess() {
@@ -19,6 +19,7 @@ export default function PaymentSuccess() {
   const [isClicked, setIsClicked] = useState(false);
   const logoutMut = useLogout('/payment-success', 'C', setIsClicked);
   const merchantData = useMerchantData();
+  const [currentDate, __] = useState(getLocalDateWithISOFormat());
 
   useLogoutOnBrowserClose(logoutMut.mutate, {
     accessToken: isClicked ? '' : notifyAccessToken,
@@ -86,7 +87,7 @@ export default function PaymentSuccess() {
               </label>
               <div className="flex after:clear-both md:w-2/3">
                 <div className="flex flex-wrap">
-                  <p className="">{transactionDetail?.currentDT}</p>
+                  <p className="">{currentDate}</p>
                 </div>
               </div>
             </div>

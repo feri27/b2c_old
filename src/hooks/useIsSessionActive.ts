@@ -35,7 +35,7 @@ export function useIsSessionActive(
         case '/maintenance':
           return;
         default:
-          router.push(loginPage);
+          router.push('/');
           return;
       }
     } else if (sessStatus === 'active' || loginSessStatus === 'active') {

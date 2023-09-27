@@ -15,6 +15,7 @@ import {
   checkSessionExpiry,
   checkSystemLogout,
   encrypt,
+  getLocalDateWithISOFormat,
   getSessionID,
   mapSrcOfFund,
 } from '@/utils/helpers';
@@ -68,7 +69,7 @@ export default function PaymentDetail() {
   const [accountTypeList, setAccountTypeList] = useState<
     | Array<{
         accNo: string;
-        accHolder: string;
+        accName: string;
         amount: string;
         accType: 'CA' | 'SA' | 'CC';
       }>
@@ -77,8 +78,9 @@ export default function PaymentDetail() {
   const [isClicked, setIsClicked] = useState(false);
   const [moClicked, setMoClicked] = useState(false);
   const [reqTACButtonClicked, setReqTACButtonClicked] = useState(false);
-  // const merchantData = useMerchantData();
+  const [fetchAccount, setFetchAccount] = useState(false);
   const logoutMut = useLogout('/payment-detail', 'S', setIsClicked);
+  const [currentDate, __] = useState(getLocalDateWithISOFormat());
 
   useLogoutOnBrowserClose(logoutMut.mutate, {
     accessToken: isClicked ? '' : notifyAccessToken,
@@ -99,7 +101,7 @@ export default function PaymentDetail() {
   const accountQry = useQuery({
     queryKey: ['account', loginData?.cif],
     queryFn: () => account(loginData?.cif ?? ''),
-    enabled: loginData?.cif !== undefined,
+    enabled: loginData?.cif !== undefined && fetchAccount,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
@@ -125,7 +127,7 @@ export default function PaymentDetail() {
         if (type && accountData?.data) {
           availableAccounts?.push({
             accNo: accountData.data.accNo,
-            accHolder: accountData.data.accHolderName,
+            accName: accountData.data.accName,
             amount: accountData.data.availableBalance,
             accType: type,
           });
@@ -180,18 +182,27 @@ export default function PaymentDetail() {
     mutationFn: authorizeTransaction,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C', () => {
-          if (transactionDetail) {
-            updateTxnMut.mutate(updateTxnPayload);
-          }
-        });
+        if ((data.message as string).includes('force logout')) {
+          checkSystemLogout(data.message as string, router, 'B2C', () => {
+            if (transactionDetail) {
+              updateTxnMut.mutate(updateTxnPayload);
+            }
+          });
+        } else {
+          setCancelType('FLD');
+          cancel('TO', transactionDetail);
+        }
       }
+    },
+    onError: () => {
+      setCancelType('FLD');
+      cancel('TO', transactionDetail);
     },
   });
   const notifyTxnMut = useMutation({
     mutationFn: notifyTransaction,
     onSuccess: (data) => {
-      if ('message' in data) {
+      if ('message' in data && (data.message as string).includes('logout')) {
         checkSystemLogout(data.message as string, router, 'B2C', () => {
           if (transactionDetail) {
             updateTxnMut.mutate(updateTxnPayload);
@@ -208,11 +219,16 @@ export default function PaymentDetail() {
     mutationFn: debit,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C', () => {
-          if (transactionDetail) {
-            updateTxnMut.mutate(updateTxnPayload);
-          }
-        });
+        if ((data.message as string).includes('force logout')) {
+          checkSystemLogout(data.message as string, router, 'B2C', () => {
+            if (transactionDetail) {
+              updateTxnMut.mutate(updateTxnPayload);
+            }
+          });
+        } else {
+          setCancelType('FLD');
+          cancel('TO', transactionDetail);
+        }
       } else {
         if (
           data.PymtConfirmRs.resBody.TxSts === 'ACTC' ||
@@ -285,11 +301,16 @@ export default function PaymentDetail() {
     mutationFn: checkTxnStatus,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C', () => {
-          if (transactionDetail) {
-            updateTxnMut.mutate(updateTxnPayload);
-          }
-        });
+        if ((data.message as string).includes('force logout')) {
+          checkSystemLogout(data.message as string, router, 'B2C', () => {
+            if (transactionDetail) {
+              updateTxnMut.mutate(updateTxnPayload);
+            }
+          });
+        } else {
+          setCancelType('FLD');
+          cancel('TO', transactionDetail);
+        }
       } else {
         if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
           setCancelType('FLD');
@@ -335,7 +356,8 @@ export default function PaymentDetail() {
       }
     },
     onError: () => {
-      setIsClicked(false);
+      setCancelType('FLD');
+      cancel('TO', transactionDetail);
     },
   });
 
@@ -376,11 +398,16 @@ export default function PaymentDetail() {
     mutationFn: verifyOTP,
     onSuccess: (data) => {
       if ('message' in data) {
-        checkSystemLogout(data.message as string, router, 'B2C', () => {
-          if (transactionDetail) {
-            updateTxnMut.mutate(updateTxnPayload);
-          }
-        });
+        if ((data.message as string).includes('force logout')) {
+          checkSystemLogout(data.message as string, router, 'B2C', () => {
+            if (transactionDetail) {
+              updateTxnMut.mutate(updateTxnPayload);
+            }
+          });
+        } else {
+          setCancelType('FLD');
+          cancel('TO', transactionDetail);
+        }
       } else {
         if (data.data.header.status !== 1 || data.data.header.errorId) {
           setCancelType('FLD');
@@ -429,7 +456,8 @@ export default function PaymentDetail() {
       }
     },
     onError: () => {
-      setIsClicked(false);
+      setCancelType('FLD');
+      cancel('TO', transactionDetail);
     },
   });
 
@@ -445,6 +473,16 @@ export default function PaymentDetail() {
     if (expired) {
       return;
     }
+    if (maSubmit.limit === 1) {
+      setMASubmit((prev) => ({ ...prev, limit: 3 }));
+    }
+    setTimerOff(false);
+    if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
+      setCancelType('FLD');
+      cancel('MFA', transactionDetail);
+      return;
+    }
+    setMASubmit((prev) => ({ ...prev, count: prev.count + 1 }));
     setReqTACButtonClicked(true);
     return;
   };
@@ -460,7 +498,17 @@ export default function PaymentDetail() {
     if (expired) {
       return;
     }
+    if (maSubmit.limit === 1) {
+      setMASubmit((prev) => ({ ...prev, limit: 3 }));
+    }
     setReqTACButtonClicked(true);
+    setTimerOff(false);
+    setMASubmit((prev) => ({ ...prev, count: prev.count + 1 }));
+    if (maSubmit.count >= 3 && maSubmit.count >= maSubmit.limit) {
+      setCancelType('FLD');
+      cancel('MFA', transactionDetail);
+      return;
+    }
     if (accountQry.data && 'data' in accountQry.data && transactionDetail) {
       authorizeTxnMut.mutate({
         accessToken: notifyAccessToken,
@@ -649,6 +697,8 @@ export default function PaymentDetail() {
       ) {
         setCancelType('UL');
         cancel('UL', transactionDetail);
+      } else {
+        setFetchAccount(true);
       }
     }
   }, [loginData, transactionDetail, cancel]);
@@ -713,6 +763,7 @@ export default function PaymentDetail() {
                 setAccType={setAccountType}
                 data={transactionDetail}
                 accountTypeList={accountTypeList}
+                currentDate={currentDate}
               />
               {mfaMethod === 'MA' ? null : (
                 <>
@@ -725,6 +776,7 @@ export default function PaymentDetail() {
                         <div className="w-[59%] md:w-1/2">
                           <input
                             onPaste={() => true}
+                            disabled={!moClicked && !reqTACButtonClicked}
                             type="number"
                             id="tac"
                             name="tac"
@@ -737,13 +789,20 @@ export default function PaymentDetail() {
                         <div>
                           {mfaMethod === 'MO' ? (
                             <TACButton
-                              disabled={moClicked}
+                              disabled={
+                                ((moClicked || reqTACButtonClicked) &&
+                                  !timerOff) ||
+                                maSubmit.count >= maSubmit.limit
+                              }
                               requestButtonText={requestButtonText}
                               onClick={handleMORequest}
                             />
                           ) : (
                             <TACButton
-                              disabled={reqTACButtonClicked}
+                              disabled={
+                                (reqTACButtonClicked && !timerOff) ||
+                                maSubmit.count >= maSubmit.limit
+                              }
                               requestButtonText={requestButtonText}
                               onClick={handleSMSRequest}
                             />
@@ -752,12 +811,12 @@ export default function PaymentDetail() {
                       </div>
                     </div>
                   </div>
-                  {moClicked && (
+                  {/* {moClicked && (
                     <p className="flex w-full justify-center">
                       iSecure Device OTP has been sent to your iRakyat for
                       approval.
                     </p>
-                  )}
+                  )} */}
                 </>
               )}
 
@@ -781,9 +840,11 @@ export default function PaymentDetail() {
                   <div className=" pl-[2.5em]">
                     {mfa?.validity && reqTACButtonClicked ? (
                       <CountdownText
-                        count={120}
+                        count={mfa.validity}
                         isNote={true}
+                        buttonClickCount={maSubmit.count}
                         controller={abortController}
+                        mfaMethod={mfaMethod as 'SMS' | 'MA' | 'MO'}
                         cb={() => {
                           const expired = checkSessionExpiry(
                             false,
@@ -796,18 +857,18 @@ export default function PaymentDetail() {
                           if (expired) {
                             return;
                           }
-                          checkTxnStatusMut.mutate({
-                            accessToken: notifyAccessToken,
-                            channel,
-                            page: '/payment-detail',
-                            refNo: transactionDetail?.recipientReference!,
-                            txnID: transactionDetail?.tnxId!,
-                            dbtrAgt: transactionDetail.dbtrAgt,
-                          });
+                          if (mfaMethod === 'MA') {
+                            checkTxnStatusMut.mutate({
+                              accessToken: notifyAccessToken,
+                              channel,
+                              page: '/payment-detail',
+                              refNo: transactionDetail?.recipientReference!,
+                              txnID: transactionDetail?.tnxId!,
+                              dbtrAgt: transactionDetail.dbtrAgt,
+                            });
+                          }
                         }}
-                        setTimerOff={
-                          mfaMethod === 'MA' ? setTimerOff : undefined
-                        }
+                        setTimerOff={setTimerOff}
                       />
                     ) : null}
                   </div>
@@ -835,7 +896,13 @@ export default function PaymentDetail() {
                   setCancelType('U');
                   cancel('U', transactionDetail);
                 }}
-                disabled={isClicked || updTrxMut.isLoading}
+                disabled={
+                  isClicked ||
+                  updTrxMut.isLoading ||
+                  checkTxnStatusMut.isLoading ||
+                  debitMut.isLoading ||
+                  verifyOTPMut.isLoading
+                }
                 defaultValue="Cancel"
                 className="bg-[#f26f21] disabled:opacity-50 cursor-pointer text-white py-[5px] px-[25px] border-none w-full min-[480px]:w-auto !rounded-md   flex justify-center items-center"
               />
@@ -850,6 +917,9 @@ export default function PaymentDetail() {
                   disabled={
                     isClicked ||
                     updTrxMut.isLoading ||
+                    checkTxnStatusMut.isLoading ||
+                    debitMut.isLoading ||
+                    verifyOTPMut.isLoading ||
                     maSubmit.count >= maSubmit.limit ||
                     !timerOff
                   }

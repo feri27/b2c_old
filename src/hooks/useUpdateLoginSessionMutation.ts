@@ -15,20 +15,21 @@ export function useUpdateLoginSessionMutation() {
   const updateLoginSessionMut = useMutation({
     mutationFn: updateLoginSession,
     onSuccess: (data) => {
-      if (
-        data.message === 'success' ||
-        data.message.includes('session not found') ||
-        data.message.includes('privilege') ||
-        data.message.includes('force')
-      ) {
-        const redirectURL = txnDetail?.redirectURL;
-        setUsername('');
-        setUserID('');
-        setCorporateLogonID('');
-        removeEverySessionStorageItem();
+      const redirectURL = txnDetail?.redirectURL;
+      setUsername('');
+      setUserID('');
+      setCorporateLogonID('');
+      removeEverySessionStorageItem();
 
-        window.location.href = redirectURL!;
-      }
+      window.location.href = redirectURL!;
+    },
+    onError: () => {
+      const redirectURL = txnDetail?.redirectURL;
+      setUsername('');
+      setUserID('');
+      setCorporateLogonID('');
+      removeEverySessionStorageItem();
+      window.location.href = redirectURL!;
     },
   });
   return updateLoginSessionMut;

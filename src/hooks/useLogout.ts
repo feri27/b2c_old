@@ -39,7 +39,12 @@ export function useLogout(
       }
     },
     onError: () => {
-      setIsClicked(false);
+      const redirectURL = txnDetail?.redirectURL;
+      setUsername('');
+      setUserID('');
+      setCorporateLogonID('');
+      removeEverySessionStorageItem();
+      window.location.href = redirectURL!;
     },
   });
   return {
